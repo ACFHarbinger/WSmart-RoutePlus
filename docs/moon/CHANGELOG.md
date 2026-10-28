@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Simulation corpus scenes (planned, `2026-10-28`, [#175](https://github.com/ACFHarbinger/WSmart-Route/issues/175))
+
+- §G.21 files the Simulation Summary corpus scenes. A user will load one JSON file, one run directory, or selected runs under a scenario and compare them on orbit, bar, flow, dot, globe, and hex scenes. The baseline is a pinned run or a typed number. A run without coordinates uses a generated layout labeled as generated. Playing the day on the existing route map is [#180](https://github.com/ACFHarbinger/WSmart-Route/issues/180) and is the next round.
+
 ### Algorithm visualizer and builder (`2026-10-28`, [#167](https://github.com/ACFHarbinger/WSmart-Route/issues/167), [#173](https://github.com/ACFHarbinger/WSmart-Route/issues/173))
 
 - **Visualizer.** A Read page loads the module catalog and draws an execution trace from input to the final route. It calls `trace_policy` for ALNS. Other routing ids and models stay on the page with a not-runnable message. `WeightAdjustmentRNN` is not offered as a route policy.

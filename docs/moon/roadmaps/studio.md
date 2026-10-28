@@ -933,9 +933,53 @@ Source files ported from: `logic/src/ui/pages/experiment_tracker.py`, `logic/src
 
 ---
 
+### §G.21 — Phase 21: Simulation Corpus Scenes on Simulation Summary 📋
+
+> **Tracking**: parent [#175](https://github.com/ACFHarbinger/WSmart-Route/issues/175). Children [#176](https://github.com/ACFHarbinger/WSmart-Route/issues/176)–[#179](https://github.com/ACFHarbinger/WSmart-Route/issues/179) are this round. [#180](https://github.com/ACFHarbinger/WSmart-Route/issues/180) is the next round. Filed 2026-10-28 from the ORION layout references. The scenes use WSmart metrics (profit, kg, km, cost, overflows, kg/km). They do not copy the ORION chrome or the sample sales figures.
+
+**Goal**: On Simulation Summary, load one JSON file, one run directory, or several runs under a scenario, and compare them in interactive scenes. A missing coordinate set still has a layout. The user pins a run or types a number as the baseline.
+
+#### §G.21.0 — Corpus scan (#176)
+
+- [ ] "Add result folders" on Simulation Summary picks one or more parent directories.
+- [ ] A Tauri command walks each tree off the WebView and collects simulation JSON and JSONL. The WebView receives a catalog of runs.
+- [ ] One run is every simulation JSON file under a run-name directory. One chosen JSON file is a partial run and can be visualized on its own.
+- [ ] Several selected runs under one scenario directory merge into one comparison corpus.
+- [ ] The scan reports kept, skipped, and failed counts. A failed file stays listed with its reason and does not drop the rest. An empty folder or a folder of non-JSON files shows an empty corpus.
+
+#### §G.21.1 — Baseline and filters (#177)
+
+- [ ] A shared strip sets the metric, the day range, the policy, and the city. The day slider filters the new scenes only.
+- [ ] The baseline is a pinned run or a numeric value the user types. Missing metric values stay gaps.
+- [ ] Hide and reload drop or refresh a loaded folder without leaving Simulation Summary.
+- [ ] Cross-highlight: selecting a policy, city, or run marks the same series on every open scene.
+
+#### §G.21.2 — 2D scenes (#178)
+
+- [ ] Policy orbit: bubble size is the selected metric.
+- [ ] Diverging bars against the pinned run or the typed baseline.
+- [ ] Metric-flow ribbons: kg into served, lost, and overflow, or a city split by policy.
+- [ ] Day-by-bin dot field. A day-level log draws one dot per day and says so.
+- [ ] Each scene can export a PNG and copy its table. `prefers-reduced-motion` skips autoplay. Each new file stays at or under 500 lines. A missing metric is a gap.
+
+#### §G.21.3 — Globe and hex map (#179)
+
+- [ ] The geographic globe draws only runs that have real coordinates, with arcs for the same policy across cities or against the pinned baseline.
+- [ ] A run with no coordinates uses a generated layout, labeled as generated. That layout is not drawn on the geographic globe as if it were real.
+- [ ] The globe canvas unmounts when the user leaves Simulation Summary.
+
+#### §G.21.4 — Next round: route-map playback (#180)
+
+- [ ] Do not start this in the corpus-scene round.
+- [ ] When it starts, play and pause move the existing Simulation Monitor route map to the selected day. Reduced motion keeps the slider and skips the tween. A partial JSON file with no route geometry does not move the map and says why.
+
+**Out of scope for this phase**: Algorithm Visualizer (#167) remains the single-solve trace. Algorithm Builder (#173) remains the composition canvas. Report Studio figure handoff waits until each scene can export a PNG.
+
+---
+
 ### §G — Studio Complete ✅
 
-All twenty phases (§G.0–§G.19) are delivered. WSmart-Route Studio is the primary desktop interface for launching simulations and training runs, browsing results, and performing post-hoc analytics. Post-§G analytics bridges continue under §A (e.g. §A.3 Policy Telemetry in hundred-ninth pass; §A.5 Optuna Plotly export in hundred-tenth pass; §A.4 Training Health in hundred-eleventh pass; §A.6 Failure Analysis in hundred-twelfth pass; §A.2 WandB attention heatmaps in hundred-thirteenth pass; §A.1 Route Solution visualizer in hundred-fourteenth pass; §A.6 route-diff failure overlay in hundred-fifteenth pass; §A.6 ECharts route-diff parity in hundred-sixteenth pass; §A.2 Studio attention ring-buffer in hundred-seventeenth pass; §A.4 HPO health prune metrics in hundred-eighteenth pass; §A.3 live policy telemetry stream in hundred-nineteenth pass; §A.3 SQLite cross-run telemetry trending in hundred-twentieth pass; §A.3 cross-run improvement trajectory chart in hundred-twenty-first pass; §A.3 trajectory brush + Benchmark Analysis panel in hundred-twenty-second pass; §A.3 chart brush filter + Simulation Summary panel in hundred-twenty-third pass; §A.3 chart brush dimming + Algorithm/City Comparison panels in hundred-twenty-fourth pass; §A.3 run_label brush sync + OLAP Explorer panel in hundred-twenty-fifth pass; §A.3 trajectory click fix + Simulation Monitor / Data Explorer panels in hundred-twenty-sixth pass; §A.3 Output Browser trends panel + KPI brush in hundred-twenty-seventh pass; §A.3 Process Monitor telemetry + Output Browser run_label auto-brush in hundred-twenty-eighth pass; §A.3 Simulation Launcher live telemetry + Process Monitor brush parity in hundred-twenty-ninth pass). Remaining release-engineering items (code-signing keys, hosted signed update CDN) are deferred per §G.8.
+All twenty phases (§G.0–§G.19) are delivered. §G.20 (NOC/Orion telemetry) and §G.21 (simulation corpus scenes) are open. WSmart-Route Studio is the primary desktop interface for launching simulations and training runs, browsing results, and performing post-hoc analytics. Post-§G analytics bridges continue under §A (e.g. §A.3 Policy Telemetry in hundred-ninth pass; §A.5 Optuna Plotly export in hundred-tenth pass; §A.4 Training Health in hundred-eleventh pass; §A.6 Failure Analysis in hundred-twelfth pass; §A.2 WandB attention heatmaps in hundred-thirteenth pass; §A.1 Route Solution visualizer in hundred-fourteenth pass; §A.6 route-diff failure overlay in hundred-fifteenth pass; §A.6 ECharts route-diff parity in hundred-sixteenth pass; §A.2 Studio attention ring-buffer in hundred-seventeenth pass; §A.4 HPO health prune metrics in hundred-eighteenth pass; §A.3 live policy telemetry stream in hundred-nineteenth pass; §A.3 SQLite cross-run telemetry trending in hundred-twentieth pass; §A.3 cross-run improvement trajectory chart in hundred-twenty-first pass; §A.3 trajectory brush + Benchmark Analysis panel in hundred-twenty-second pass; §A.3 chart brush filter + Simulation Summary panel in hundred-twenty-third pass; §A.3 chart brush dimming + Algorithm/City Comparison panels in hundred-twenty-fourth pass; §A.3 run_label brush sync + OLAP Explorer panel in hundred-twenty-fifth pass; §A.3 trajectory click fix + Simulation Monitor / Data Explorer panels in hundred-twenty-sixth pass; §A.3 Output Browser trends panel + KPI brush in hundred-twenty-seventh pass; §A.3 Process Monitor telemetry + Output Browser run_label auto-brush in hundred-twenty-eighth pass; §A.3 Simulation Launcher live telemetry + Process Monitor brush parity in hundred-twenty-ninth pass). Remaining release-engineering items (code-signing keys, hosted signed update CDN) are deferred per §G.8.
 
 | Area | Status |
 | --- | --- |
@@ -999,6 +1043,7 @@ Phase 18 →  Phase 1, Phase 17 (builds on analytics dashboard and training runs
 | §G.17 | Training Monitor | Medium | Very High | P1 ✅ |
 | §G.18 | Experiment & HPO Tracker | High | High | P2 ✅ |
 | §G.20 | NOC/Orion Telemetry & OR Overhaul (V0–V8) | High | Very High | P0 📋 |
+| §G.21 | Simulation corpus scenes on Simulation Summary | High | Very High | P1 📋 |
 
 ---
 
