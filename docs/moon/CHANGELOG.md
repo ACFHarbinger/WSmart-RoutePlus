@@ -21,7 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Scan.** Simulation Summary can add result folders or a single JSON file. A Tauri command walks the trees off the WebView. Every JSON file under a run directory is one run. One chosen file is a partial run. Failed files stay listed and do not drop the rest. A missing metric stays a gap.
 - **Controls.** The user selects runs to merge, hides a run, filters by metric, day, policy, and city, and sets the baseline by pinning a run or typing a number. The day range filters the new scenes only.
-- **Scenes.** Policy orbit, diverging bars, metric flow, and a day-by-bin field support PNG export and copying the table. The globe draws runs that have coordinates. A run without coordinates uses a generated layout labeled as generated. Playing the day on the existing route map is [#180](https://github.com/ACFHarbinger/WSmart-Route/issues/180) and is the next round.
+- **Scenes.** Policy orbit, diverging bars, metric flow, and a day-by-bin field support PNG export and copying the table. The globe draws runs that have coordinates. A run without coordinates uses a generated layout labeled as generated.
+- **Playback** ([#180](https://github.com/ACFHarbinger/WSmart-Route/issues/180)). Play and pause step the selected corpus day on the route map. The scan keeps the tour and bin coordinates. Reduced motion keeps the day step and skips the tween. A partial file with no tour or coordinates leaves the current map in place and says why.
 
 ### Algorithm visualizer and builder (`2026-10-28`, [#167](https://github.com/ACFHarbinger/WSmart-Route/issues/167), [#173](https://github.com/ACFHarbinger/WSmart-Route/issues/173))
 

@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { RouteViz } from "../../analysis/routes/RouteViz";
 import { GRAPH_PRESETS, guessGraphPreset } from "../../../utils/graph/graphCoords";
 import { POLICY_COLORS } from "./SimMonitorPanels";
@@ -6,6 +6,22 @@ import type { DayLogEntry } from "../../../types";
 import type { MapRoute } from "../../maps/DeckRouteMap";
 
 const DeckRouteMap = lazy(() => import("../../maps/DeckRouteMap"));
+
+function usePrefersReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(() => {
+    if (typeof window.matchMedia !== "function") return false;
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  });
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const apply = () => setReduced(query.matches);
+    apply();
+    query.addEventListener("change", apply);
+    return () => query.removeEventListener("change", apply);
+  }, []);
+  return reduced;
+}
 
 export interface SimMonitorMapSectionProps {
   showBinFill: boolean;
@@ -18,6 +34,7 @@ export interface SimMonitorMapSectionProps {
   activeMapPolicies: string[];
   toggleMapPolicy: (policy: string) => void;
   mapRoutes: MapRoute[];
+  mapReason: string | null;
   mapLayout: "overlay" | "split";
   setMapLayout: (layout: "overlay" | "split") => void;
   hasGeoCoords: boolean;
@@ -54,6 +71,7 @@ export function SimMonitorMapSection({
   activeMapPolicies,
   toggleMapPolicy,
   mapRoutes,
+  mapReason,
   mapLayout,
   setMapLayout,
   hasGeoCoords,
@@ -78,6 +96,8 @@ export function SimMonitorMapSection({
   displayDay,
   displayEntry,
 }: SimMonitorMapSectionProps) {
+  const reducedMotion = usePrefersReducedMotion();
+  const animate = isPlaying && !reducedMotion;
   return (
     <>
       <div className="flex items-center gap-2 flex-wrap">
@@ -228,6 +248,10 @@ export function SimMonitorMapSection({
         )}
       </div>
 
+      {showRouteMap && mapReason ? (
+        <p className="text-xs text-canvas-muted">{mapReason}</p>
+      ) : null}
+
       {showRouteMap && mapRoutes.length > 0 ? (
         routeMapMode === "deckgl" && hasBinCoords ? (
           <Suspense
@@ -242,7 +266,7 @@ export function SimMonitorMapSection({
                     </p>
                     <DeckRouteMap
                       routes={[route]}
-                      animate={isPlaying}
+                      animate={animate}
                       playbackSpeed={playbackSpeed}
                       showFailureOverlay={showFailureOverlay}
                       showHexDensity={showHexDensity}
@@ -253,7 +277,7 @@ export function SimMonitorMapSection({
             ) : (
               <DeckRouteMap
                 routes={mapRoutes}
-                animate={isPlaying}
+                animate={animate}
                 playbackSpeed={playbackSpeed}
                 showFailureOverlay={showFailureOverlay}
                 showRouteDiff={showRouteDiff}

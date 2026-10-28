@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { hexToRgb } from "../../../utils/charts/colors";
+import type { MapRoute } from "../../../utils/map/deckRouteGeometry";
 import { POLICY_COLORS } from "./SimMonitorPanels";
 import type { DayLogEntry, PendingMapCompare } from "../../../types";
 
@@ -15,6 +16,7 @@ export function useSimMonitorMapRoutes({
   setMapPolicies,
   setMapLayout,
   setRouteMapMode,
+  corpusOverride = null,
 }: {
   entries: DayLogEntry[];
   displayDay: number;
@@ -27,6 +29,8 @@ export function useSimMonitorMapRoutes({
   setMapPolicies: (p: string[]) => void;
   setMapLayout: (l: "overlay" | "split") => void;
   setRouteMapMode: (m: "echarts" | "deckgl") => void;
+  /** Corpus routes for the playback day. Empty or null keeps the log routes. */
+  corpusOverride?: MapRoute[] | null;
 }) {
   useEffect(() => {
     if (!pendingMapCompare) return;
@@ -44,7 +48,7 @@ export function useSimMonitorMapRoutes({
         (selectedSample === null || e.sample_id === selectedSample) &&
         activeMapPolicies.includes(e.policy)
     );
-    return dayEntries
+    const built = dayEntries
       .filter((e) => e.data.all_bin_coords?.length)
       .map((e) => {
         const idx = policies.indexOf(e.policy);
@@ -55,7 +59,9 @@ export function useSimMonitorMapRoutes({
           color: hexToRgb(POLICY_COLORS[idx % POLICY_COLORS.length]),
         };
       });
-  }, [entries, displayDay, selectedSample, activeMapPolicies, policies]);
+    if (corpusOverride != null && corpusOverride.length > 0) return corpusOverride;
+    return built;
+  }, [entries, displayDay, selectedSample, activeMapPolicies, policies, corpusOverride]);
 
   const mapHasFailureData = useMemo(
     () =>

@@ -674,7 +674,8 @@ Phases 3-7 (docs, types, architecture, deps, tooling) can proceed in parallel wi
 ### 2026-10-28 (Simulation corpus scenes)
 
 - ✅ Simulation Summary loads one JSON file, one run directory, or selected runs under a scenario, and compares them in orbit, diverging-bar, flow, dot-field, globe, and hex scenes ([#175](https://github.com/ACFHarbinger/WSmart-Route/issues/175)–[#179](https://github.com/ACFHarbinger/WSmart-Route/issues/179)).
-- ✅ The baseline is a pinned run or a typed number. A run with no coordinates gets a generated layout labeled as generated. Day playback on the existing route map stays open as [#180](https://github.com/ACFHarbinger/WSmart-Route/issues/180).
+- ✅ The baseline is a pinned run or a typed number. A run with no coordinates gets a generated layout labeled as generated.
+- ✅ Play and pause step the selected corpus day on the route map ([#180](https://github.com/ACFHarbinger/WSmart-Route/issues/180)). Reduced motion skips the tween. A partial file with no route geometry does not move the map.
 
 ### 2026-10-24 (Studio Telemetry & Operations Research Overhaul)
 
