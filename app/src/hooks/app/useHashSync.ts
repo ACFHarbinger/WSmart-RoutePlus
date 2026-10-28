@@ -6,8 +6,8 @@ import type { AppMode } from "../../types";
 const VALID_MODES = new Set<string>([
   "simulation", "training", "simulation_summary", "benchmark", "city_comparison",
   "olap_explorer", "data_explorer",
-  "experiment_tracker", "algorithms", "hpo_tracker", "process_monitor",
-  "sim_launcher", "training_hub", "data_gen", "config_editor", "output_browser",
+  "experiment_tracker", "algorithms", "algorithm_visualizer", "hpo_tracker", "process_monitor",
+  "sim_launcher", "algorithm_builder", "training_hub", "data_gen", "config_editor", "output_browser",
   "eval_runner", "report_studio", "system_tools", "settings",
 ]);
 

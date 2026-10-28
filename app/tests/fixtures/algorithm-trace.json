@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "problem": "ptp",
+  "policies": {
+    "packing": null,
+    "routing": "alns",
+    "route_improvement": null,
+    "acceptance": "oi"
+  },
+  "seed": 1,
+  "instance": {
+    "n_nodes": 4,
+    "depot": [0.1, 0.2],
+    "capacity": 10.0
+  },
+  "events": [
+    {
+      "id": "e0",
+      "parent_id": null,
+      "name": "instance",
+      "kind": "input",
+      "changed_solution": false,
+      "arguments": { "n_nodes": 4 },
+      "before": null,
+      "after": null
+    },
+    {
+      "id": "e1",
+      "parent_id": "e0",
+      "name": "hgs",
+      "kind": "stage",
+      "changed_solution": false,
+      "arguments": { "routing": "hgs" },
+      "before": null,
+      "after": null,
+      "interior": "not_instrumented"
+    },
+    {
+      "id": "e2",
+      "parent_id": "e0",
+      "name": "alns",
+      "kind": "stage",
+      "changed_solution": false,
+      "arguments": {},
+      "before": null,
+      "after": null
+    },
+    {
+      "id": "e3",
+      "parent_id": "e2",
+      "name": "RandomRemoval",
+      "kind": "operator",
+      "changed_solution": true,
+      "arguments": { "iteration": 0 },
+      "before": {
+        "routes": [[0, 2, 1, 0]],
+        "objective": 3.0,
+        "load": null,
+        "feasible": true,
+        "unchanged_hash": "beforehash000000"
+      },
+      "after": {
+        "routes": [[0, 1, 2, 0]],
+        "objective": 2.0,
+        "load": null,
+        "feasible": true,
+        "unchanged_hash": "afterhash0000000"
+      }
+    },
+    {
+      "id": "e4",
+      "parent_id": "e0",
+      "name": "routes",
+      "kind": "output",
+      "changed_solution": true,
+      "arguments": {},
+      "before": null,
+      "after": {
+        "routes": [[0, 1, 2, 0]],
+        "objective": 2.0,
+        "load": null,
+        "feasible": true,
+        "unchanged_hash": "afterhash0000000"
+      }
+    }
+  ],
+  "final": {
+    "routes": [[0, 1, 2, 0]],
+    "objective": 2.0,
+    "load": null,
+    "feasible": true,
+    "unchanged_hash": "afterhash0000000"
+  }
+}

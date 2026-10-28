@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Algorithm visualizer and builder (`2026-10-28`, [#167](https://github.com/ACFHarbinger/WSmart-Route/issues/167), [#173](https://github.com/ACFHarbinger/WSmart-Route/issues/173))
+
+- **Visualizer.** A Read page loads the module catalog and draws an execution trace from input to the final route. It calls `trace_policy` for ALNS. Other routing ids and models stay on the page with a not-runnable message. `WeightAdjustmentRNN` is not offered as a route policy.
+- **Builder.** A Run page places packing, routing, acceptance, operators, and cuts on a canvas and refuses a link that does not fit. Export shows YAML for a runnable graph and stays disabled when a module has no runner. Open in visualizer writes the same draft the visualizer reads.
+- **Bridge.** Tauri commands `list_policy_modules` and `trace_policy` run `python main.py` and return the JSON file the CLI writes.
+
 ### Exact solver traces (`2026-10-28`, [#170](https://github.com/ACFHarbinger/WSmart-Route/issues/170))
 
 - An opt-in trace on branch-and-price-and-cut records phase I/II, Farkas and ordinary pricing, injected columns with reduced cost, cuts, node bounds, branch decisions, and the Lagrangian bound after column generation. Branch-and-cut, branch-and-price, branch-and-bound, integer L-shaped, and logic-based Benders record the events their loops already compute. A solve with no trace does not allocate one, and a traced run keeps the untraced routes and objective.
