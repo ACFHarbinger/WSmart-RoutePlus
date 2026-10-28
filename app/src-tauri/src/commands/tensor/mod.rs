@@ -12,8 +12,8 @@ use zip::ZipArchive;
 
 use crate::commands::arrow::{export_batch, ArrowIpcFile};
 
-pub mod td;
 pub mod npy;
+pub mod td;
 
 #[cfg(test)]
 mod tests;
@@ -157,9 +157,9 @@ pub fn load_tensor_slice(
 
     let p = Path::new(&path);
     if td::is_td_path(p) {
-        let root = project_root.filter(|s| !s.is_empty()).ok_or_else(|| {
-            "Project root required to load TensorDict (.td) slices".to_string()
-        })?;
+        let root = project_root
+            .filter(|s| !s.is_empty())
+            .ok_or_else(|| "Project root required to load TensorDict (.td) slices".to_string())?;
         let k = key.ok_or("TensorDict (.td) requires a key")?;
         return td::load_td_slice(&path, &k, &indices, max_dim, &root, python_executable);
     }
@@ -244,14 +244,7 @@ pub fn tensor_slice_to_arrow_ipc(
     python_executable: Option<String>,
 ) -> Result<ArrowIpcFile, String> {
     let start = Instant::now();
-    let preview = load_tensor_slice(
-        path,
-        key,
-        indices,
-        max_dim,
-        project_root,
-        python_executable,
-    )?;
+    let preview = load_tensor_slice(path, key, indices, max_dim, project_root, python_executable)?;
     let rows = preview.slice_shape[0];
     let cols = preview.slice_shape.get(1).copied().unwrap_or(1);
 
@@ -302,10 +295,7 @@ pub fn load_npz_vectors(path: String, keys: Vec<String>) -> Result<Vec<NpzVector
                 shape.len()
             ));
         }
-        out.push(NpzVectorData {
-            key,
-            values: flat,
-        });
+        out.push(NpzVectorData { key, values: flat });
     }
     Ok(out)
 }

@@ -188,10 +188,7 @@ pub async fn install_app_update(
         })?;
 
     update
-        .download_and_install(
-            |_chunk_length, _content_length| {},
-            || {},
-        )
+        .download_and_install(|_chunk_length, _content_length| {}, || {})
         .await
         .map_err(|e| format!("Update install failed: {e}"))?;
 

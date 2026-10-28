@@ -250,7 +250,9 @@ pub async fn cloud_cost_estimate(
         subcmd.push("--command".to_string());
         subcmd.push(c.clone());
     } else {
-        return Err("cloud_cost_estimate requires either 'manifest' or 'command' in request".to_string());
+        return Err(
+            "cloud_cost_estimate requires either 'manifest' or 'command' in request".to_string(),
+        );
     }
     if let Some(ref p) = request.policy {
         subcmd.push("--policy".to_string());
@@ -436,14 +438,7 @@ pub fn cloud_watch_job(
         return Err("job_id cannot be empty".to_string());
     }
     let interval = interval_ms.unwrap_or(2000);
-    get_default_poller().watch_job(
-        job_id,
-        interval,
-        project_root,
-        root,
-        python_executable,
-        app,
-    )
+    get_default_poller().watch_job(job_id, interval, project_root, root, python_executable, app)
 }
 
 /// Cancel status polling for a specific job.

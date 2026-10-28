@@ -181,8 +181,7 @@ pub fn create_wsroute_bundle(
 
     let out_file = File::create(&output_path).map_err(|e| e.to_string())?;
     let mut zip = ZipWriter::new(out_file);
-    let options = SimpleFileOptions::default()
-        .compression_method(zip::CompressionMethod::Deflated);
+    let options = SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated);
 
     zip.start_file("manifest.json", options)
         .map_err(|e| e.to_string())?;
@@ -215,7 +214,10 @@ pub struct WsrouteExtractResult {
 
 /// Extract a `.wsroute` bundle to a destination directory; returns first `.jsonl` path if found.
 #[tauri::command]
-pub fn extract_wsroute_bundle(path: String, dest_dir: String) -> Result<WsrouteExtractResult, String> {
+pub fn extract_wsroute_bundle(
+    path: String,
+    dest_dir: String,
+) -> Result<WsrouteExtractResult, String> {
     fs::create_dir_all(&dest_dir).map_err(|e| e.to_string())?;
     let dest = Path::new(&dest_dir);
 

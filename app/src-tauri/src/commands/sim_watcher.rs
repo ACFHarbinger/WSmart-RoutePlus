@@ -53,7 +53,12 @@ pub fn parse_day_log_line(line: &str) -> Option<DayLogEntry> {
     let sample_id: i32 = parts[1].trim().parse().ok()?;
     let day: i32 = parts[2].trim().parse().ok()?;
     let data: serde_json::Value = serde_json::from_str(parts[3].trim()).ok()?;
-    Some(DayLogEntry { policy, sample_id, day, data })
+    Some(DayLogEntry {
+        policy,
+        sample_id,
+        day,
+        data,
+    })
 }
 
 pub fn parse_policy_viz_line(line: &str) -> Option<PolicyVizEntry> {
@@ -235,8 +240,15 @@ mod tests {
 
         // Append a second complete line and a partial third line (no trailing newline)
         {
-            let mut f = std::fs::OpenOptions::new().append(true).open(&path).unwrap();
-            write!(f, "GUI_DAY_LOG_START:alns,0,1,{{\"profit\":95}}\nPARTIAL_LINE").unwrap();
+            let mut f = std::fs::OpenOptions::new()
+                .append(true)
+                .open(&path)
+                .unwrap();
+            write!(
+                f,
+                "GUI_DAY_LOG_START:alns,0,1,{{\"profit\":95}}\nPARTIAL_LINE"
+            )
+            .unwrap();
         }
         let second = read_new_log_lines(&path, &mut offset).expect("read 2");
         assert_eq!(second.len(), 1);
@@ -244,7 +256,10 @@ mod tests {
 
         // Finish the partial line
         {
-            let mut f = std::fs::OpenOptions::new().append(true).open(&path).unwrap();
+            let mut f = std::fs::OpenOptions::new()
+                .append(true)
+                .open(&path)
+                .unwrap();
             writeln!(f, "_COMPLETED").unwrap();
         }
         let third = read_new_log_lines(&path, &mut offset).expect("read 3");
@@ -254,7 +269,8 @@ mod tests {
 
     #[test]
     fn parse_policy_viz_line_valid() {
-        let line = r#"POLICY_VIZ_START:ALNS + Ftsp,0,2,alns,{"iteration":[0,1],"best_cost":[10.0,9.0]}"#;
+        let line =
+            r#"POLICY_VIZ_START:ALNS + Ftsp,0,2,alns,{"iteration":[0,1],"best_cost":[10.0,9.0]}"#;
         let entry = parse_policy_viz_line(line).expect("parse");
         assert_eq!(entry.policy, "ALNS + Ftsp");
         assert_eq!(entry.sample_id, 0);

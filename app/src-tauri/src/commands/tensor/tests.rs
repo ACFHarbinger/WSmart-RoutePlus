@@ -10,9 +10,7 @@ fn write_test_npy(path: &Path, shape: &[usize], values: &[f64]) {
         .map(|d| d.to_string())
         .collect::<Vec<_>>()
         .join(", ");
-    let header = format!(
-        "{{'descr': '<f8', 'fortran_order': False, 'shape': ({shape_str},), }}"
-    );
+    let header = format!("{{'descr': '<f8', 'fortran_order': False, 'shape': ({shape_str},), }}");
     let pad = (16 - (10 + header.len()) % 16) % 16;
     let header_padded = format!("{header}{}", " ".repeat(pad));
     let header_len = header_padded.len() as u16;
@@ -94,8 +92,7 @@ fn npz_decompress_plane_reads_trailing_2d_slice() {
     use zip::write::SimpleFileOptions;
     use zip::ZipWriter;
 
-    let dir =
-        std::env::temp_dir().join(format!("wsroute_npz_deflate_{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("wsroute_npz_deflate_{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     let npy_path = dir.join("tensor.npy");
     let mut vals = Vec::new();

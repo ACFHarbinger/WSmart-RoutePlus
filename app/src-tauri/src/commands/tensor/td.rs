@@ -1,8 +1,8 @@
 use std::path::Path;
 use std::process::Command;
 
-use crate::commands::process::resolve_python;
 use super::{NpzArchiveInfo, TensorSlicePreview};
+use crate::commands::process::resolve_python;
 
 const INSPECT_TD_SCRIPT: &str = r#"
 import json, sys
@@ -96,8 +96,7 @@ print(json.dumps({
 "#;
 
 pub fn is_td_path(path: &Path) -> bool {
-    path
-        .extension()
+    path.extension()
         .and_then(|e| e.to_str())
         .map(|e| e.eq_ignore_ascii_case("td"))
         .unwrap_or(false)

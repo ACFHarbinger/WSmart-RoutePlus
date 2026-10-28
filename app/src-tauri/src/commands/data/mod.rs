@@ -93,30 +93,22 @@ pub fn parse_attention_viz_line(line: &str) -> Option<AttentionVizEntry> {
 #[tauri::command]
 pub fn load_simulation_log(path: String) -> Result<Vec<DayLogEntry>, String> {
     let content = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
-    let entries: Vec<DayLogEntry> = content
-        .lines()
-        .filter_map(parse_day_log_line)
-        .collect();
+    let entries: Vec<DayLogEntry> = content.lines().filter_map(parse_day_log_line).collect();
     Ok(entries)
 }
 
 #[tauri::command]
 pub fn load_policy_viz_log(path: String) -> Result<Vec<PolicyVizEntry>, String> {
     let content = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
-    let entries: Vec<PolicyVizEntry> = content
-        .lines()
-        .filter_map(parse_policy_viz_line)
-        .collect();
+    let entries: Vec<PolicyVizEntry> = content.lines().filter_map(parse_policy_viz_line).collect();
     Ok(entries)
 }
 
 #[tauri::command]
 pub fn load_sim_failure_log(path: String) -> Result<Vec<SimFailureEntry>, String> {
     let content = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
-    let entries: Vec<SimFailureEntry> = content
-        .lines()
-        .filter_map(parse_sim_failure_line)
-        .collect();
+    let entries: Vec<SimFailureEntry> =
+        content.lines().filter_map(parse_sim_failure_line).collect();
     Ok(entries)
 }
 
@@ -153,8 +145,7 @@ pub fn load_csv_file(path: String) -> Result<CsvFile, String> {
         for (header, field) in headers.iter().zip(record.iter()) {
             let value = if let Ok(n) = field.parse::<f64>() {
                 serde_json::Value::Number(
-                    serde_json::Number::from_f64(n)
-                        .unwrap_or(serde_json::Number::from(0)),
+                    serde_json::Number::from_f64(n).unwrap_or(serde_json::Number::from(0)),
                 )
             } else {
                 serde_json::Value::String(field.to_string())
@@ -163,7 +154,11 @@ pub fn load_csv_file(path: String) -> Result<CsvFile, String> {
         }
         rows.push(row);
     }
-    Ok(CsvFile { path, headers, rows })
+    Ok(CsvFile {
+        path,
+        headers,
+        rows,
+    })
 }
 
 #[tauri::command]

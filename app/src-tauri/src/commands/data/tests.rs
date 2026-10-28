@@ -116,11 +116,13 @@ fn simulation_arrow_sidecar_row_parity() {
 
     let log_path = base.join("sim_log.jsonl");
     let arrow_path = base.join("sim_log.arrow");
-    let entries = load_simulation_log(log_path.to_string_lossy().to_string())
-        .expect("load simulation log");
-    let row_count =
-        crate::commands::arrow::write_simulation_log_arrow_sidecar(&log_path.to_string_lossy(), &arrow_path)
-            .expect("write simulation arrow sidecar");
+    let entries =
+        load_simulation_log(log_path.to_string_lossy().to_string()).expect("load simulation log");
+    let row_count = crate::commands::arrow::write_simulation_log_arrow_sidecar(
+        &log_path.to_string_lossy(),
+        &arrow_path,
+    )
+    .expect("write simulation arrow sidecar");
     assert_eq!(row_count, entries.len());
 
     let _ = fs::remove_dir_all(&base);

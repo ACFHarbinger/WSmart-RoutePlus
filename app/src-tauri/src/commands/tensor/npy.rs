@@ -1,9 +1,9 @@
-use std::fs::File;
-use std::io::{Cursor, Read};
-use std::path::Path;
 use memmap2::Mmap;
 use ndarray::{ArrayD, IxDyn};
 use ndarray_npy::ReadNpyExt;
+use std::fs::File;
+use std::io::{Cursor, Read};
+use std::path::Path;
 use zip::read::ZipFile;
 use zip::{CompressionMethod, ZipArchive};
 
@@ -93,13 +93,21 @@ pub fn f16_to_f64(bits: u16) -> f64 {
     }
     if exp == 0x1f {
         return if frac == 0 {
-            if sign == 1 { f64::NEG_INFINITY } else { f64::INFINITY }
+            if sign == 1 {
+                f64::NEG_INFINITY
+            } else {
+                f64::INFINITY
+            }
         } else {
             f64::NAN
         };
     }
     let val = (1.0 + (frac as f64) / 1024.0) * 2.0_f64.powi(exp as i32 - 15);
-    if sign == 1 { -val } else { val }
+    if sign == 1 {
+        -val
+    } else {
+        val
+    }
 }
 
 pub struct NpzNpyEntryLoc {
@@ -260,7 +268,9 @@ pub fn parse_npy_header(raw: &[u8]) -> Result<(Vec<usize>, String, usize), Strin
 }
 
 pub fn parse_shape_from_header(header: &str) -> Result<Vec<usize>, String> {
-    let start = header.find("'shape'").ok_or("shape missing in NPY header")?;
+    let start = header
+        .find("'shape'")
+        .ok_or("shape missing in NPY header")?;
     let rest = &header[start..];
     let open = rest.find('(').ok_or("shape tuple missing")?;
     let close = rest[open..].find(')').ok_or("shape tuple unclosed")?;
@@ -306,7 +316,10 @@ pub fn load_array_from_path(path: &Path) -> Result<ArrayD<f64>, String> {
     ArrayD::read_npy(&mut file).map_err(|e| format!("NPY read error: {e}"))
 }
 
-pub fn select_2d_slice(arr: &ArrayD<f64>, indices: &[usize]) -> Result<(Vec<usize>, Vec<f64>), String> {
+pub fn select_2d_slice(
+    arr: &ArrayD<f64>,
+    indices: &[usize],
+) -> Result<(Vec<usize>, Vec<f64>), String> {
     let shape = arr.shape().to_vec();
     if shape.is_empty() {
         return Err("Empty tensor".to_string());
@@ -389,10 +402,7 @@ pub fn min_max(grid: &[Vec<f64>]) -> (f64, f64) {
     (min, max)
 }
 
-pub fn open_npz_array(
-    path: &str,
-    key: &str,
-) -> Result<(Vec<usize>, ArrayD<f64>), String> {
+pub fn open_npz_array(path: &str, key: &str) -> Result<(Vec<usize>, ArrayD<f64>), String> {
     let file = File::open(path).map_err(|e| e.to_string())?;
     let mut archive = ZipArchive::new(file).map_err(|e| format!("Invalid NPZ: {e}"))?;
     let npy_name = format!("{key}.npy");
