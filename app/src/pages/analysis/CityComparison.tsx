@@ -23,6 +23,8 @@ import {
   groupRunsByCity,
   type CityRunSlice,
 } from "../../utils/benchmark/cityComparison";
+import { cityHoneycombInputs } from "../../utils/benchmark/cityHoneycomb";
+import { honeycombFromCities, honeycombSubtitle } from "../../utils/orion/liveScenes";
 import {
   loadPortfolioLogs,
   PORTFOLIO_SCAN_DEFAULT,
@@ -39,7 +41,7 @@ import { SqlQueryPanel } from "../../components/analysis/explorer/SqlQueryPanel"
 import { useDuckDbStore } from "../../store/duckdb";
 import type { DayLogEntry } from "../../types";
 import { simOutputRoots } from "../../utils/runs/outputRoots";
-import { OrionHoneycombMap, getSampleRoutingOrionData } from "../../components/ui/orion";
+import { OrionHoneycombMap } from "../../components/ui/orion";
 const CITY_SIM_TABLE = "city_sim";
 
 interface RunFile extends CityRunSlice {}
@@ -89,6 +91,10 @@ export function CityComparison() {
   );
 
   const cityGroups = useMemo(() => groupRunsByCity(filteredRuns), [filteredRuns]);
+  const cityHoneycomb = useMemo(
+    () => honeycombFromCities(cityHoneycombInputs(cityGroups)),
+    [cityGroups]
+  );
   const {
     runLabels: portfolioRunLabels,
     runLabel: activeRunLabel,
@@ -304,12 +310,12 @@ export function CityComparison() {
         </div>
       )}
 
-      {cityGroups.length >= 1 && (
+      {cityHoneycomb && (
         <OrionHoneycombMap
-          zones={getSampleRoutingOrionData().honeycombZones}
-          trajectories={getSampleRoutingOrionData().zoneTrajectories}
-          title="Multi-City Situational Honeycomb & Dispatch Corridors"
-          subtitle="Regional bin density, overflow risk, and inter-zone transit routes"
+          zones={cityHoneycomb.zones}
+          trajectories={cityHoneycomb.trajectories}
+          title="City honeycomb"
+          subtitle={honeycombSubtitle(cityHoneycomb)}
           height={320}
         />
       )}

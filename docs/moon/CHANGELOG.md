@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Studio live scenes (`2026-10-28`)
+
+- Simulation Summary, City Comparison, and Algorithm Comparison no longer draw the ORION sample honeycomb, radar, or profit bubbles. Summary bins and city cells come from the open log or corpus. A view with no coordinates uses a generated layout and says so. A missing fill stays a gap, and an idle cell says "fill not measured". A policy with no finite profit is left off the orbital chart.
+
 ### Tracking database CLI (`2026-10-26`)
 
 - `python main.py tracking_db` forwards the remaining arguments to the tracking database commands.
