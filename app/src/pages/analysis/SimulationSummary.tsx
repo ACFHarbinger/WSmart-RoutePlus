@@ -31,6 +31,8 @@ import {
   SummaryPortfolioAndCompareSection,
   SummaryRouteSection,
 } from "../../components/analysis/summary/SummaryPortfolioSections";
+import { CorpusScenes } from "../../components/analysis/summary/corpus/CorpusScenes";
+import { CorpusStrip } from "../../components/analysis/summary/corpus/CorpusStrip";
 import {
   SUMMARY_SIM_TABLE,
   useSimulationSummaryController,
@@ -103,6 +105,9 @@ export function SimulationSummary() {
           <span className="text-xs text-canvas-muted">{c.allRuns.length} runs loaded</span>
         )}
       </div>
+
+      <CorpusStrip />
+      <CorpusScenes />
 
       {c.comparisonRuns.length > 0 && (
         <div className="card">
