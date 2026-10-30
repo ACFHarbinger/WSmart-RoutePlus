@@ -1,7 +1,8 @@
 """Regular packing: collect every eligible bin on scheduled days.
 
 The period is ``context.threshold`` days. Scheduled days are
-``1, 1+period, 1+2*period, …`` (``spec.regular``).
+``1, 1+period, 1+2*period, …`` (``spec.regular``). A bin is eligible when its fill is at or
+above ``context.min_fill`` percent (0 selects every bin: plain Regular; 50 is threshold Regular).
 
 Attributes:
     RegularSelection: Periodic collection packing algorithm.
@@ -41,7 +42,7 @@ class RegularSelection(IPackingAlgorithm):
         """
         current_day = getattr(context, "current_day", 1)
         frequency = getattr(context, "threshold", 1)
-        min_fill = getattr(self, "min_fill", 0.0)
+        min_fill = getattr(context, "min_fill", getattr(self, "min_fill", 0.0))
         fills = context.current_fill
         if fills is None or len(fills) == 0:
             selected = []

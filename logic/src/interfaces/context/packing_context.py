@@ -97,6 +97,9 @@ class PackingContext:
     # --- Savings / Clarke-Wright ---
     savings_min_fill_ratio: float = 0.5
 
+    # --- Regular with a fill filter (threshold Regular) ---
+    min_fill: float = 0.0  # percent of capacity; scheduled days select only bins at or above it
+
     # --- Set-cover ---
     service_radius: float = 5.0
 

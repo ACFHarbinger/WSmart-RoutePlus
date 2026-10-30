@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Threshold Regular packing (`2026-10-30`)
+
+- `PackingContext.min_fill` (percent of capacity, default 0) reaches `RegularSelection` from the packing config, so a Regular schedule can select only the bins at or above a minimum fill. Before, `min_fill` was read from an attribute that nothing set, so it was always 0.
+- `pk_regular.yaml` adds `regular_tr_lvl3`, `regular_tr_lvl4` and `regular_tr_lvl5` (periods 3, 4 and 5, `min_fill: 50`), and the analysis slug parser recognizes them.
+
 ### Central depot placement (`2026-10-30`)
 
 - `sim.graph.depot_mode` places the depot: `remote` (default) keeps the depot of the area, and `centroid` promotes the bin nearest to the centroid of the bins. `num_loc` still counts the customers, so one extra bin is loaded and promoted, and the promoted bin leaves the bin set.

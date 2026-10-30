@@ -7,3 +7,15 @@ regular_lvl4:
 regular_lvl5:
   strategy: regular
   threshold: 5
+regular_tr_lvl3:
+  strategy: regular
+  threshold: 3
+  min_fill: 50
+regular_tr_lvl4:
+  strategy: regular
+  threshold: 4
+  min_fill: 50
+regular_tr_lvl5:
+  strategy: regular
+  threshold: 5
+  min_fill: 50
