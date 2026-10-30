@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Campaign launcher, central depot on subset networks, TR threshold 15% (`2026-10-30`)
+
+- **Central depot on the municipal networks** (`data/processor/depot.py`, `states/initializing.py`): every shipped network is a bin subset (`bins_selection/graphs_*.json`), which the first central-depot version rejected. The depot is now the bin of the subset nearest to the subset's centroid, a spare bin (`extend_subset`, the lowest unused position) replaces it so the customer count stays `num_loc`, and distances are read by bin ID instead of subset position (`promote_central_depot(..., candidate_ids)`). The remote depot is unchanged.
+- **Threshold Regular uses 15%** (`pk_regular.yaml`: `regular_tr_lvl3/4/5`, `min_fill: 15`; owner ruling 2026-10-30, was 50).
+- **Campaign policy overlays** (`pipeline/simulations/campaign_policies.py`): patched copies of the routing policy files with the campaign packing (LM-CF90, SL1, LA, TR-3/4/5), one route improver, a 60 s routing limit and no retry of a day without an incumbent. The canonical policy files are untouched.
+- **Launcher** (`logic/gen/launch_campaign.py`, `NetworkSpec`/`NETWORKS` in `campaign.py`): expands the five remote and five central scenarios of a network and demand process into one simulator invocation per routing algorithm, improver and scenario (plus the fixed-schedule baseline), with fresh deposits per seed (`sim.graph.load_dataset=null`) and resumable cells.
+
 ### Benchmark campaign plan (`2026-10-30`)
 
 - `logic/src/pipeline/simulations/campaign.py` lists the campaign scenarios: `benchmark_campaign()` returns five independent scenarios with the remote depot and five with the centroid depot, on disjoint seed ranges (`sim.seed`, `sim.graph.n_samples`, `sim.graph.depot_mode` as Hydra overrides).

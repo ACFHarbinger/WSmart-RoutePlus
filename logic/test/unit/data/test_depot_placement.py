@@ -3,7 +3,13 @@
 import numpy as np
 import pandas as pd
 import pytest
-from logic.src.data.processor.depot import bins_to_load, promote_central_depot, relocate_depot, select_depot_bin
+from logic.src.data.processor.depot import (
+    bins_to_load,
+    extend_subset,
+    promote_central_depot,
+    relocate_depot,
+    select_depot_bin,
+)
 
 
 def test_centroid_picks_the_bin_nearest_to_the_mean():
@@ -84,3 +90,17 @@ def test_other_modes_are_not_available_at_initialization(mode):
         promote_central_depot(data, coords, mode)
     with pytest.raises(ValueError, match="depot mode"):
         promote_central_depot(data, coords, "middle")
+
+
+def test_extend_subset_adds_the_lowest_unused_position():
+    assert extend_subset([0, 1, 3, 4], 6) == [0, 1, 2, 3, 4]
+    with pytest.raises(ValueError, match="spare"):
+        extend_subset([0, 1], 2)
+
+
+def test_candidate_ids_restrict_the_centroid_and_the_promoted_bin():
+    data, coords = _frames()
+    # without the far bin 13 the centroid moves to bin 10's side; the promoted bin must be a candidate
+    out_data, out_coords = promote_central_depot(data, coords, "centroid", candidate_ids=[10, 11, 12])
+    assert out_coords["ID"].iloc[0] in (10, 11, 12)
+    assert sorted(out_coords["ID"].tolist()) == [10, 11, 12, 13]

@@ -5,6 +5,8 @@ placement, the seed and the number of samples of one simulator invocation, and r
 Hydra overrides. Scenarios use disjoint seed ranges, so their deposits are independent.
 
 Attributes:
+    NetworkSpec: One municipal network of the campaign.
+    NETWORKS: The networks by short name.
     CampaignScenario: One simulator invocation of the campaign.
     benchmark_campaign: Scenarios split evenly between remote and central depots.
 
@@ -19,6 +21,40 @@ from dataclasses import dataclass
 from typing import List, Tuple
 
 DEFAULT_DEPOT_MODES: Tuple[str, ...] = ("remote", "centroid")
+
+
+@dataclass(frozen=True)
+class NetworkSpec:
+    """One municipal network.
+
+    Attributes:
+        area: Simulator area name.
+        num_loc: Customer bins.
+        dm_filepath: Distance matrix file under ``data/simulator/distance_matrix``.
+    """
+
+    area: str
+    num_loc: int
+    dm_filepath: str
+
+    def overrides(self) -> List[str]:
+        """Hydra overrides that select this network.
+
+        Returns:
+            List[str]: ``key=value`` overrides, with the matrix file quoted for Hydra.
+        """
+        return [
+            f"sim.graph.area={self.area}",
+            f"sim.graph.num_loc={self.num_loc}",
+            f'sim.graph.dm_filepath="{self.dm_filepath}"',
+        ]
+
+
+NETWORKS = {
+    "rm100": NetworkSpec("riomaior", 100, "gmaps_distmat_plastic[riomaior].csv"),
+    "rm170": NetworkSpec("riomaior", 170, "gmaps_distmat_plastic[riomaior].csv"),
+    "ff350": NetworkSpec("figueiradafoz", 350, "osm_distmat_plastic[figueiradafoz].csv"),
+}
 
 
 @dataclass(frozen=True)
@@ -53,6 +89,8 @@ class CampaignScenario:
             f"sim.graph.depot_mode={self.depot_mode}",
             f"sim.seed={self.seed}",
             f"sim.graph.n_samples={self.n_samples}",
+            # Fresh deposits for this seed range, not the pre-generated seed-42 arrays.
+            "sim.graph.load_dataset=null",
         ]
 
 

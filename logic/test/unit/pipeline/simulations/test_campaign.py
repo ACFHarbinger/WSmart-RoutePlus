@@ -21,9 +21,23 @@ def test_scenarios_use_disjoint_seeds():
 
 def test_overrides_select_the_scenario():
     _, central = benchmark_campaign()
-    assert central.overrides() == ["sim.graph.depot_mode=centroid", "sim.seed=47", "sim.graph.n_samples=5"]
+    assert central.overrides() == [
+        "sim.graph.depot_mode=centroid",
+        "sim.seed=47",
+        "sim.graph.n_samples=5",
+        "sim.graph.load_dataset=null",
+    ]
 
 
 def test_empty_campaign_is_rejected():
     with pytest.raises(ValueError, match="n_per_depot"):
         benchmark_campaign(n_per_depot=0)
+
+
+def test_network_overrides_quote_the_matrix_file():
+    from logic.src.pipeline.simulations.campaign import NETWORKS
+
+    overrides = NETWORKS["rm100"].overrides()
+    assert "sim.graph.num_loc=100" in overrides
+    assert 'sim.graph.dm_filepath="gmaps_distmat_plastic[riomaior].csv"' in overrides
+    assert "sim.graph.load_dataset=null" in benchmark_campaign()[0].overrides()

@@ -2,7 +2,7 @@
 
 The period is ``context.threshold`` days. Scheduled days are
 ``1, 1+period, 1+2*period, …`` (``spec.regular``). A bin is eligible when its fill is at or
-above ``context.min_fill`` percent (0 selects every bin: plain Regular; 50 is threshold Regular).
+above ``context.min_fill`` percent (0 selects every bin: plain Regular; 15 is threshold Regular).
 
 Attributes:
     RegularSelection: Periodic collection packing algorithm.
