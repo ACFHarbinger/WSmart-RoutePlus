@@ -34,6 +34,9 @@ class GraphConfig:
         n_samples: Number of samples/instances to generate for this graph.
         start_day: The starting day of the simulation.
         n_days: Number of days to generate for this graph.
+        depot_mode: Depot placement: 'remote' keeps the depot of the area, and 'centroid' promotes the bin
+            nearest to the centroid of the bins to the depot. ``num_loc`` counts the customers, so one extra
+            bin is loaded and promoted.
         init_accumulation_days: For multi-day datasets, start instance ``i`` with the waste of
             ``(i mod init_accumulation_days) + 1`` days already in the bins. 1 keeps a single
             day's waste for every instance.
@@ -65,6 +68,7 @@ class GraphConfig:
     n_samples: int = 1
     start_day: int = 0
     n_days: int = 1
+    depot_mode: str = "remote"
     init_accumulation_days: int = 1
     state_refresh_fraction: float = 0.0
     reward: Optional[ObjectiveConfig] = field(default=None)

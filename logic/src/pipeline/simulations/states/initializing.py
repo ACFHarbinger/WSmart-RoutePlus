@@ -31,6 +31,7 @@ from logic.src.data.processor import (
     setup_basedata,
     setup_dist_path_tup,
 )
+from logic.src.data.processor.depot import bins_to_load, promote_central_depot
 from logic.src.pipeline.simulations.actions.policy_config import _as_policy_mapping
 from logic.src.pipeline.simulations.bins import Bins
 from logic.src.pipeline.simulations.checkpoints import SimulationCheckpoint
@@ -89,7 +90,12 @@ class InitializingState(SimState):
         self._load_all_configurations(ctx)
 
         # Load base data
-        data, bins_coordinates, depot = setup_basedata(graph.num_loc, ctx.data_dir, graph.area, graph.waste_type)
+        depot_mode = str(graph.depot_mode).strip().lower()
+        if depot_mode != "remote" and ctx.indices is not None:
+            raise ValueError("depot_mode other than 'remote' does not support a bin subset (indices)")
+        data, bins_coordinates, depot = setup_basedata(
+            bins_to_load(graph.num_loc, depot_mode), ctx.data_dir, graph.area, graph.waste_type
+        )
         self._setup_capacities(ctx)
 
         # Checkpoints
@@ -402,6 +408,9 @@ class InitializingState(SimState):
         graph = get_graph_config(sim)
 
         ctx.new_data, ctx.coords = process_data(data, bins_coordinates, depot, ctx.indices)
+        ctx.new_data, ctx.coords = promote_central_depot(
+            ctx.new_data, ctx.coords, str(graph.depot_mode).strip().lower()
+        )
 
         _save_dm = getattr(graph, "save_updated_dm", None)
         if _save_dm and ctx.results_dir:
