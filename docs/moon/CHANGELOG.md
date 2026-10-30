@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Central depot placement (`2026-10-30`)
+
+- `sim.graph.depot_mode` places the depot: `remote` (default) keeps the depot of the area, and `centroid` promotes the bin nearest to the centroid of the bins. `num_loc` still counts the customers, so one extra bin is loaded and promoted, and the promoted bin leaves the bin set.
+- The placement lives in `logic/src/data/processor/depot.py` (`select_depot_bin`, `relocate_depot`, `promote_central_depot`) and runs after `process_data`. The distance matrix is read by ID and needs no change.
+- `medoid` is available as a selector, but the initializer rejects it, and `synthetic` is not implemented: both need distances that do not exist before the matrix is built. `depot_mode` other than `remote` does not support a bin subset (`indices`).
+
 ### SWC-TCF formulation selector (`2026-10-30`)
 
 - `SWCTCFConfig.formulation` now selects the Gurobi model by name: `paper` (default), `asymmetric` or `directed`. The names map to builders in `FORMULATIONS` (`gurobi.py`).
