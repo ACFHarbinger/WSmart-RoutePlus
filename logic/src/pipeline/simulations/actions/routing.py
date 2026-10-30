@@ -223,10 +223,6 @@ class RoutingAction(SimulationAction):
             # Preserve updated multi-day state for the next simulation day
             context.multi_day_context = updated_multi_day
 
-            # Legacy caching for regular selection
-            if "regular" in full_policy:
-                context.cached = extra_output
-
         except Exception as e:
             context.solver_status = resolve_solver_status(current_solver_status(), getattr(context, "tour", None), e)
             if getattr(context, "tour", None) is None:

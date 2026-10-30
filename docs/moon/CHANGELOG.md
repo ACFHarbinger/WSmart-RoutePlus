@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Regular baseline crash on day 2 (`2026-10-30`)
+
+- **`actions/routing.py`**: after a `regular` policy the routing action stored the routing contract's fifth value (the search context) in `context.cached`, which the CVRP policy then took for a cached tour (`len(cached)`), so every fixed-schedule run died with `TypeError: object of type 'SearchContext' has no len()` on its second routed day. The stale assignment is removed; the cache stays the empty list the simulator initializes, and CVRP recomputes its route (the cache is read only when no bin is mandatory). A six-day Rio Maior run of Regular-3/4/5 completes.
+
 ### Campaign launcher, central depot on subset networks, TR threshold 15% (`2026-10-30`)
 
 - **Central depot on the municipal networks** (`data/processor/depot.py`, `states/initializing.py`): every shipped network is a bin subset (`bins_selection/graphs_*.json`), which the first central-depot version rejected. The depot is now the bin of the subset nearest to the subset's centroid, a spare bin (`extend_subset`, the lowest unused position) replaces it so the customer count stays `num_loc`, and distances are read by bin ID instead of subset position (`promote_central_depot(..., candidate_ids)`). The remote depot is unchanged.
