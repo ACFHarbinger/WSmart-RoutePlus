@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Benchmark campaign plan (`2026-10-30`)
+
+- `logic/src/pipeline/simulations/campaign.py` lists the campaign scenarios: `benchmark_campaign()` returns five independent scenarios with the remote depot and five with the centroid depot, on disjoint seed ranges (`sim.seed`, `sim.graph.n_samples`, `sim.graph.depot_mode` as Hydra overrides).
+- A test pins `profit_aware_operators: true` as the default of ALNS, HGS, ACO-HH, PG-CLNS and PSOMA, so the campaign runs all of them with the profit-aware operators. SANS has no such operators.
+
 ### Threshold Regular packing (`2026-10-30`)
 
 - `PackingContext.min_fill` (percent of capacity, default 0) reaches `RegularSelection` from the packing config, so a Regular schedule can select only the bins at or above a minimum fill. Before, `min_fill` was read from an attribute that nothing set, so it was always 0.
