@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### SWC-TCF formulation selector (`2026-10-30`)
+
+- `SWCTCFConfig.formulation` now selects the Gurobi model by name: `paper` (default), `asymmetric` or `directed`. The names map to builders in `FORMULATIONS` (`gurobi.py`).
+- The `asymmetric` flag is removed. Use `formulation: asymmetric`, which keeps the tight feasibility tolerance of the published model. Configs that still set `asymmetric` are rejected by the typed config.
+
 ### Studio live scenes (`2026-10-28`)
 
 - Simulation Summary, City Comparison, and Algorithm Comparison no longer draw the ORION sample honeycomb, radar, or profit bubbles. Summary bins and city cells come from the open log or corpus. A view with no coordinates uses a generated layout and says so. A missing fill stays a gap, and an idle cell says "fill not measured". A policy with no finite profit is left off the orbital chart.
