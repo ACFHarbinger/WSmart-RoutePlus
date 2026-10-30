@@ -9,16 +9,16 @@ two-commodity flow with a copy depot n+1.
 
 Everything that is not in those sources is optional and off by default:
 
-- ``formulation: directed``: the earlier directed two-commodity flow (separate
-  waste / empty-space flows on directed arcs, no copy depot).
+- ``formulation``: a name in ``FORMULATIONS`` selecting the model. ``paper`` is the published
+  model, ``asymmetric`` directs the arcs at their own cost (``_build_asymmetric``) instead of the
+  undirected edges of the published model, and ``directed`` is the earlier directed two-commodity
+  flow (separate waste / empty-space flows on directed arcs, no copy depot).
 - ``depot_inflow: le``: the notebook's ``sum y_i0 <= Q k`` instead of eq. (15).
 - ``solver_tuning``: MIPFocus/heuristics/cut/presolve settings and a 1% MIP gap.
 - ``relax_forced_on_infeasible``: re-solve without forced visits when infeasible.
 - ``link_depot_arcs``: ``x[0, j] <= g[j]``.
 - ``max_arc_distance_km``: drop arcs longer than this.
 - ``warm_start``: Clarke-Wright MIP starts and a no-incumbent fallback (#41).
-- ``asymmetric``: directed arcs at their own cost (``_build_asymmetric``) instead of the
-  undirected edges of the published model; requires ``formulation: paper``.
 
 Attributes:
     _run_gurobi_optimizer: Solves one day's SWC-TCF model with native Gurobi.
@@ -149,6 +149,14 @@ def _optional_float(value: object) -> Optional[float]:
     return float(value)  # type: ignore[arg-type]
 
 
+#: Formulation name (``SWCTCFConfig.formulation``) -> builder of the Gurobi model.
+FORMULATIONS = {
+    "paper": _build_paper,
+    "asymmetric": _build_asymmetric,
+    "directed": _build_directed,
+}
+
+
 def _options(cfg: Union[SWCTCFConfig, Dict[str, Any]]) -> Dict[str, Any]:
     """Read and validate the optional, off-by-default model switches.
 
@@ -163,8 +171,8 @@ def _options(cfg: Union[SWCTCFConfig, Dict[str, Any]]) -> Dict[str, Any]:
         cfg = _structured_load(SWCTCFConfig, _unwrap_engine_section(cfg))
     cfg = cast(SWCTCFConfig, cfg)
     formulation = str(cfg.formulation).strip().lower()
-    if formulation not in ("paper", "directed"):
-        raise ValueError("formulation must be 'paper' or 'directed'")
+    if formulation not in FORMULATIONS:
+        raise ValueError(f"formulation must be one of {', '.join(repr(name) for name in FORMULATIONS)}")
     depot_inflow = str(cfg.depot_inflow).strip().lower()
     if depot_inflow not in ("equal", "le"):
         raise ValueError("depot_inflow must be 'equal' (eq. 15) or 'le' (notebook)")
@@ -182,7 +190,6 @@ def _options(cfg: Union[SWCTCFConfig, Dict[str, Any]]) -> Dict[str, Any]:
         "relax_forced_on_infeasible": _flag(cfg.relax_forced_on_infeasible),
         "link_depot_arcs": _flag(cfg.link_depot_arcs),
         "warm_start": _flag(cfg.warm_start),
-        "asymmetric": _flag(cfg.asymmetric),
         "no_solution_time_factor": no_solution_factor,
     }
 
@@ -260,14 +267,9 @@ def _run_gurobi_optimizer(  # noqa: C901
         print(f"[INFO][VRPP-Gurobi] Threads={mdl.Params.Threads}, SoftMemLimit={mdl.Params.SoftMemLimit} GB")
         mdl.Params.Seed = seed
 
-        if options["asymmetric"] and options["formulation"] != "paper":
-            raise ValueError("asymmetric requires formulation: paper")
-        if options["asymmetric"] and options["warm_start"]:
+        if options["formulation"] == "asymmetric" and options["warm_start"]:
             raise ValueError("warm_start is not defined for the asymmetric model")
-        if options["formulation"] != "paper":
-            build = _build_directed
-        else:
-            build = _build_asymmetric if options["asymmetric"] else _build_paper
+        build = FORMULATIONS[options["formulation"]]
         built = build(mdl, d, distance_matrix, forced_nodes, number_vehicles, dual_values, options)
 
         # Optional, off by default: not part of the published model (#41).
@@ -279,7 +281,7 @@ def _run_gurobi_optimizer(  # noqa: C901
         if not env:
             mdl.Params.LogToConsole = 0
             mdl.Params.OutputFlag = 0
-            if options["formulation"] == "paper" and not default_feastol:
+            if options["formulation"] in ("paper", "asymmetric") and not default_feastol:
                 mdl.Params.FeasibilityTol = 1e-09  # as in collectioncompare's policy_gurobi
                 tight_tol = True
             if options["solver_tuning"]:

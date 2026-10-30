@@ -44,7 +44,8 @@ class SWCTCFConfig:
         time_limit: Maximum time in seconds for the solver.
         engine: Solver engine to use ('gurobi', 'scip', 'highs', or 'cplex').
         framework: Solver framework to use ('gurobi'/'native', 'ortools', 'pyomo').
-        formulation: Native Gurobi model: 'paper' (published SWCR model, default) or 'directed'.
+        formulation: Native Gurobi model: 'paper' (published SWCR model, default), 'asymmetric'
+            (directed arcs at their own cost) or 'directed' (earlier directed two-commodity flow).
         depot_inflow: 'equal' (eq. 15, default) or 'le' (collectioncompare notebook).
         solver_tuning: Optional Gurobi tuning (MIPFocus, cuts, 1% gap); off by default.
         relax_forced_on_infeasible: Optional re-solve without forced visits; off by default.
@@ -52,8 +53,6 @@ class SWCTCFConfig:
         max_arc_distance_km: Optional arc length cutoff; None keeps every arc.
         warm_start: Native Gurobi only; off by default. Loads Clarke-Wright MIP
             starts, which are not part of the published model (#41).
-        asymmetric: Directed arcs at their own cost (not the undirected published
-            model); requires formulation 'paper' and cannot be combined with warm_start.
         no_solution_time_factor: A day that reaches the time limit with no incumbent
             is re-solved once, at the default tolerance, with this multiple of the
             limit (at least 1).
@@ -76,7 +75,6 @@ class SWCTCFConfig:
     link_depot_arcs: bool = False
     max_arc_distance_km: Optional[float] = None
     warm_start: bool = False
-    asymmetric: bool = False
     no_solution_time_factor: float = 3.0
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None

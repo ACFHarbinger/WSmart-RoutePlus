@@ -22,12 +22,12 @@ def _values(**overrides):
     return {"Omega": 0.1, "psi": 1.0, "Q": 100.0, "R": 1.0, "C": 1.0, **overrides}
 
 
-def _solve(bins, dist, asymmetric: bool):
+def _solve(bins, dist, formulation: str):
     return gurobi._run_gurobi_optimizer(
         bins,
         dist,
         None,
-        _values(asymmetric=asymmetric),
+        _values(formulation=formulation),
         list(range(len(bins) + 1)),
         [],
         number_vehicles=0,
@@ -50,14 +50,14 @@ def _trips(route):
 @pytest.mark.parametrize("seed", [0, 1])
 def test_symmetric_matrix_matches_published_model(seed):
     bins, dist = _instance(seed, 5, symmetric=True)
-    _, published, _ = _solve(bins, dist, asymmetric=False)
-    _, asymmetric, _ = _solve(bins, dist, asymmetric=True)
+    _, published, _ = _solve(bins, dist, "paper")
+    _, asymmetric, _ = _solve(bins, dist, "asymmetric")
     assert asymmetric == pytest.approx(published, rel=1e-6, abs=1e-6)
 
 
 def test_asymmetric_profit_matches_directed_route_cost():
     bins, dist = _instance(0, 5, symmetric=False)
-    route, profit, cost = _solve(bins, dist, asymmetric=True)
+    route, profit, cost = _solve(bins, dist, "asymmetric")
     trips = _trips(route)
     assert trips, "the instance has positive profit, so a route is expected"
     for trip in trips:
@@ -69,20 +69,14 @@ def test_asymmetric_profit_matches_directed_route_cost():
 
 
 def test_default_is_the_undirected_model():
-    assert gurobi._options({})["asymmetric"] is False
+    assert gurobi._options({})["formulation"] == "paper"
 
 
-def test_asymmetric_requires_the_paper_formulation():
-    with pytest.raises(ValueError, match="requires formulation: paper"):
-        gurobi._run_gurobi_optimizer(
-            np.array([50.0]),
-            [[0.0, 1.0], [1.0, 0.0]],
-            None,
-            _values(asymmetric=True, formulation="directed"),
-            [1],
-            [],
-            number_vehicles=0,
-        )
+def test_formulation_names_map_to_builders():
+    assert set(gurobi.FORMULATIONS) == {"paper", "asymmetric", "directed"}
+    assert gurobi._options({"formulation": "Asymmetric"})["formulation"] == "asymmetric"
+    with pytest.raises(ValueError, match="formulation must be one of"):
+        gurobi._options({"formulation": "asymmetric_flag"})
 
 
 def test_asymmetric_rejects_warm_starts():
@@ -91,7 +85,7 @@ def test_asymmetric_rejects_warm_starts():
             np.array([50.0]),
             [[0.0, 1.0], [1.0, 0.0]],
             None,
-            _values(asymmetric=True, warm_start=True),
+            _values(formulation="asymmetric", warm_start=True),
             [1],
             [],
             number_vehicles=0,
