@@ -31,7 +31,7 @@ from logic.src.data.processor import (
     setup_basedata,
     setup_dist_path_tup,
 )
-from logic.src.data.processor.depot import bins_to_load, promote_central_depot
+from logic.src.data.processor.depot import bins_to_load, extend_subset, promote_central_depot
 from logic.src.pipeline.simulations.actions.policy_config import _as_policy_mapping
 from logic.src.pipeline.simulations.bins import Bins
 from logic.src.pipeline.simulations.checkpoints import SimulationCheckpoint
@@ -91,8 +91,6 @@ class InitializingState(SimState):
 
         # Load base data
         depot_mode = str(graph.depot_mode).strip().lower()
-        if depot_mode != "remote" and ctx.indices is not None:
-            raise ValueError("depot_mode other than 'remote' does not support a bin subset (indices)")
         data, bins_coordinates, depot = setup_basedata(
             bins_to_load(graph.num_loc, depot_mode), ctx.data_dir, graph.area, graph.waste_type
         )
@@ -407,10 +405,14 @@ class InitializingState(SimState):
 
         graph = get_graph_config(sim)
 
+        depot_mode = str(graph.depot_mode).strip().lower()
+        candidate_ids = None
+        if depot_mode != "remote" and ctx.indices is not None:
+            # The depot comes from the subset's bins; a spare bin keeps the customer count.
+            candidate_ids = process_data(data, bins_coordinates, depot, ctx.indices)[1]["ID"].iloc[1:].tolist()
+            ctx.indices = extend_subset(ctx.indices, len(data))
         ctx.new_data, ctx.coords = process_data(data, bins_coordinates, depot, ctx.indices)
-        ctx.new_data, ctx.coords = promote_central_depot(
-            ctx.new_data, ctx.coords, str(graph.depot_mode).strip().lower()
-        )
+        ctx.new_data, ctx.coords = promote_central_depot(ctx.new_data, ctx.coords, depot_mode, candidate_ids)
 
         _save_dm = getattr(graph, "save_updated_dm", None)
         if _save_dm and ctx.results_dir:
@@ -430,7 +432,8 @@ class InitializingState(SimState):
             graph.waste_type,
             graph.n_days,
             sim.data_distribution,
-            ctx.indices,
+            # Distances are read by bin ID once a bin is the depot; positions no longer apply.
+            ctx.indices if depot_mode == "remote" else None,
             save_updated_dm=_save_dm,
             tensor_backend=ctx.device is not None,
         )

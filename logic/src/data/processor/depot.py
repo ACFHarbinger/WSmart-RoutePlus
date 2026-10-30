@@ -9,6 +9,7 @@ Attributes:
     select_depot_bin: Index of the bin that becomes the depot under a bin-based mode.
     relocate_depot: Distance matrix with a bin promoted to the depot.
     bins_to_load: Number of bins to load so that ``num_loc`` customers remain after relocation.
+    extend_subset: Bin subset with one spare bin, so a promoted bin leaves the customer count unchanged.
     promote_central_depot: Processed simulator frames with a bin promoted to the depot.
 
 Example:
@@ -19,7 +20,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Literal, Optional, Tuple
+from typing import List, Literal, Optional, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
@@ -128,7 +129,35 @@ def bins_to_load(num_loc: int, mode: DepotMode) -> int:
     return num_loc if mode == "remote" else num_loc + 1
 
 
-def promote_central_depot(data: pd.DataFrame, coords: pd.DataFrame, mode: DepotMode) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def extend_subset(indices: Sequence[int], n_available: int) -> List[int]:
+    """Add the lowest unused bin position to a bin subset.
+
+    A network defined by a bin subset loses one customer when a bin becomes the depot. The spare
+    bin replaces it, so the routed network keeps its customer count.
+
+    Args:
+        indices: Positions of the subset bins in the loaded bin frame.
+        n_available: Number of bins in the loaded frame.
+
+    Returns:
+        List[int]: The sorted subset positions plus the lowest position outside the subset.
+
+    Raises:
+        ValueError: If every available bin is already in the subset.
+    """
+    taken = set(int(i) for i in indices)
+    spare = next((i for i in range(n_available) if i not in taken), None)
+    if spare is None:
+        raise ValueError("no spare bin is left to replace the promoted depot")
+    return sorted([*taken, spare])
+
+
+def promote_central_depot(
+    data: pd.DataFrame,
+    coords: pd.DataFrame,
+    mode: DepotMode,
+    candidate_ids: Optional[Sequence[int]] = None,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Promote one bin of the processed simulator frames to the depot.
 
     The frames are the output of ``process_data``: row 0 is the depot and the other rows are the
@@ -141,6 +170,8 @@ def promote_central_depot(data: pd.DataFrame, coords: pd.DataFrame, mode: DepotM
         coords: Frame with ``ID``, ``Lat`` and ``Lng`` columns, in the row order of ``data``.
         mode: ``remote`` returns the frames unchanged and ``centroid`` promotes the bin nearest
             to the centroid of the bins.
+        candidate_ids: Bin IDs that define the centroid and may become the depot (default: every
+            bin). A spare bin added by ``extend_subset`` is left out of them.
 
     Returns:
         Tuple[pd.DataFrame, pd.DataFrame]: The data and coordinate frames with the new depot.
@@ -158,7 +189,10 @@ def promote_central_depot(data: pd.DataFrame, coords: pd.DataFrame, mode: DepotM
         raise NotImplementedError(f"depot mode {mode!r} is not available at initialization")
     if not (data["ID"].to_numpy() == coords["ID"].to_numpy()).all():
         raise ValueError("data and coords must list the same node IDs in the same order")
-    chosen = 1 + select_depot_bin("centroid", coords=coords.iloc[1:][["Lat", "Lng"]].to_numpy())
+    bins = coords.iloc[1:]
+    if candidate_ids is not None:
+        bins = bins[bins["ID"].isin(list(candidate_ids))]
+    chosen = int(bins.index[select_depot_bin("centroid", coords=bins[["Lat", "Lng"]].to_numpy())])
     order = [chosen, *[row for row in range(1, len(coords)) if row != chosen]]
 
     def relocate(frame: pd.DataFrame, depot_values: pd.Series) -> pd.DataFrame:
