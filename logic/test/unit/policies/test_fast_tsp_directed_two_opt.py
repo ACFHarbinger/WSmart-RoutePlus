@@ -38,3 +38,12 @@ def test_improver_reads_the_flag_from_its_kwargs():
     without, _ = improver.process(tour, distance_matrix=d, directed_two_opt=False)
     for result in (with_polish, without):
         assert result[0] == 0 and result[-1] == 0 and sorted(result[1:-1]) == list(range(1, 26))
+
+
+def test_best_direction_switch_drives_the_cheaper_way():
+    d = _asymmetric(12, 3)
+    bins = np.arange(1, 12)
+    as_returned = find_route(d, bins, time_limit=0.2, directed_two_opt=False, best_direction=False)
+    cheaper = find_route(d, bins, time_limit=0.2, directed_two_opt=False)
+    assert sorted(as_returned[1:-1]) == sorted(cheaper[1:-1]) == list(bins)
+    assert _length(d, cheaper) <= _length(d, as_returned) + 1e-9

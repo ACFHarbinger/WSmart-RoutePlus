@@ -2,12 +2,15 @@ ftsp:
   methods:
   - fast_tsp
   time_limit: 30.0
-  # false returns the fast_tsp order in its cheaper direction, without the directed 2-opt polish.
+  # false skips the directed 2-opt polish of each trip.
   directed_two_opt: true
+  # false drives the fast_tsp order as returned instead of in its cheaper direction.
+  best_direction: true
 
-# Fast-TSP without the directed 2-opt polish: the fast_tsp order driven in its cheaper direction.
+# Raw Fast-TSP: the order fast_tsp returns, without the cheaper-direction choice or the directed 2-opt.
 ftsp_raw:
   methods:
   - fast_tsp
   time_limit: 30.0
   directed_two_opt: false
+  best_direction: false

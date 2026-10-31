@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 _FAST_TSP_MAX_DIST = 65535
 
 
-def find_route(C, to_collect, time_limit=2.0, seed=42, engine="fast_tsp", directed_two_opt=True):
+def find_route(C, to_collect, time_limit=2.0, seed=42, engine="fast_tsp", directed_two_opt=True, best_direction=True):
     """
     Find a TSP route through the depot and ``to_collect`` with fast_tsp.
 
@@ -56,8 +56,9 @@ def find_route(C, to_collect, time_limit=2.0, seed=42, engine="fast_tsp", direct
             find_tour has no seed and its time-budgeted search is not repeatable
             (different tours across runs on the same input).
         engine: Only "fast_tsp" is available in this export.
-        directed_two_opt: Polish the route with a directed 2-opt (default). False keeps the fast_tsp order
-            in its cheaper direction.
+        directed_two_opt: Polish the route with a directed 2-opt (default). False skips the polish.
+        best_direction: Drive the fast_tsp order in its cheaper direction on ``C`` (default). False drives it
+            as returned, which is the order fast_tsp found for the transposed matrix up to 20 nodes.
 
     Returns:
         List[int]: Tour starting and ending at depot. Format: [0, node1, node2, ..., 0].
@@ -86,7 +87,7 @@ def find_route(C, to_collect, time_limit=2.0, seed=42, engine="fast_tsp", direct
     # returns the optimum of the transposed matrix, and its local search ignores the
     # direction of reversed segments. Drive the cheaper direction on the true matrix,
     # then polish with a 2-opt that prices every reversal with the directed costs.
-    if _directed_length(C, bins[::-1]) < _directed_length(C, bins):
+    if best_direction and _directed_length(C, bins[::-1]) < _directed_length(C, bins):
         bins = bins[::-1]
     if directed_two_opt:
         bins = directed_two_opt_route(bins, C)

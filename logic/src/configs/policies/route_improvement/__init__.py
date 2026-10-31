@@ -51,13 +51,16 @@ class FastTSPPostConfig:
         time_limit: Maximum time in seconds for the solver.
         seed: Random seed for reproducibility.
         directed_two_opt: Polish each trip with a directed 2-opt after fast_tsp and the choice of the cheaper
-            direction. False returns the fast_tsp order in its cheaper direction (fast_tsp prices the matrix
-            as symmetric, so on asymmetric matrices that tour is not locally optimal).
+            direction (fast_tsp prices the matrix as symmetric, so on asymmetric matrices its tour is not
+            locally optimal).
+        best_direction: Drive each fast_tsp order in its cheaper direction on the distance matrix. With both
+            switches False the order is used as fast_tsp returns it.
     """
 
     time_limit: float = 2.0
     seed: int = 42
     directed_two_opt: bool = True
+    best_direction: bool = True
 
 
 @dataclass
