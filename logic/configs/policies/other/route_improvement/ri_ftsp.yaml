@@ -2,3 +2,12 @@ ftsp:
   methods:
   - fast_tsp
   time_limit: 30.0
+  # false returns the fast_tsp order in its cheaper direction, without the directed 2-opt polish.
+  directed_two_opt: true
+
+# Fast-TSP without the directed 2-opt polish: the fast_tsp order driven in its cheaper direction.
+ftsp_raw:
+  methods:
+  - fast_tsp
+  time_limit: 30.0
+  directed_two_opt: false

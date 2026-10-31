@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 _FAST_TSP_MAX_DIST = 65535
 
 
-def find_route(C, to_collect, time_limit=2.0, seed=42, engine="fast_tsp"):
+def find_route(C, to_collect, time_limit=2.0, seed=42, engine="fast_tsp", directed_two_opt=True):
     """
     Find a TSP route through the depot and ``to_collect`` with fast_tsp.
 
@@ -56,11 +56,13 @@ def find_route(C, to_collect, time_limit=2.0, seed=42, engine="fast_tsp"):
             find_tour has no seed and its time-budgeted search is not repeatable
             (different tours across runs on the same input).
         engine: Only "fast_tsp" is available in this export.
+        directed_two_opt: Polish the route with a directed 2-opt (default). False keeps the fast_tsp order
+            in its cheaper direction.
 
     Returns:
         List[int]: Tour starting and ending at depot. Format: [0, node1, node2, ..., 0].
         The fast_tsp order is driven in its cheaper direction on ``C`` and polished by a
-        directed 2-opt, since fast_tsp treats ``C`` as symmetric. If fast_tsp fails, the
+        directed 2-opt (unless ``directed_two_opt`` is False), since fast_tsp treats ``C`` as symmetric. If fast_tsp fails, the
         input order ``[0, *to_collect, 0]`` is returned unchanged.
     """
     if engine == "custom":
@@ -86,7 +88,8 @@ def find_route(C, to_collect, time_limit=2.0, seed=42, engine="fast_tsp"):
     # then polish with a 2-opt that prices every reversal with the directed costs.
     if _directed_length(C, bins[::-1]) < _directed_length(C, bins):
         bins = bins[::-1]
-    bins = directed_two_opt_route(bins, C)
+    if directed_two_opt:
+        bins = directed_two_opt_route(bins, C)
     return [0, *bins, 0]
 
 
