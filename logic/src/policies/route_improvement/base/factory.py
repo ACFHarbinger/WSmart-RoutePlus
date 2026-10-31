@@ -80,7 +80,7 @@ def _neural_selector_kwargs(config: Any) -> Dict[str, Any]:
     return {"config": config}
 
 
-_FAST_TSP = _from_section("fast_tsp", ("time_limit", "seed"))
+_FAST_TSP = _from_section("fast_tsp", ("time_limit", "seed", "directed_two_opt"))
 _LKH = _from_section("lkh", ("max_iterations", "time_limit", "seed"))
 _LOCAL_SEARCH = _from_section("local_search", ("ls_operator", "iterations", "time_limit", "seed"))
 _RANDOM_SEARCH = _from_section("random_local_search", ("iterations", "params", "time_limit", "seed"))

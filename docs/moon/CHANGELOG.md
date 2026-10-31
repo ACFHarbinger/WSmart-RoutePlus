@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fast-TSP directed 2-opt polish is a parameter (`2026-10-31`)
+
+- **`directed_two_opt`** (default `true`, so behavior is unchanged) on `FastTSPPostConfig`, the Fast-TSP improver's kwargs and `find_route`. With `false`, a trip is the `fast_tsp` order driven in its cheaper direction, without the final directed 2-opt. `ri_ftsp.yaml` gains the variant `ftsp_raw` for it. `fast_tsp` prices the matrix as symmetric, so on the asymmetric Rio Maior matrix the raw tour is 5 to 7% costlier than a directed 2-opt on the campaign's trips (`Scripts/fast_tsp_asymmetry_real_tours.py` in the simulation paper).
+
 ### Campaign improver arms: CLS versus no improvement (`2026-10-31`)
 
 - **`campaign_policies.IMPROVERS`**: `ftsp` is replaced by `none` (an empty `route_improvement` stage). Fast-TSP is not valid on the asymmetric road matrices, so it cannot be compared fairly with the CLS local search; each routing algorithm now runs with CLS or with no improvement, which measures what improvement adds. The Fast-TSP outputs of the first Rio Maior 100 pass are kept under `outputs/campaign/quarantine_ftsp/`.
