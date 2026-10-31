@@ -55,6 +55,7 @@ class FastTSPRouteImprover(IRouteImprovement):
                 seed: Accepted but unused: fast-tsp has no seed, and trips above 20 bins
                     (time-budgeted local search) are not repeatable; up to 20 bins it is exact (Held-Karp).
                 directed_two_opt: Polish each trip with a directed 2-opt (default True).
+                best_direction: Drive each trip in its cheaper direction (default True).
                 wastes: Bin mass dictionary.
                 capacity: Vehicle capacity.
 
@@ -86,6 +87,7 @@ class FastTSPRouteImprover(IRouteImprovement):
                     time_limit=time_limit,
                     seed=seed,
                     directed_two_opt=kwargs.get("directed_two_opt", self.config.get("directed_two_opt", True)),
+                    best_direction=kwargs.get("best_direction", self.config.get("best_direction", True)),
                 )
                 # strip depot 0s from the constructed route to avoid doubles
                 refined_routes.append([n for n in refined_trip if n != 0])
