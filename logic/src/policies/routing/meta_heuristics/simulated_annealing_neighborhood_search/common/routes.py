@@ -221,7 +221,10 @@ def uncross_arcs_in_routes(
 
 def uncross_arcs_in_sans_routes(routes, id_to_index, distance_matrix):
     """
-    Apply first-improvement 2-opt, until no reversal shortens the route, to every route of a solution.
+    Apply first-improvement 2-opt, until no reversal shortens the route by more than 1e-9, to every route of a solution.
+
+    The tolerance must stay positive: on a directed matrix a zero tolerance accepts reversals whose gain is floating-point
+    noise and cycles forever (58 of 300 random Rio Maior routes never terminated).
 
     Args:
         routes: Solution to optimize (depot-terminated routes of node IDs).
@@ -236,7 +239,7 @@ def uncross_arcs_in_sans_routes(routes, id_to_index, distance_matrix):
     new_routes = []
     for route in cleaned_routes:
         if len(route) > 3:
-            inner = two_opt_route([id_to_index[x] for x in route[1:-1]], distance_matrix, max_iter=None, tol=0.0)
+            inner = two_opt_route([id_to_index[x] for x in route[1:-1]], distance_matrix, max_iter=None, tol=1e-9)
             route = [route[0], *(index_to_id[x] for x in inner), route[-1]]
         new_routes.append(route)
     return new_routes

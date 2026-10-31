@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed: SANS final 2-opt never terminated on directed matrices (`2026-10-31`)
+
+- `uncross_arcs_in_sans_routes` (the clean-up after the annealing loop, which the time limit does not cover) ran `two_opt_route(..., max_iter=None, tol=0.0)`. On an asymmetric distance matrix a zero tolerance accepts reversals whose gain is floating-point noise, so a reversal and its inverse can both look improving and the descent cycles forever. On the Rio Maior matrix 58 of 300 random routes never finished. In the Rio Maior 100 campaign this left the four SANS cells at about 93% CPU for 8 hours with no output. The tolerance is now `1e-9` (0 of 300 hang), and the descent stays uncapped because every accepted reversal now gains at least `1e-9`.
+
 ### Fast-TSP directed 2-opt polish and direction choice are parameters (`2026-10-31`)
 
 - **`directed_two_opt`** (default `true`, so behavior is unchanged) on `FastTSPPostConfig`, the Fast-TSP improver's kwargs and `find_route`. With `false`, a trip skips the final directed 2-opt. A second switch, **`best_direction`** (default `true`), drives each `fast_tsp` order in its cheaper direction on the matrix; with both `false` the order is used as `fast_tsp` returns it. `ri_ftsp.yaml` gains the variant `ftsp_raw` (both off). `fast_tsp` prices the matrix as symmetric, so on the asymmetric Rio Maior matrix the raw tour is 5 to 7% costlier than a directed 2-opt on the campaign's trips (`Scripts/fast_tsp_asymmetry_real_tours.py` in the simulation paper).
