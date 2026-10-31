@@ -26,9 +26,9 @@ _TREE = {
 
 
 def test_packing_improver_and_limits_are_patched():
-    out = patch_policy(_TREE, "ftsp")["swc_tcf"]
+    out = patch_policy(_TREE, "cls")["swc_tcf"]
     assert out["gurobi"]["packing"] == CAMPAIGN_PACKING
-    assert out["gurobi"]["route_improvement"] == IMPROVERS["ftsp"]
+    assert out["gurobi"]["route_improvement"] == IMPROVERS["cls"]
     assert out["gurobi"]["time_limit"] == 60.0
     assert out["other"]["time_limit"] == 30.0  # a tighter limit is kept
     assert out["gurobi"]["no_solution_time_factor"] == 1.0
@@ -67,3 +67,7 @@ def test_strict_overlay_uses_the_default_feasibility_tolerance():
     tree = {"swc_tcf": {"gurobi": {"formulation": "asymmetric", "time_limit": 600.0}}}
     assert patch_policy(tree, "cls", strict=True)["swc_tcf"]["gurobi"]["feasibility_tol"] == -1
     assert "feasibility_tol" not in patch_policy(tree, "cls")["swc_tcf"]["gurobi"]
+
+
+def test_none_improver_empties_the_stage():
+    assert patch_policy(_TREE, "none")["swc_tcf"]["gurobi"]["route_improvement"] == []

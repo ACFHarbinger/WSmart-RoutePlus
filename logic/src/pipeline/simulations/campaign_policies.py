@@ -36,9 +36,10 @@ STRICT_POLICIES = ("bpc", "swc_tcf")
 STATIC_POLICY = "cvrp"
 ROUTING_LIMIT_S = 60.0
 
-IMPROVERS: Dict[str, Dict[str, List[str]]] = {
+# ``none`` leaves the routed tours as the algorithm returns them, to measure what improvement adds.
+IMPROVERS: Dict[str, Any] = {
     "cls": {"other/route_improvement/ri_cls.yaml": ["default"]},
-    "ftsp": {"other/route_improvement/ri_ftsp.yaml": ["ftsp"]},
+    "none": [],
 }
 
 CAMPAIGN_PACKING: List[Dict[str, List[str]]] = [
