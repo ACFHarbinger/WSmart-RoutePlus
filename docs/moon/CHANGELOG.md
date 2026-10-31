@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Campaign improver arms: CLS versus no improvement (`2026-10-31`)
+
+- **`campaign_policies.IMPROVERS`**: `ftsp` is replaced by `none` (an empty `route_improvement` stage). Fast-TSP is not valid on the asymmetric road matrices, so it cannot be compared fairly with the CLS local search; each routing algorithm now runs with CLS or with no improvement, which measures what improvement adds. The Fast-TSP outputs of the first Rio Maior 100 pass are kept under `outputs/campaign/quarantine_ftsp/`.
+
 ### SWC-TCF formulations reduced to `paper` and `asymmetric`, tolerance parameter (`2026-10-31`)
 
 - **`formulation: directed` is deleted** (`_build_directed`, its `FORMULATIONS` entry). `asymmetric` is the paper's directed copy-depot model (`0 -> bins -> N+1`, one load per arc, free capacity eliminated), so `policy_swc_tcf.yaml` now sets `formulation: asymmetric`. The agreement test now compares `paper` and `asymmetric` on symmetric instances. The simulation paper's SWC-TCF description, parameter table and fallback statements are updated to match (single load per arc, no substitute plans, default tolerance).
