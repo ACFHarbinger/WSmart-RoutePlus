@@ -66,12 +66,12 @@ def test_invalid_options_are_rejected(bad):
 
 
 @pytest.mark.parametrize(("seed", "revenue", "fleet"), [(10, 0.04, 0), (11, 0.06, 1), (12, 0.1, 0), (15, 0.1, 1)])
-def test_paper_and_directed_models_agree_on_symmetric_instances(seed, revenue, fleet):
+def test_paper_and_asymmetric_models_agree_on_symmetric_instances(seed, revenue, fleet):
     """Same optimum on symmetric distances, including partial selection and a one-truck fleet."""
     bins, dist = _instance(seed)
     values = {"Omega": 0.1, "psi": 1, "Q": 300.0, "R": revenue, "C": 1.0}
     paper = _solve(bins, dist, values, number_vehicles=fleet)
-    directed = _solve(bins, dist, {**values, "formulation": "directed"}, number_vehicles=fleet)
+    directed = _solve(bins, dist, {**values, "formulation": "asymmetric"}, number_vehicles=fleet)
     assert paper[1] == pytest.approx(directed[1], abs=1e-4)
     assert sorted(set(paper[0]) - {0}) == sorted(set(directed[0]) - {0})
 

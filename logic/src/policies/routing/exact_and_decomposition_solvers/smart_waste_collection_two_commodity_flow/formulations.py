@@ -1,9 +1,8 @@
-"""Gurobi formulations of SWC-TCF: the paper's two-commodity flow model and its asymmetric and directed variants.
+"""Gurobi formulations of SWC-TCF: the paper's two-commodity flow model and its asymmetric variant.
 
 Attributes:
     _build_paper: The published symmetric model.
     _build_asymmetric: Arc-based variant for asymmetric matrices.
-    _build_directed: Directed variant.
 
 Example:
     >>> built = _build_paper(model, data, cfg)
@@ -16,7 +15,6 @@ from typing import Any, Callable, Dict, List, Optional
 import gurobipy as gp
 from gurobipy import GRB, quicksum
 
-from ._route_extraction import extract_depot_delimited_route
 from ._tcf_data import TCFData
 
 
@@ -270,93 +268,5 @@ def _build_asymmetric(  # noqa: C901
                 cur, steps = succ[cur][0], steps + 1
             route.append(0)
         return route if len(route) > 1 else [0, 0]
-
-    return _Built(x, g, k_var, forced, set_starts, extract_route)
-
-
-def _build_directed(  # noqa: C901
-    mdl: gp.Model,
-    d: TCFData,
-    distance_matrix: List[List[float]],
-    forced_nodes: List[int],
-    number_vehicles: int,
-    dual_values: Optional[Dict[int, float]],
-    options: Dict[str, Any],
-) -> _Built:
-    """Directed two-commodity flow (``formulation: directed``; not the published model)."""
-    Q, R, C, Omega = d.Q, d.R, d.C, d.Omega
-    S = d.S_dict
-    nodes, nodes_real = d.nodes, d.nodes_real
-    cutoff = options["max_arc_distance_km"]
-    pairs = [(i, j) for i in nodes for j in nodes if i != j and (cutoff is None or distance_matrix[i][j] <= cutoff)]
-
-    x = mdl.addVars(pairs, vtype=GRB.BINARY, name="x")
-    g = mdl.addVars(nodes, vtype=GRB.BINARY, name="g")
-    # f_ij: flow of waste (commodity 1); h_ij: flow of empty capacity (commodity 2)
-    f = mdl.addVars(pairs, vtype=GRB.CONTINUOUS, lb=0, name="f")
-    h = mdl.addVars(pairs, vtype=GRB.CONTINUOUS, lb=0, name="h")
-    k_var = mdl.addVar(lb=0, vtype=GRB.INTEGER, name="k_var")
-
-    for i, j in pairs:
-        mdl.addConstr(f[i, j] + h[i, j] == Q * x[i, j])
-    for i in nodes_real:
-        mdl.addConstr(
-            quicksum(f[i, j] for j in nodes if (i, j) in f) - quicksum(f[j, i] for j in nodes if (j, i) in f)
-            == S[i] * g[i]
-        )
-    for i in nodes_real:
-        mdl.addConstr(
-            quicksum(h[j, i] for j in nodes if (j, i) in h) - quicksum(h[i, j] for j in nodes if (i, j) in h)
-            == S[i] * g[i]
-        )
-    mdl.addConstr(quicksum(f[i, 0] for i in nodes_real if (i, 0) in f) == quicksum(S[i] * g[i] for i in nodes_real))
-    mdl.addConstr(quicksum(h[0, j] for j in nodes_real if (0, j) in h) == Q * k_var)
-    mdl.addConstr(quicksum(f[0, j] for j in nodes_real if (0, j) in f) == 0)
-    if number_vehicles > 0:
-        mdl.addConstr(k_var <= number_vehicles)
-    mdl.addConstr(quicksum(x[0, j] for j in nodes_real if (0, j) in x) == k_var)
-    mdl.addConstr(quicksum(x[j, 0] for j in nodes_real if (j, 0) in x) == k_var)
-    if options["link_depot_arcs"]:
-        for j in nodes_real:
-            if (0, j) in x:
-                mdl.addConstr(x[0, j] <= g[j])
-            if (j, 0) in x:
-                mdl.addConstr(x[j, 0] <= g[j])
-    forced = [mdl.addConstr(g[i] == 1, name=f"forced_{i}") for i in forced_nodes]
-    for j in nodes_real:
-        mdl.addConstr(quicksum(x[i, j] for i in nodes if (i, j) in x) == g[j])
-        mdl.addConstr(quicksum(x[j, k] for k in nodes if (j, k) in x) == g[j])
-
-    travel = C * quicksum(x[i, j] * distance_matrix[i][j] for i, j in pairs)
-    if dual_values:
-        pi_0 = dual_values.get(0, 0.0)
-        mdl.setObjective(
-            quicksum((R * S[i] - dual_values.get(i, 0.0)) * g[i] for i in nodes_real) - travel - pi_0 * k_var,
-            GRB.MAXIMIZE,
-        )
-    else:
-        mdl.setObjective(R * quicksum(S[i] * g[i] for i in nodes_real) - travel - Omega * k_var, GRB.MAXIMIZE)
-
-    def set_starts(starts: List[List[List[int]]]) -> None:
-        all_vars = [*x.values(), *g.values(), *f.values(), *h.values()]
-        mdl.NumStart = len(starts)
-        for number, trips in enumerate(starts):
-            mdl.Params.StartNumber = number
-            mdl.setAttr("Start", all_vars, [0.0] * len(all_vars))
-            start_vars, start_vals = [k_var], [float(len(trips))]
-            for trip in trips:
-                load = 0.0
-                path = [0, *trip, 0]
-                for a, b in zip(path, path[1:], strict=False):
-                    start_vars += [x[a, b], f[a, b], h[a, b]]
-                    start_vals += [1.0, load, Q - load]
-                    if b != 0:
-                        start_vars.append(g[b])
-                        start_vals.append(1.0)
-                        load += S[b]
-            mdl.setAttr("Start", start_vars, start_vals)
-
-    def extract_route() -> List[int]:
-        return extract_depot_delimited_route([(i, j) for (i, j) in pairs if x[i, j].X > 0.5], d.id_map)
 
     return _Built(x, g, k_var, forced, set_starts, extract_route)

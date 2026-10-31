@@ -11,8 +11,7 @@ Everything that is not in those sources is optional and off by default:
 
 - ``formulation``: a name in ``FORMULATIONS`` selecting the model. ``paper`` is the published
   model, ``asymmetric`` directs the arcs at their own cost (``_build_asymmetric``) instead of the
-  undirected edges of the published model, and ``directed`` is the earlier directed two-commodity
-  flow (separate waste / empty-space flows on directed arcs, no copy depot).
+  undirected edges of the published model.
 - ``depot_inflow: le``: the notebook's ``sum y_i0 <= Q k`` instead of eq. (15).
 - ``solver_tuning``: MIPFocus/heuristics/cut/presolve settings and a 1% MIP gap.
 - ``relax_forced_on_infeasible``: re-solve without forced visits when infeasible.
@@ -43,7 +42,6 @@ from logic.src.constants.routing import HEURISTICS_RATIO, MIP_GAP, NODEFILE_STAR
 from logic.src.policies.routing.base.base_routing_policy import _structured_load, _unwrap_engine_section
 from logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.formulations import (
     _build_asymmetric,
-    _build_directed,
     _build_paper,
 )
 
@@ -153,7 +151,6 @@ def _optional_float(value: object) -> Optional[float]:
 FORMULATIONS = {
     "paper": _build_paper,
     "asymmetric": _build_asymmetric,
-    "directed": _build_directed,
 }
 
 
@@ -191,6 +188,7 @@ def _options(cfg: Union[SWCTCFConfig, Dict[str, Any]]) -> Dict[str, Any]:
         "link_depot_arcs": _flag(cfg.link_depot_arcs),
         "warm_start": _flag(cfg.warm_start),
         "no_solution_time_factor": no_solution_factor,
+        "feasibility_tol": float(cfg.feasibility_tol),
         "allow_fallback": _flag(cfg.allow_fallback),
     }
 
@@ -282,8 +280,12 @@ def _run_gurobi_optimizer(  # noqa: C901
         if not env:
             mdl.Params.LogToConsole = 0
             mdl.Params.OutputFlag = 0
-            if options["formulation"] in ("paper", "asymmetric") and not default_feastol:
-                mdl.Params.FeasibilityTol = 1e-09  # as in collectioncompare's policy_gurobi
+            if (
+                options["formulation"] in ("paper", "asymmetric")
+                and not default_feastol
+                and options["feasibility_tol"] >= 0
+            ):
+                mdl.Params.FeasibilityTol = options["feasibility_tol"]  # 1e-9 as in collectioncompare's policy_gurobi
                 tight_tol = True
             if options["solver_tuning"]:
                 mdl.Params.MIPFocus = 1
@@ -336,7 +338,13 @@ def _run_gurobi_optimizer(  # noqa: C901
             note_solver_status(format_backend_status("gurobi", mdl.Status), append=True)
         if mdl.Status in (GRB.INFEASIBLE, GRB.INF_OR_UNBD):
             raise RuntimeError(f"SWC-TCF model is infeasible (Gurobi status {mdl.Status}).")
-        if mdl.SolCount == 0 and mdl.Status == GRB.TIME_LIMIT and time_limit > 0 and allow_escalation and options["allow_fallback"]:
+        if (
+            mdl.SolCount == 0
+            and mdl.Status == GRB.TIME_LIMIT
+            and time_limit > 0
+            and allow_escalation
+            and options["allow_fallback"]
+        ):
             # Hit the limit before any incumbent: the day would otherwise collect nothing. The retry uses the
             # default tolerance and no further retry, so one day costs at most (1 + factor) x the limit.
             longer = int(time_limit * options["no_solution_time_factor"])

@@ -61,9 +61,9 @@ def test_strict_overlay_switches_the_fallbacks_off():
     assert "allow_fallback" not in patch_policy(tree, "cls")["bpc"]["custom"]
 
 
-def test_strict_overlay_selects_the_paper_formulation():
+def test_strict_overlay_uses_the_default_feasibility_tolerance():
     from logic.src.pipeline.simulations.campaign_policies import patch_policy
 
-    tree = {"swc_tcf": {"gurobi": {"formulation": "directed", "time_limit": 600.0}}}
-    assert patch_policy(tree, "cls", strict=True)["swc_tcf"]["gurobi"]["formulation"] == "asymmetric"
-    assert patch_policy(tree, "cls")["swc_tcf"]["gurobi"]["formulation"] == "directed"
+    tree = {"swc_tcf": {"gurobi": {"formulation": "asymmetric", "time_limit": 600.0}}}
+    assert patch_policy(tree, "cls", strict=True)["swc_tcf"]["gurobi"]["feasibility_tol"] == -1
+    assert "feasibility_tol" not in patch_policy(tree, "cls")["swc_tcf"]["gurobi"]
