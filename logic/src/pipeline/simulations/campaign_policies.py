@@ -30,6 +30,9 @@ import yaml
 from logic.src.utils.configs.policy_files import find_policy_file
 
 ROUTING_POLICIES = ("aco_hh", "pg_clns", "bpc", "alns", "swc_tcf", "hgs", "psoma", "sans_new")
+# Exact methods whose plan-substituting fallbacks are switched off, so a day without an incumbent reports nothing.
+STRICT_POLICIES = ("bpc", "swc_tcf")
+
 STATIC_POLICY = "cvrp"
 ROUTING_LIMIT_S = 60.0
 
@@ -46,7 +49,9 @@ CAMPAIGN_PACKING: List[Dict[str, List[str]]] = [
 ]
 
 
-def patch_policy(tree: Any, improver: str, packing: Any = None, limit: float = ROUTING_LIMIT_S) -> Any:
+def patch_policy(
+    tree: Any, improver: str, packing: Any = None, limit: float = ROUTING_LIMIT_S, strict: bool = False
+) -> Any:
     """Apply the campaign settings to a policy configuration tree.
 
     Packing and route improvement are replaced wherever a policy declares them, ``time_limit``
@@ -57,6 +62,7 @@ def patch_policy(tree: Any, improver: str, packing: Any = None, limit: float = R
         improver: Key of ``IMPROVERS``.
         packing: Packing variants to use (default ``CAMPAIGN_PACKING``).
         limit: Routing limit in seconds.
+        strict: Also set ``allow_fallback: false`` beside every routing time limit.
 
     Returns:
         A patched deep copy of ``tree``.
@@ -78,6 +84,8 @@ def patch_policy(tree: Any, improver: str, packing: Any = None, limit: float = R
                     node[key] = copy.deepcopy(stage)
                 elif key == "time_limit" and isinstance(node[key], (int, float)):
                     node[key] = min(float(node[key]), float(limit))
+                    if strict:
+                        node["allow_fallback"] = False
                 elif key == "no_solution_time_factor":
                     node[key] = 1.0
                 else:
@@ -118,7 +126,9 @@ def write_overlay(
         stem = stem.rpartition("_")[0] if source is None else stem
     if source is None:
         raise FileNotFoundError(f"no policy file for {policy!r} under {root}")
-    patched = patch_policy(yaml.safe_load(Path(source).read_text()), improver, packing)
+    patched = patch_policy(
+        yaml.safe_load(Path(source).read_text()), improver, packing, strict=policy in STRICT_POLICIES
+    )
     out_dir.mkdir(parents=True, exist_ok=True)
     target = out_dir / Path(source).name
     target.write_text(yaml.dump(patched, default_flow_style=False, sort_keys=False))

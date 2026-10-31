@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Strict mode for BPC and SWC-TCF, no substitute plans (`2026-10-31`)
+
+- **`allow_fallback`** (default `true`, so shipped behavior is unchanged) on `BPCConfig` and `SWCTCFConfig`. With `false`, BPC returns an empty plan with status `bpc:no_incumbent` when no integer node is reached in the limit, instead of the greedy or restricted-master IP plan (`bpc:fallback_*`); SWC-TCF skips the longer re-solve and the Clarke-Wright plan and the day collects nothing. The tolerance re-solve of an infeasible verdict is kept, since it solves the same model.
+- **`campaign_policies.py`**: `STRICT_POLICIES = ("bpc", "swc_tcf")`; their campaign overlays set `allow_fallback: false`. The first Rio Maior 100 pass showed BPC ending about 90% of its days in `bpc:fallback_rmp_ip` at 60 s, so those results were quarantined and rerun.
+
 ### Regular baseline crash on day 2 (`2026-10-30`)
 
 - **`actions/routing.py`**: after a `regular` policy the routing action stored the routing contract's fifth value (the search context) in `context.cached`, which the CVRP policy then took for a cached tour (`len(cached)`), so every fixed-schedule run died with `TypeError: object of type 'SearchContext' has no len()` on its second routed day. The stale assignment is removed; the cache stays the empty list the simulator initializes, and CVRP recomputes its route (the cache is read only when no bin is mandatory). A six-day Rio Maior run of Regular-3/4/5 completes.

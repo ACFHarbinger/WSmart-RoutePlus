@@ -51,3 +51,11 @@ def test_every_campaign_policy_has_a_patched_overlay(policy, tmp_path):
     assert written.name.startswith("policy_")
     assert yaml.dump(data).count("last_minute_cf90") >= 1
     assert "last_minute_cf70" not in yaml.dump(data)
+
+
+def test_strict_overlay_switches_the_fallbacks_off():
+    from logic.src.pipeline.simulations.campaign_policies import patch_policy
+
+    tree = {"bpc": {"custom": {"time_limit": 600.0, "packing": {}, "route_improvement": {}}}}
+    assert patch_policy(tree, "cls", strict=True)["bpc"]["custom"]["allow_fallback"] is False
+    assert "allow_fallback" not in patch_policy(tree, "cls")["bpc"]["custom"]

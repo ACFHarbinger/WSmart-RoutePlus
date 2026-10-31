@@ -191,6 +191,7 @@ def _options(cfg: Union[SWCTCFConfig, Dict[str, Any]]) -> Dict[str, Any]:
         "link_depot_arcs": _flag(cfg.link_depot_arcs),
         "warm_start": _flag(cfg.warm_start),
         "no_solution_time_factor": no_solution_factor,
+        "allow_fallback": _flag(cfg.allow_fallback),
     }
 
 
@@ -335,7 +336,7 @@ def _run_gurobi_optimizer(  # noqa: C901
             note_solver_status(format_backend_status("gurobi", mdl.Status), append=True)
         if mdl.Status in (GRB.INFEASIBLE, GRB.INF_OR_UNBD):
             raise RuntimeError(f"SWC-TCF model is infeasible (Gurobi status {mdl.Status}).")
-        if mdl.SolCount == 0 and mdl.Status == GRB.TIME_LIMIT and time_limit > 0 and allow_escalation:
+        if mdl.SolCount == 0 and mdl.Status == GRB.TIME_LIMIT and time_limit > 0 and allow_escalation and options["allow_fallback"]:
             # Hit the limit before any incumbent: the day would otherwise collect nothing. The retry uses the
             # default tolerance and no further retry, so one day costs at most (1 + factor) x the limit.
             longer = int(time_limit * options["no_solution_time_factor"])
@@ -363,7 +364,8 @@ def _run_gurobi_optimizer(  # noqa: C901
             best = max(starts, key=lambda t: _plan_objective(d, distance_matrix, t)[0]) if starts else None
             # Without forced bins the empty plan (profit 0) is feasible and wins unless a start beats it.
             if (
-                best is not None
+                options["allow_fallback"]
+                and best is not None
                 and not dual_values
                 and (forced_nodes or _plan_objective(d, distance_matrix, best)[0] > 0)
             ):
