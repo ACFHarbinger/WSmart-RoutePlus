@@ -373,6 +373,12 @@ def run_bpc(  # noqa: C901
         logger.info(f"[BPC] CPTP pricing stats: {dict(pricing_stats)}")
 
     # 6. Extract best integer solution
+    if bb_tree.best_integer_node is None and not cfg.allow_fallback:
+        # Strict evaluation: no integer node within the limit means no plan, not a substitute plan.
+        note_solver_status("bpc:no_incumbent")
+        note_solver_incumbent(0.0)
+        close_solver(trace, stage_id, [], 0.0)
+        return SolveResult(routes=[], profit=0.0, cost=0.0)
     if bb_tree.best_integer_node is None:
         # No integer node was reached (e.g. the time limit hit during the root).
         # Return the best plan available: the mandatory-only greedy routes, or the

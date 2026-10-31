@@ -56,6 +56,8 @@ class SWCTCFConfig:
         no_solution_time_factor: A day that reaches the time limit with no incumbent
             is re-solved once, at the default tolerance, with this multiple of the
             limit (at least 1).
+        allow_fallback: When False, a day with no incumbent in the time limit collects nothing: no
+            longer re-solve and no Clarke-Wright plan.
         packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
     """
@@ -76,5 +78,6 @@ class SWCTCFConfig:
     max_arc_distance_km: Optional[float] = None
     warm_start: bool = False
     no_solution_time_factor: float = 3.0
+    allow_fallback: bool = True
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None

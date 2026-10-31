@@ -55,6 +55,8 @@ class BPCConfig:
         enable_column_pool_deduplication: Whether to enable column pool deduplication.
         rc_tolerance: Minimum reduced cost to accept a new column.
         exact_mode: Whether to enable strict exact management.
+        allow_fallback: When False, a day that ends with no integer node reports no plan (status
+            ``bpc:no_incumbent``) instead of the greedy or restricted-master plan.
         strong_branching_size: Number of candidates for strong branching.
         cg_at_root_only: Run column generation only at the root B&B node; at all
             descendant nodes, no new columns are generated (use the pool built at
@@ -104,6 +106,7 @@ class BPCConfig:
     enable_column_pool_deduplication: bool = True
     rc_tolerance: float = 1e-6
     exact_mode: bool = False
+    allow_fallback: bool = True
     strong_branching_size: int = 5
     cg_at_root_only: bool = False
     lr_pre_pruning: bool = True
