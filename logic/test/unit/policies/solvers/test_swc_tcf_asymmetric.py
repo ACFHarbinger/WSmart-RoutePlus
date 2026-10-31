@@ -73,7 +73,7 @@ def test_default_is_the_undirected_model():
 
 
 def test_formulation_names_map_to_builders():
-    assert set(gurobi.FORMULATIONS) == {"paper", "asymmetric", "directed"}
+    assert set(gurobi.FORMULATIONS) == {"paper", "asymmetric"}
     assert gurobi._options({"formulation": "Asymmetric"})["formulation"] == "asymmetric"
     with pytest.raises(ValueError, match="formulation must be one of"):
         gurobi._options({"formulation": "asymmetric_flag"})

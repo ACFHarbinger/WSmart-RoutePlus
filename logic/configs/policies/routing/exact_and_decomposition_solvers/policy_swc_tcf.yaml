@@ -4,9 +4,9 @@ swc_tcf:
     psi: 1
     engine: gurobi
     framework: gurobi
-    # Directed two-commodity flow: each used arc costs its own directed distance (owner ruling
-    # 2026-10-26; the paper's results use it). formulation: paper is the undirected published model.
-    formulation: directed
+    # Directed copy-depot model of the paper's appendix: each used arc costs its own directed distance.
+    # formulation: paper is the undirected published model.
+    formulation: asymmetric
     # A day that ends with no incumbent is re-solved once with 9 x 60 s = 540 s, as the paper states.
     no_solution_time_factor: 9.0
     packing:

@@ -44,8 +44,8 @@ class SWCTCFConfig:
         time_limit: Maximum time in seconds for the solver.
         engine: Solver engine to use ('gurobi', 'scip', 'highs', or 'cplex').
         framework: Solver framework to use ('gurobi'/'native', 'ortools', 'pyomo').
-        formulation: Native Gurobi model: 'paper' (published SWCR model, default), 'asymmetric'
-            (directed arcs at their own cost) or 'directed' (earlier directed two-commodity flow).
+        formulation: Native Gurobi model: 'paper' (published SWCR model, default) or 'asymmetric'
+            (directed arcs at their own cost).
         depot_inflow: 'equal' (eq. 15, default) or 'le' (collectioncompare notebook).
         solver_tuning: Optional Gurobi tuning (MIPFocus, cuts, 1% gap); off by default.
         relax_forced_on_infeasible: Optional re-solve without forced visits; off by default.
@@ -56,6 +56,8 @@ class SWCTCFConfig:
         no_solution_time_factor: A day that reaches the time limit with no incumbent
             is re-solved once, at the default tolerance, with this multiple of the
             limit (at least 1).
+        feasibility_tol: Gurobi FeasibilityTol of the ``paper`` and ``asymmetric`` models (default
+            1e-9, as in the notebook). A negative value keeps Gurobi's default tolerance.
         allow_fallback: When False, a day with no incumbent in the time limit collects nothing: no
             longer re-solve and no Clarke-Wright plan.
         packing: List of packing algorithm config files.
@@ -78,6 +80,7 @@ class SWCTCFConfig:
     max_arc_distance_km: Optional[float] = None
     warm_start: bool = False
     no_solution_time_factor: float = 3.0
+    feasibility_tol: float = 1e-9
     allow_fallback: bool = True
     packing: Optional[List[PackingConfig]] = None
     route_improvement: Optional[List[RouteImprovingConfig]] = None
