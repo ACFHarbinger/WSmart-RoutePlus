@@ -2508,7 +2508,7 @@ SWC-TCF (Smart Waste Collection - Two-Commodity Flow) Optimizer Interface.
 
 ### `logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.formulations`
 
-Gurobi formulations of SWC-TCF: the paper's two-commodity flow model and its asymmetric and directed variants.
+Gurobi formulations of SWC-TCF: the paper's two-commodity flow model and its asymmetric (directed copy-depot) variant.
 
 ### `logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.gurobi`
 

@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### SWC-TCF formulations reduced to `paper` and `asymmetric`, tolerance parameter (`2026-10-31`)
 
-- **`formulation: directed` is deleted** (`_build_directed`, its `FORMULATIONS` entry). `asymmetric` is the paper's directed copy-depot model (`0 -> bins -> N+1`, one load per arc, free capacity eliminated), so `policy_swc_tcf.yaml` now sets `formulation: asymmetric`. The agreement test now compares `paper` and `asymmetric` on symmetric instances.
+- **`formulation: directed` is deleted** (`_build_directed`, its `FORMULATIONS` entry). `asymmetric` is the paper's directed copy-depot model (`0 -> bins -> N+1`, one load per arc, free capacity eliminated), so `policy_swc_tcf.yaml` now sets `formulation: asymmetric`. The agreement test now compares `paper` and `asymmetric` on symmetric instances. The simulation paper's SWC-TCF description, parameter table and fallback statements are updated to match (single load per arc, no substitute plans, default tolerance).
 - **`SWCTCFConfig.feasibility_tol`** (default `1e-9`, the notebook's value): Gurobi's `FeasibilityTol` for `paper` and `asymmetric`; a negative value keeps Gurobi's default and also removes the default-tolerance re-solve. The strict campaign overlay sets `-1`.
 
 ### Strict mode for BPC and SWC-TCF, no substitute plans (`2026-10-31`)
