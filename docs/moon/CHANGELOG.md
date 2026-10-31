@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Strict mode for BPC and SWC-TCF, no substitute plans (`2026-10-31`)
 
 - **`allow_fallback`** (default `true`, so shipped behavior is unchanged) on `BPCConfig` and `SWCTCFConfig`. With `false`, BPC returns an empty plan with status `bpc:no_incumbent` when no integer node is reached in the limit, instead of the greedy or restricted-master IP plan (`bpc:fallback_*`); SWC-TCF skips the longer re-solve and the Clarke-Wright plan and the day collects nothing. The tolerance re-solve of an infeasible verdict is kept, since it solves the same model.
-- **`campaign_policies.py`**: `STRICT_POLICIES = ("bpc", "swc_tcf")`; their campaign overlays set `allow_fallback: false`. The first Rio Maior 100 pass showed BPC ending about 90% of its days in `bpc:fallback_rmp_ip` at 60 s, so those results were quarantined and rerun.
+- **`campaign_policies.py`**: `STRICT_POLICIES = ("bpc", "swc_tcf")`; their campaign overlays set `allow_fallback: false`. The strict overlay also selects `formulation: asymmetric` for SWC-TCF, the directed copy-depot model of the paper's appendix (`0 -> bins -> N+1`, one load per arc), instead of the older `directed` model. The first Rio Maior 100 pass showed BPC ending about 90% of its days in `bpc:fallback_rmp_ip` at 60 s, so those results were quarantined and rerun.
 
 ### Regular baseline crash on day 2 (`2026-10-30`)
 

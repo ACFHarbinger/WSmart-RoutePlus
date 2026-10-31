@@ -62,7 +62,8 @@ def patch_policy(
         improver: Key of ``IMPROVERS``.
         packing: Packing variants to use (default ``CAMPAIGN_PACKING``).
         limit: Routing limit in seconds.
-        strict: Also set ``allow_fallback: false`` beside every routing time limit.
+        strict: Also set ``allow_fallback: false`` beside every routing time limit and select the
+            paper's directed copy-depot model (``formulation: asymmetric``) where a policy has one.
 
     Returns:
         A patched deep copy of ``tree``.
@@ -86,6 +87,8 @@ def patch_policy(
                     node[key] = min(float(node[key]), float(limit))
                     if strict:
                         node["allow_fallback"] = False
+                elif key == "formulation" and strict:
+                    node[key] = "asymmetric"
                 elif key == "no_solution_time_factor":
                     node[key] = 1.0
                 else:
