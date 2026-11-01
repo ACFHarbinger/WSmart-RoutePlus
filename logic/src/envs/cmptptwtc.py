@@ -1,14 +1,14 @@
-"""Capacitated Profitable Tour Problem with Time Windows and Time Constraints (CPTPTWTC).
+"""Capacitated Multi-vehicle Profitable Tour Problem with Time Windows and Time Constraints (CMPTPTWTC).
 
-CPTPTWTC extends CPTPTC: every trip is still bounded by the vehicle capacity and by the
+CMPTPTWTC extends CMPTPTC: every trip is still bounded by the vehicle capacity and by the
 working-shift time budget (driving + service time), and every bin also has a time window
 ``[tw_early, tw_late]`` in hours from the start of the day. A vehicle that arrives early
 waits until the window opens; service must start no later than the window closes; and the
 vehicle must be back at the depot before the depot's window (the working day) closes. The
 day clock runs across trips: a depot return resets the trip's shift budget, not the clock.
 
-The module also holds ``CPTPTWTCGenerator``, the problem's instance generator, and
-``CPTPTWTC_SPEC``, its problem specification.
+The module also holds ``CMPTPTWTCGenerator``, the problem's instance generator, and
+``CMPTPTWTC_SPEC``, its problem specification.
 """
 
 from __future__ import annotations
@@ -29,12 +29,12 @@ from logic.src.envs.base.resources import LoadResource, ShiftTimeResource, TimeW
 from logic.src.envs.common.metrics import DEFAULT_METRICS
 from logic.src.envs.common.objectives import profit_objective
 from logic.src.envs.core.ptp import evaluate_profitable_tour
-from logic.src.envs.cptptc import CPTPTC, CPTPTCEnv, CPTPTCGenerator
+from logic.src.envs.cmptptc import CMPTPTC, CMPTPTCEnv, CMPTPTCGenerator
 from logic.src.envs.spec import PROBLEMS, ProblemSpec
 
 
-class CPTPTWTCGenerator(CPTPTCGenerator):
-    """Generator for CPTPTWTC instances: CPTPTC fields plus per-bin time windows.
+class CMPTPTWTCGenerator(CMPTPTCGenerator):
+    """Generator for CMPTPTWTC instances: CMPTPTC fields plus per-bin time windows.
 
     Attributes:
         day_hours: Length of the working day (h); the depot is open for all of it.
@@ -50,14 +50,14 @@ class CPTPTWTCGenerator(CPTPTCGenerator):
         tw_max_width_h: Optional[float] = None,
         **kwargs,
     ) -> None:
-        """Initialize the CPTPTWTC generator.
+        """Initialize the CMPTPTWTC generator.
 
         Args:
-            args: Positional arguments forwarded to CPTPTCGenerator.
+            args: Positional arguments forwarded to CMPTPTCGenerator.
             day_hours: Override for the working-day length (h).
             tw_min_width_h: Override for the shortest bin window (h).
             tw_max_width_h: Override for the longest bin window (h).
-            kwargs: Keyword arguments forwarded to CPTPTCGenerator (shift_hours, avg_speed_kmh, ...).
+            kwargs: Keyword arguments forwarded to CMPTPTCGenerator (shift_hours, avg_speed_kmh, ...).
         """
         super().__init__(*args, **kwargs)
         self.day_hours = float(day_hours if day_hours is not None else DEFAULT_DAY_HOURS)
@@ -66,13 +66,13 @@ class CPTPTWTCGenerator(CPTPTCGenerator):
         sample_node_time_windows((1, 1), self.day_hours, self.tw_min_width_h, self.tw_max_width_h)  # validates
 
     def _generate(self, batch_size: Union[int, Sequence[int]]) -> TensorDict:
-        """Generate CPTPTWTC instances.
+        """Generate CMPTPTWTC instances.
 
         Args:
             batch_size: Batch size.
 
         Returns:
-            TensorDict with CPTPTC's fields plus:
+            TensorDict with CMPTPTC's fields plus:
                 day_hours: [*B]   — working-day length (h); the depot window is [0, day_hours]
                 tw_early: [*B, N] — opening time of each bin's window (h)
                 tw_late: [*B, N]  — closing time of each bin's window (h)
@@ -89,26 +89,26 @@ class CPTPTWTCGenerator(CPTPTCGenerator):
         return td
 
 
-class CPTPTWTCEnv(CPTPTCEnv):
-    """CPTPTWTC environment: CPTPTC's capacity and shift budget plus bin time windows.
+class CMPTPTWTCEnv(CMPTPTCEnv):
+    """CMPTPTWTC environment: CMPTPTC's capacity and shift budget plus bin time windows.
 
     Attributes:
-        NAME: Environment identifier "cptptwtc".
+        NAME: Environment identifier "cmptptwtc".
     """
 
-    NAME: str = "cptptwtc"
-    name: str = "cptptwtc"
+    NAME: str = "cmptptwtc"
+    name: str = "cmptptwtc"
 
     def __init__(
         self,
-        generator: Optional[CPTPTWTCGenerator] = None,
+        generator: Optional[CMPTPTWTCGenerator] = None,
         generator_params: Optional[dict] = None,
         device: Union[str, torch.device] = "cpu",
         **kwargs: Any,
     ) -> None:
         generator_params = generator_params or {k: v for k, v in kwargs.items() if k not in ("waste_weight", "cost_weight", "revenue_kg", "cost_km")}
         if generator is None:
-            generator = CPTPTWTCGenerator(**generator_params, device=device)
+            generator = CMPTPTWTCGenerator(**generator_params, device=device)
         super().__init__(generator=generator, generator_params=generator_params, device=device, **kwargs)
         self.resources = (LoadResource(), ShiftTimeResource(), TimeWindowResource(default_day_hours=DEFAULT_DAY_HOURS))
 
@@ -187,10 +187,10 @@ def time_window_violations(
     return violations
 
 
-class CPTPTWTC(CPTPTC):
-    """Capacitated Profitable Tour Problem with Time Windows and Time Constraints task definition."""
+class CMPTPTWTC(CMPTPTC):
+    """Capacitated Multi-vehicle Profitable Tour Problem with Time Windows and Time Constraints task definition."""
 
-    NAME: str = "cptptwtc"
+    NAME: str = "cmptptwtc"
 
     @staticmethod
     def evaluate_tour(
@@ -203,10 +203,10 @@ class CPTPTWTC(CPTPTC):
         check_feasibility: bool = False,
         **kwargs: Any,
     ) -> Dict[str, torch.Tensor]:
-        """Evaluate a CPTPTWTC tour: CPTPTC's capacity and shift checks plus the time windows.
+        """Evaluate a CMPTPTWTC tour: CMPTPTC's capacity and shift checks plus the time windows.
 
         Returns:
-            CPTPTC's outcome dict plus ``tw_violations`` (late visits per instance, [B]).
+            CMPTPTC's outcome dict plus ``tw_violations`` (late visits per instance, [B]).
 
         Raises:
             AssertionError: With ``check_feasibility``, when a visit starts after its window closes.
@@ -226,20 +226,20 @@ class CPTPTWTC(CPTPTC):
             avg_speed_kmh=kwargs.get("avg_speed_kmh"), service_time_h=kwargs.get("service_time_h"),
         )
         if check_feasibility and bool((late > 0).any()):
-            raise AssertionError(f"CPTPTWTC: {int(late.sum())} visit(s) start after their time window closes")
+            raise AssertionError(f"CMPTPTWTC: {int(late.sum())} visit(s) start after their time window closes")
         out["tw_violations"] = late
         return out
 
 
-CPTPTWTC_SPEC = ProblemSpec(
-    name="cptptwtc",
+CMPTPTWTC_SPEC = ProblemSpec(
+    name="cmptptwtc",
     objective=profit_objective,
     metrics=DEFAULT_METRICS + ("time_spent",),
-    env_target="logic.src.envs.cptptwtc:CPTPTWTCEnv",
+    env_target="logic.src.envs.cmptptwtc:CMPTPTWTCEnv",
     expand_pool=True,
     per_trip_shift=True,
 )
 
-PROBLEMS.register(CPTPTWTC_SPEC)
+PROBLEMS.register(CMPTPTWTC_SPEC)
 
-__all__ = ["CPTPTWTCGenerator", "CPTPTWTCEnv", "CPTPTWTC", "CPTPTWTC_SPEC", "time_window_violations"]
+__all__ = ["CMPTPTWTCGenerator", "CMPTPTWTCEnv", "CMPTPTWTC", "CMPTPTWTC_SPEC", "time_window_violations"]

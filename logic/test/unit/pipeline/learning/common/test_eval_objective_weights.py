@@ -22,7 +22,7 @@ from omegaconf import OmegaConf
 def test_eval_objective_preserves_zero_and_defaults_only_none(reward, expected, per_eval_graph):
     graph_reward = reward if not per_eval_graph else {"cost_weight": 99.0, "waste_weight": 99.0}
     cfg = OmegaConf.create(
-        {"task": "train", "device": "cpu", "train": {"env": {"name": "cptp", "graph": {"reward": graph_reward}}}}
+        {"task": "train", "device": "cpu", "train": {"env": {"name": "cmptp", "graph": {"reward": graph_reward}}}}
     )
     eval_graph = {"num_loc": 2, "n_samples": 2}
     if per_eval_graph:

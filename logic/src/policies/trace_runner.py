@@ -18,7 +18,7 @@ from logic.src.policies.routing.meta_heuristics.adaptive_large_neighborhood_sear
 )
 from logic.src.tracking.execution_trace import ExecutionTrace, solution_record
 
-PROBLEMS = ("ptp", "cptp", "cptptc", "cptptwtc", "cvrp")
+PROBLEMS = ("ptp", "cmptp", "cmptptc", "cmptptwtc", "cvrp")
 TRACED_ROUTING = "alns"
 
 

@@ -2,13 +2,13 @@
 
 import pytest
 import torch
-from logic.src.models.subnets.embeddings.context.cptp import CPTPContextEmbedder
+from logic.src.models.subnets.embeddings.context.cmptp import CMPTPContextEmbedder
 from tensordict import TensorDict
 
 
 @pytest.mark.parametrize("matrix_key", ["dm", "dist", "dist_matrix"])
 def test_context_distance_ignores_objective_road_matrix(matrix_key):
-    model = CPTPContextEmbedder(4)
+    model = CMPTPContextEmbedder(4)
     with torch.no_grad():
         model.project_step_context.weight.zero_()
         model.project_step_context.bias.zero_()

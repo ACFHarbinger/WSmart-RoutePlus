@@ -9,12 +9,12 @@ pytestmark = [pytest.mark.unit]
 
 def test_context_embedders_multi_instance_beam_expansion():
     """Verify that context embedders support beam_width > 1 without dimension mismatch crash."""
-    from logic.src.models.subnets.embeddings.context.cptp import CPTPContextEmbedder
+    from logic.src.models.subnets.embeddings.context.cmptp import CMPTPContextEmbedder
     from logic.src.models.subnets.embeddings.context.generic import GenericContextEmbedder
     from logic.src.models.subnets.embeddings.context.ptp import PTPContextEmbedder
 
     embed_dim = 16
-    for cls in [CPTPContextEmbedder, GenericContextEmbedder, PTPContextEmbedder]:
+    for cls in [CMPTPContextEmbedder, GenericContextEmbedder, PTPContextEmbedder]:
         embedder = cls(embed_dim=embed_dim)
         for bs in [1, 2]:
             num_nodes = 10
@@ -36,10 +36,10 @@ def test_context_embedders_multi_instance_beam_expansion():
 
 def test_attention_model_policy_no_dummy_step_accumulation():
     """Verify that finished instances do not accumulate log_p and entropy indefinitely."""
-    from logic.src.envs.cptp import CPTPEnv
+    from logic.src.envs.cmptp import CMPTPEnv
     from logic.src.models.core.attention_model.policy import AttentionModelPolicy
 
-    env = CPTPEnv(generator_params={"num_loc": 6})
+    env = CMPTPEnv(generator_params={"num_loc": 6})
     policy = AttentionModelPolicy(env_name=env.name, embed_dim=16, n_heads=2, n_encode_layers=1)
 
     td = env.reset(batch_size=[2])
@@ -55,10 +55,10 @@ def test_attention_model_policy_no_dummy_step_accumulation():
 
 def test_attention_model_policy_teacher_forcing_bounds_check():
     """Verify teacher forcing does not raise IndexError when trajectory exceeds actions length."""
-    from logic.src.envs.cptp import CPTPEnv
+    from logic.src.envs.cmptp import CMPTPEnv
     from logic.src.models.core.attention_model.policy import AttentionModelPolicy
 
-    env = CPTPEnv(generator_params={"num_loc": 6})
+    env = CMPTPEnv(generator_params={"num_loc": 6})
     policy = AttentionModelPolicy(env_name=env.name, embed_dim=16, n_heads=2, n_encode_layers=1)
 
     td = env.reset(batch_size=[2])
@@ -181,8 +181,8 @@ def test_glimpse_decoder_mask_inner_forwarding():
     """Verify GlimpseDecoder forwards mask_inner flag to one_to_many_logits."""
     from logic.src.models.subnets.decoders.glimpse.decoder import GlimpseDecoder
 
-    dec_unmasked = GlimpseDecoder(embed_dim=16, hidden_dim=32, problem="cptp", n_heads=2, mask_inner=False)
+    dec_unmasked = GlimpseDecoder(embed_dim=16, hidden_dim=32, problem="cmptp", n_heads=2, mask_inner=False)
     assert dec_unmasked.mask_inner is False
 
-    dec_masked = GlimpseDecoder(embed_dim=16, hidden_dim=32, problem="cptp", n_heads=2, mask_inner=True)
+    dec_masked = GlimpseDecoder(embed_dim=16, hidden_dim=32, problem="cmptp", n_heads=2, mask_inner=True)
     assert dec_masked.mask_inner is True

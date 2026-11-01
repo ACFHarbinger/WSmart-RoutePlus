@@ -23,8 +23,8 @@ command: "train"  # Command to execute. Options: train, eval, test_sim, gen_data
 model: ["amgc"]  # List of model names to run (for batch job submission).
                  # Example: ["am", "tam", "deep_decoder"]
 
-problem: "ptp"  # Problem type. CPTPTC: problem=cptptc (and match the inner
-                  # task's env group, e.g. envs@train.env=cptptc when command=train).
+problem: "ptp"  # Problem type. CMPTPTC: problem=cmptptc (and match the inner
+                  # task's env group, e.g. envs@train.env=cmptptc when command=train).
 
 gs: 20  # Graph size (number of nodes) - abbreviated for brevity
 

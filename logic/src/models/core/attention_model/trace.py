@@ -45,7 +45,7 @@ def init_model_trace(
             if isinstance(dep, torch.Tensor) and dep.numel() >= 2:
                 dep_cpu = dep.cpu()
                 depot_coord = [float(dep_cpu[0, 0].item()), float(dep_cpu[0, 1].item())]
-        problem_name = str(getattr(policy, "env_name", None) or "cptp")
+        problem_name = str(getattr(policy, "env_name", None) or "cmptp")
         trace_obj = ExecutionTrace(
             problem=problem_name,
             policies={"model": "am"},
@@ -273,7 +273,7 @@ def make_tracer(
 
 
 def build_attention_model_trace(
-    problem: str = "cptp",
+    problem: str = "cmptp",
     graph_size: int = 5,
     seed: int = 1,
     strategy: str = "greedy",
@@ -284,7 +284,7 @@ def build_attention_model_trace(
     """Build and run one CPU forward of AttentionModel and return (trace, out).
 
     Args:
-        problem: Problem domain ('cptp', 'ptp', etc.).
+        problem: Problem domain ('cmptp', 'ptp', etc.).
         graph_size: Number of nodes.
         seed: Random seed for initialization.
         strategy: Decoding strategy ('greedy', 'sampling').
@@ -297,7 +297,7 @@ def build_attention_model_trace(
     """
     from tensordict import TensorDict
 
-    from logic.src.envs.cptp import CPTPEnv
+    from logic.src.envs.cmptp import CMPTPEnv
     from logic.src.models.core.attention_model import AttentionModel
 
     torch.manual_seed(seed)
@@ -306,7 +306,7 @@ def build_attention_model_trace(
         model.eval()
 
     if env is None:
-        env = CPTPEnv(generator_params={"num_loc": graph_size}, check_env_specs=False)
+        env = CMPTPEnv(generator_params={"num_loc": graph_size}, check_env_specs=False)
 
     if td is None:
         g = torch.Generator().manual_seed(seed)

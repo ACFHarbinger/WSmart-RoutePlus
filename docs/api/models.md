@@ -708,11 +708,11 @@ Abstract base class for context embeddings.
 
 - **class `ContextEmbedder`** — Abstract base class for problem-specific context embeddings.
 
-### `logic.src.models.subnets.embeddings.context.cptp`
+### `logic.src.models.subnets.embeddings.context.cmptp`
 
-CPTP-specific context embedding module.
+CMPTP-specific context embedding module.
 
-- **class `CPTPContextEmbedder`** — Context embedder for Capacitated Profitable Tour Problem (CPTP).
+- **class `CMPTPContextEmbedder`** — Context embedder for Capacitated Multi-vehicle Profitable Tour Problem (CMPTP).
 
 ### `logic.src.models.subnets.embeddings.context.generic`
 
@@ -726,17 +726,17 @@ PTP specific context embedding module.
 
 - **class `PTPContextEmbedder`** — Context embedder for Profitable Tour Problem (PTP) and CVRP families.
 
-### `logic.src.models.subnets.embeddings.cptp`
+### `logic.src.models.subnets.embeddings.cmptp`
 
-CPTP Embedding module.
+CMPTP Embedding module.
 
-- **class `CPTPInitEmbedding`** — Initial embedding for CPTP (Capacitated Profitable Tour Problem).
+- **class `CMPTPInitEmbedding`** — Initial embedding for CMPTP (Capacitated Multi-vehicle Profitable Tour Problem).
 
-### `logic.src.models.subnets.embeddings.cptptwtc`
+### `logic.src.models.subnets.embeddings.cmptptwtc`
 
-CPTPTWTC Embedding module.
+CMPTPTWTC Embedding module.
 
-- **class `CPTPTWTCInitEmbedding`** — Initial embedding for CPTPTWTC: CPTP's node features plus each node's time window.
+- **class `CMPTPTWTCInitEmbedding`** — Initial embedding for CMPTPTWTC: CMPTP's node features plus each node's time window.
 
 ### `logic.src.models.subnets.embeddings.dynamic`
 
@@ -756,11 +756,11 @@ Edge embedding modules for graph-based encoders.
 
 - **class `EdgeEmbedding`** — Base class for edge embeddings in graph reinforcement learning.
 
-### `logic.src.models.subnets.embeddings.edges.cptp`
+### `logic.src.models.subnets.embeddings.edges.cmptp`
 
-CPTP Edge embedding module.
+CMPTP Edge embedding module.
 
-- **class `CPTPEdgeEmbedding`** — Edge embedding for capacitated VRP problems.
+- **class `CMPTPEdgeEmbedding`** — Edge embedding for capacitated VRP problems.
 
 ### `logic.src.models.subnets.embeddings.edges.none`
 
@@ -808,11 +808,11 @@ PTP Embedding module.
 
 State embedding modules for environment representations.
 
-### `logic.src.models.subnets.embeddings.state.cptp`
+### `logic.src.models.subnets.embeddings.state.cmptp`
 
-CPTP specific context embedding module.
+CMPTP specific context embedding module.
 
-- **class `CPTPState`** — Context embedding for CPTP.
+- **class `CMPTPState`** — Context embedding for CMPTP.
 
 ### `logic.src.models.subnets.embeddings.state.env`
 

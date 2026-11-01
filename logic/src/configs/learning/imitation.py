@@ -48,7 +48,7 @@ class ImitationConfig:
                    sampled rollout; trained the paper models) or 'expert' (the expert's tours;
                    the model rollout is skipped).
         expert_cache: Directory of the expert solve cache (profitable nearest-neighbour expert
-                      only), e.g. 'data/cache/expert/cptp100_emp'; None disables it.
+                      only), e.g. 'data/cache/expert/cmptp100_emp'; None disables it.
         precompute: Only fill the expert cache, without training the model (needs
                     fill_from='expert' and expert_cache).
     """

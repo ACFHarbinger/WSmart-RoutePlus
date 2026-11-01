@@ -20,8 +20,8 @@ from typing import Any, Dict
 
 from torch import nn
 
-from logic.src.models.subnets.embeddings.cptp import CPTPInitEmbedding
-from logic.src.models.subnets.embeddings.cptptwtc import CPTPTWTCInitEmbedding
+from logic.src.models.subnets.embeddings.cmptp import CMPTPInitEmbedding
+from logic.src.models.subnets.embeddings.cmptptwtc import CMPTPTWTCInitEmbedding
 from logic.src.models.subnets.embeddings.ptp import PTPInitEmbedding
 
 from .context import (
@@ -33,7 +33,7 @@ from .context import (
 from .dynamic import DynamicEmbedding
 from .edges import (
     EDGE_EMBEDDING_REGISTRY,
-    CPTPEdgeEmbedding,
+    CMPTPEdgeEmbedding,
     EdgeEmbedding,
     NoEdgeEmbedding,
     TSPEdgeEmbedding,
@@ -47,7 +47,7 @@ from .positional import (
 )
 from .state import (
     STATE_EMBEDDING_REGISTRY,
-    CPTPState,
+    CMPTPState,
     EnvState,
     PTPState,
 )
@@ -56,9 +56,9 @@ from .static import StaticEmbedding
 # Embedding registry
 INIT_EMBEDDING_REGISTRY: Dict[str, Any] = {
     "ptp": PTPInitEmbedding,
-    "cptp": CPTPInitEmbedding,
-    "cptptc": CPTPInitEmbedding,
-    "cptptwtc": CPTPTWTCInitEmbedding,
+    "cmptp": CMPTPInitEmbedding,
+    "cmptptc": CMPTPInitEmbedding,
+    "cmptptwtc": CMPTPTWTCInitEmbedding,
 }
 
 DYNAMIC_EMBEDDING_REGISTRY: Dict[str, Any] = {
@@ -90,18 +90,18 @@ def get_init_embedding(env_name: str, embed_dim: int = 128, **kwargs: Any) -> nn
 
 __all__: list[str] = [
     "PTPInitEmbedding",
-    "CPTPInitEmbedding",
-    "CPTPTWTCInitEmbedding",
+    "CMPTPInitEmbedding",
+    "CMPTPTWTCInitEmbedding",
     "EnvState",
     "PTPState",
-    "CPTPState",
+    "CMPTPState",
     "ContextEmbedder",
     "PTPContextEmbedder",
     "DynamicEmbedding",
     "StaticEmbedding",
     "EdgeEmbedding",
     "TSPEdgeEmbedding",
-    "CPTPEdgeEmbedding",
+    "CMPTPEdgeEmbedding",
     "NoEdgeEmbedding",
     "INIT_EMBEDDING_REGISTRY",
     "STATE_EMBEDDING_REGISTRY",

@@ -1,4 +1,4 @@
-"""Unit tests verifying PTP and CPTP get_costs parity across width N and N+1 waste shapes.
+"""Unit tests verifying PTP and CMPTP get_costs parity across width N and N+1 waste shapes.
 
 Addresses Issue #61 design item:
 - PTP.get_costs unconditionally prepended a depot waste column, shifting customer
@@ -13,7 +13,7 @@ import pytest
 import torch
 from logic.src.envs.base.generator import Generator
 from logic.src.envs.base.problem import BaseProblem
-from logic.src.envs.cptp import CPTP
+from logic.src.envs.cmptp import CMPTP
 from logic.src.envs.ptp import PTP, PTPEnv
 
 
@@ -117,8 +117,8 @@ def test_ptp_get_costs_batched_parity() -> None:
 
 @pytest.mark.unit
 @pytest.mark.fast
-def test_cptp_get_costs_width_n_vs_n1_parity() -> None:
-    """CPTP.evaluate_tour must produce identical cost dict and trip capacity check on both shapes."""
+def test_cmptp_get_costs_width_n_vs_n1_parity() -> None:
+    """CMPTP.evaluate_tour must produce identical cost dict and trip capacity check on both shapes."""
     depot = torch.zeros(1, 2)
     locs_N = torch.tensor([[[1.0, 0.0], [2.0, 0.0]]])
     waste_N = torch.tensor([[20.0, 30.0]])
@@ -142,8 +142,8 @@ def test_cptp_get_costs_width_n_vs_n1_parity() -> None:
 
     pi = torch.tensor([[0, 1, 2, 0]])
 
-    c_dict_N = CPTP.evaluate_tour(dataset_N, pi, cw_dict=None)
-    c_dict_N1 = CPTP.evaluate_tour(dataset_N1, pi, cw_dict=None)
+    c_dict_N = CMPTP.evaluate_tour(dataset_N, pi, cw_dict=None)
+    c_dict_N1 = CMPTP.evaluate_tour(dataset_N1, pi, cw_dict=None)
 
     assert torch.allclose(c_dict_N["cost"], c_dict_N1["cost"])
     assert torch.allclose(c_dict_N["waste"], c_dict_N1["waste"])

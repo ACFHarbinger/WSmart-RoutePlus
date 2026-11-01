@@ -106,7 +106,7 @@ def test_traced_packing_policies():
     rates = np.array([5.0, 10.0, 15.0, 2.0], dtype=np.float64)
     stds = np.array([1.0, 2.0, 3.0, 0.5], dtype=np.float64)
 
-    trace = ExecutionTrace("cptp", {}, seed=1, instance={"n_nodes": 5})
+    trace = ExecutionTrace("cmptp", {}, seed=1, instance={"n_nodes": 5})
     input_id = trace.add("instance", "input")
 
     # 1. last_minute

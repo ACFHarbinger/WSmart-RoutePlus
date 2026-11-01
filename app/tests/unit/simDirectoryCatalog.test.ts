@@ -100,7 +100,7 @@ describe("Simulation directory and log adapter utilities", () => {
 
     // Figueira da Foz 350
     expect(
-      guessGraphPreset("outputs/simulations/90days/figueiradafoz350_all/cptp/log_regular_10N.json")
+      guessGraphPreset("outputs/simulations/90days/figueiradafoz350_all/cmptp/log_regular_10N.json")
     ).toBe("ffz-350");
 
     // Inferred from bin count fallback

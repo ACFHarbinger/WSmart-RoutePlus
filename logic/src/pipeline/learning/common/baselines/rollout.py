@@ -303,14 +303,14 @@ class RolloutBaseline(Baseline):
         Only the built-in deterministic greedy policy and complete routing data are
         eligible. Other policy/environment contracts retain ordinary precomputation.
         """
-        from logic.src.envs.cptp import CPTPEnv
+        from logic.src.envs.cmptp import CMPTPEnv
         from logic.src.envs.ptp import PTPEnv
         from logic.src.models.core.attention_model.policy import AttentionModelPolicy
 
         data = getattr(dataset, "data", None)
         if (
             type(self.baseline_policy) is not AttentionModelPolicy
-            or type(env) not in (PTPEnv, CPTPEnv)
+            or type(env) not in (PTPEnv, CMPTPEnv)
             or type(dataset) is not TensorDictDataset
             or not isinstance(data, TensorDict)
             or "locs" not in data.keys()

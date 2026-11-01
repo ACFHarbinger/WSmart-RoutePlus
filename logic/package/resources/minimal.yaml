@@ -25,7 +25,7 @@ dropped_requirements:
 
 problems:
   - ptp
-  - cptp
+  - cmptp
 
 # Ship configs/envs/<problem>.yaml for these problems only.
 only_problem_env_configs: true
@@ -67,7 +67,7 @@ infrastructure:
   - logic.src.models.subnets.factories.attention   # the GAT encoder factory, loaded by string target in utils/model/loader.py
   - logic.src.envs.base.routing
   - logic.src.envs.ptp
-  - logic.src.envs.cptp
+  - logic.src.envs.cmptp
   - logic.src.models.common.policy_contract
   - logic.controllers.hydra_dispatch
 
@@ -104,8 +104,8 @@ excluded_packages:
   - logic.src.data.generators                         # the package loads existing datasets only
   - logic.src.policies.packing.dispatcher_thompson
   - logic.src.policies.routing.exact_and_decomposition_solvers.smart_waste_collection_two_commodity_flow.ortools_wrapper   # SWC-TCF runs on Gurobi only
-  - logic.src.envs.cptptc
-  - logic.src.envs.cptptwtc
+  - logic.src.envs.cmptptc
+  - logic.src.envs.cmptptwtc
   - logic.src.utils.infrastructure.setup_manager     # HRL manager setup
   - logic.src.pipeline.callbacks.pytorch.attention_heatmaps
   - logic.src.pipeline.callbacks.pytorch.training_health

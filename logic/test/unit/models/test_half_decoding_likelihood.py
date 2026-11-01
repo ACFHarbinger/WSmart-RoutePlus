@@ -29,11 +29,11 @@ def test_half_logits_match_float32_log_probability_and_gradient(strategy, dtype)
 
 
 def test_half_teacher_forcing_rare_action_matches_log_softmax(monkeypatch):
-    from logic.src.envs.cptp import CPTPEnv
+    from logic.src.envs.cmptp import CMPTPEnv
     from logic.src.models.core.attention_model.policy import AttentionModelPolicy
 
-    env = CPTPEnv(generator_params={"num_loc": 2})
-    policy = AttentionModelPolicy(env_name="cptp", embed_dim=16, n_heads=2, n_encode_layers=1)
+    env = CMPTPEnv(generator_params={"num_loc": 2})
+    policy = AttentionModelPolicy(env_name="cmptp", embed_dim=16, n_heads=2, n_encode_layers=1)
     logits = torch.tensor([[0.0, -11.5, 0.0]], dtype=torch.float16, requires_grad=True)
     monkeypatch.setattr(policy.decoder, "_get_log_p", lambda *args: (logits, torch.zeros(1, 3, dtype=torch.bool)))
     output = policy(env.reset(batch_size=[1]), env=env, actions=torch.tensor([[1]]))

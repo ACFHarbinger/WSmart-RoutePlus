@@ -24,7 +24,7 @@ pytestmark = [pytest.mark.integration, pytest.mark.slow]
 class TestIntegrationTraining:
     """Integration tests for Training workflows."""
 
-    @pytest.mark.parametrize("problem_name", ["ptp", "cptp"])
+    @pytest.mark.parametrize("problem_name", ["ptp", "cmptp"])
     def test_run_training_integration(self, problem_name, tmp_path):
         """Test standard training orchestration with real entry point (mocked trainer)."""
         cfg = Config()

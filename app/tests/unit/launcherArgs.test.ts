@@ -17,9 +17,9 @@ describe("launcherArgs — Slice V7 Hydra argument builders & domain nomenclatur
   it("synchronizes TRAIN_PROBLEMS with problem_factory.py and TRAIN_MODELS with logic/configs/models/", () => {
     expect(TRAIN_PROBLEMS).toEqual([
       "ptp",
-      "cptp",
-      "cptptc",
-      "cptptwtc",
+      "cmptp",
+      "cmptptc",
+      "cmptptwtc",
       "cvrp",
     ]);
     expect(TRAIN_MODELS).toEqual([
@@ -100,7 +100,7 @@ describe("launcherArgs — Slice V7 Hydra argument builders & domain nomenclatur
       mode: "train",
       seed: 42,
       wandb: false,
-      problem: "cptptwtc",
+      problem: "cmptptwtc",
       model: "deep_decoder",
       encoder: "gat",
       batchSize: 512,
@@ -120,7 +120,7 @@ describe("launcherArgs — Slice V7 Hydra argument builders & domain nomenclatur
       extraOverrides: "",
     });
 
-    expect(trainArgs).toContain("envs@train.env=cptptwtc");
+    expect(trainArgs).toContain("envs@train.env=cmptptwtc");
     expect(trainArgs).toContain("models=deep_decoder");
     expect(trainArgs).toContain("tracker.enabled=false");
 
@@ -128,7 +128,7 @@ describe("launcherArgs — Slice V7 Hydra argument builders & domain nomenclatur
       mode: "meta",
       seed: 42,
       wandb: false,
-      problem: "cptp",
+      problem: "cmptp",
       model: "am",
       encoder: "gat",
       batchSize: 64,
@@ -147,8 +147,8 @@ describe("launcherArgs — Slice V7 Hydra argument builders & domain nomenclatur
       evalStrategy: "greedy",
       extraOverrides: "",
     });
-    expect(metaArgs).toContain("envs@meta_rl.env=cptp");
-    expect(metaArgs).toContain("meta_rl.env.name=cptp");
+    expect(metaArgs).toContain("envs@meta_rl.env=cmptp");
+    expect(metaArgs).toContain("meta_rl.env.name=cmptp");
   });
 
   it("buildReportStudioCliArgs reflects bound scenario filter in simulation report mode", () => {

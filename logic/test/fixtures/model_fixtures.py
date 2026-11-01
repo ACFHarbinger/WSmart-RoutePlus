@@ -242,7 +242,7 @@ def mock_ppo_deps(mocker):
     mock_baseline.eval.side_effect = lambda td, reward, env=None: torch.ones_like(reward)
 
     mock_problem = MagicMock()
-    mock_problem.NAME = "cptp"
+    mock_problem.NAME = "cmptp"
     mock_problem.evaluate_tour.return_value = {"cost": torch.tensor([1.0, 1.0]), "reward": torch.tensor([1.0, 1.0]), "length": torch.tensor([1.0, 1.0]), "waste": torch.tensor([1.0, 1.0]), "overflows": torch.tensor([0.0, 0.0])}
     mock_problem.get_costs.return_value = (torch.tensor([1.0, 1.0]), {}, None)
 

@@ -90,7 +90,7 @@ def _instances(n: int, kind: str, batch: int = 40, seed: int = 0):
 @pytest.mark.parametrize("revenue", [1.0, 27.7])
 def test_batched_expert_matches_the_reference(kind: str, n: int, revenue: float) -> None:
     dms, waste = _instances(n, kind)
-    expert = ProfitableNearestNeighbourPolicy("cptp")
+    expert = ProfitableNearestNeighbourPolicy("cmptp")
 
     batched = expert.solve(dms, waste, revenue, 1.0)
 
@@ -102,6 +102,6 @@ def test_a_shared_distance_matrix_is_not_copied_per_instance() -> None:
     dms, waste = _instances(30, "asymmetric", batch=8)
     shared = torch.tensor(dms[:1]).expand(8, -1, -1).numpy()
 
-    batched = ProfitableNearestNeighbourPolicy("cptp").solve(shared, waste, 5.0, 1.0)
+    batched = ProfitableNearestNeighbourPolicy("cmptp").solve(shared, waste, 5.0, 1.0)
 
     assert batched == [_reference(dms[0], waste[b], 5.0, 1.0) for b in range(8)]

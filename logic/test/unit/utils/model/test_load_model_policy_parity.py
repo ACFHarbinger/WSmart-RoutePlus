@@ -5,7 +5,7 @@ import json
 import pytest
 import torch
 from logic.src.configs.models import ActivationConfig, NormalizationConfig
-from logic.src.envs.cptp import CPTPEnv
+from logic.src.envs.cmptp import CMPTPEnv
 from logic.src.envs.ptp import PTPEnv
 from logic.src.models.core.attention_model.policy import AttentionModelPolicy
 from logic.src.utils.model.loader import load_model
@@ -61,7 +61,7 @@ def _instances(batch: int = 16, num_loc: int = 12) -> TensorDict:
     )
 
 
-@pytest.mark.parametrize(("env_name", "env_class"), [("cptp", CPTPEnv), ("ptp", PTPEnv)])
+@pytest.mark.parametrize(("env_name", "env_class"), [("cmptp", CMPTPEnv), ("ptp", PTPEnv)])
 def test_reloaded_policy_decodes_the_trained_routes(tmp_path, env_name, env_class) -> None:
     torch.manual_seed(11)
     policy = AttentionModelPolicy(

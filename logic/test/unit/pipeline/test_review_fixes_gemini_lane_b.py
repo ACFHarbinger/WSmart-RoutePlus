@@ -7,11 +7,11 @@ from tensordict import TensorDict
 pytestmark = [pytest.mark.unit]
 
 
-def test_cptptc_check_done_explicit_stop_and_exhaustion():
-    """Verify CPTPTCEnv._check_done respects explicit finished flag and exhausted customer actions."""
-    from logic.src.envs.cptptc import CPTPTCEnv
+def test_cmptptc_check_done_explicit_stop_and_exhaustion():
+    """Verify CMPTPTCEnv._check_done respects explicit finished flag and exhausted customer actions."""
+    from logic.src.envs.cmptptc import CMPTPTCEnv
 
-    env = CPTPTCEnv(generator_params={"num_loc": 5})
+    env = CMPTPTCEnv(generator_params={"num_loc": 5})
     td = env.reset(batch_size=[2])
 
     # Case 1: Initially at depot, i=0 -> not done
@@ -124,9 +124,9 @@ def test_problem_get_tour_length_batched_matrix():
 
 def test_routing_env_step_vectorized_dm_lookup():
     """Verify RoutingEnv._step indexes distance from tensordict['dm'] in a vectorized fashion."""
-    from logic.src.envs.cptp import CPTPEnv
+    from logic.src.envs.cmptp import CMPTPEnv
 
-    env = CPTPEnv(generator_params={"num_loc": 3})
+    env = CMPTPEnv(generator_params={"num_loc": 3})
     td = env.reset(batch_size=[2])
 
     # Provide precomputed dm: 4x4 (0 depot + 3 customers)

@@ -80,10 +80,10 @@ def _decoded_sequence(problem_name: str, seq: Any) -> Any:
     """Turn a padded evaluator sequence into the problem's tour, or None when it is empty."""
     if seq is None:
         return None
-    if problem_name in ("cptp", "cptptc"):
+    if problem_name in ("cmptp", "cmptptc"):
         # Multi-trip problems: keep the trailing depot-return marker
-        # (cptptc is single-vehicle-multi-trip, same shape as cptp's
-        # per-trip capacity resets -- see logic/src/envs/cptptc.py)
+        # (cmptptc is single-vehicle-multi-trip, same shape as cmptp's
+        # per-trip capacity resets -- see logic/src/envs/cmptptc.py)
         return np.trim_zeros(seq).tolist() + [0]
     if problem_name == "ptp":
         return np.trim_zeros(seq).tolist()
@@ -215,7 +215,7 @@ def _eval_dataset(
             "kg": c_dict["waste"].item() * bin_cap_kg,
             "overflows": c_dict["overflows"].item(),
         }
-        # Additive KPI: only present when the problem tracks it (e.g. cptptc's
+        # Additive KPI: only present when the problem tracks it (e.g. cmptptc's
         # "time" key from get_costs), so this stays plug-and-play for future
         # problem-specific KPIs without a fixed schema here.
         if "time" in c_dict:

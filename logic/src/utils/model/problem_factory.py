@@ -5,13 +5,13 @@ from __future__ import annotations
 from typing import Any, Type
 
 # Problem name -> task class in logic.src.envs. Classes import on request,
-# so a tree without a problem's module (the release ships PTP, CPTP, CPTPTC and CVRP) loads
+# so a tree without a problem's module (the release ships PTP, CMPTP, CMPTPTC and CVRP) loads
 # the others.
 _PROBLEM_CLASSES = {
     "ptp": "PTP",
-    "cptp": "CPTP",
-    "cptptc": "CPTPTC",
-    "cptptwtc": "CPTPTWTC",
+    "cmptp": "CMPTP",
+    "cmptptc": "CMPTPTC",
+    "cmptptwtc": "CMPTPTWTC",
     "cvrp": "CVRP",
 }
 

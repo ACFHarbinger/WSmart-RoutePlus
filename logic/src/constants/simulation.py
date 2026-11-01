@@ -94,7 +94,7 @@ METRICS: List[str] = [
     "collection_days",  # Days with a non-empty executed tour
 ]
 
-# Sample columns. ``time_spent`` is CPTPTC-only and is not in this default list.
+# Sample columns. ``time_spent`` is CMPTPTC-only and is not in this default list.
 SIM_METRICS: List[str] = list(METRICS)
 
 # Daily log metrics (add mandatory nodes selected before tour)
@@ -126,7 +126,7 @@ MAX_CAPACITY_PERCENT = 100.0  # percent (0-100 range)
 # Prevents unbounded route lengths in waste-collecting and selective problems.
 
 # Default vehicle capacity (kilograms)
-# Used in: Capacitated VRP variants (CVRP, CPTP, CPTPTC)
+# Used in: Capacitated VRP variants (CVRP, CMPTP, CMPTPTC)
 # Route terminates when cumulative collected waste ≥ VEHICLE_CAPACITY
 # Typical real-world values: 80-120 kg for small trucks, 200-300 kg for large trucks
 VEHICLE_CAPACITY: float = 200.0  # kg (default for synthetic instances)
@@ -137,6 +137,6 @@ VEHICLE_CAPACITY: float = 200.0  # kg (default for synthetic instances)
 # Format: {problem_name} → logic/src/envs/{problem_name}.py
 PROBLEMS: List[str] = [
     "ptp",  # Profitable Tour Problem (maximize profit - cost)
-    "cptp",  # Capacitated Profitable Tour Problem (adds the vehicle capacity constraint)
-    "cptptc",  # Capacitated Profitable Tour Problem with Time Constraints (capacity + shift time budget)
+    "cmptp",  # Capacitated Multi-vehicle Profitable Tour Problem (adds the vehicle capacity constraint)
+    "cmptptc",  # Capacitated Multi-vehicle Profitable Tour Problem with Time Constraints (capacity + shift time budget)
 ]

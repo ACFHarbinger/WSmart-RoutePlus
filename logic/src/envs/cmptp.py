@@ -1,9 +1,9 @@
-"""Capacitated Profitable Tour Problem (CPTP) environment, generator, and task specification.
+"""Capacitated Multi-vehicle Profitable Tour Problem (CMPTP) environment, generator, and task specification.
 
-In CPTP, the vehicle has finite capacity per trip. Visiting the depot unloads the vehicle
+In CMPTP, the vehicle has finite capacity per trip. Visiting the depot unloads the vehicle
 and resets trip capacity. Selecting the depot while already at the depot terminates the day.
 
-The module also holds ``CPTPGenerator``, the problem's instance generator.
+The module also holds ``CMPTPGenerator``, the problem's instance generator.
 """
 
 from __future__ import annotations
@@ -13,30 +13,30 @@ from typing import Any, Dict, Optional, Union
 import torch
 
 from logic.src.envs.base.resources import LoadResource
-from logic.src.envs.common.released_specs import CPTP_SPEC
+from logic.src.envs.common.released_specs import CMPTP_SPEC
 from logic.src.envs.core.ptp import evaluate_profitable_tour
 from logic.src.envs.ptp import PTP, PTPEnv, PTPGenerator
 from logic.src.envs.spec import PROBLEMS
 
 
-class CPTPGenerator(PTPGenerator):
-    """Generator for Capacitated Profitable Tour Problem (CPTP) instances.
+class CMPTPGenerator(PTPGenerator):
+    """Generator for Capacitated Multi-vehicle Profitable Tour Problem (CMPTP) instances.
 
     The instance layout is PTP's; the capacity it carries (``capacity``) binds per trip
-    in ``CPTPEnv``.
+    in ``CMPTPEnv``.
     """
 
 
-class CPTPEnv(PTPEnv):
-    """Capacitated Profitable Tour Problem Environment.
+class CMPTPEnv(PTPEnv):
+    """Capacitated Multi-vehicle Profitable Tour Problem Environment.
 
     Attributes:
-        NAME: Environment identifier "cptp".
+        NAME: Environment identifier "cmptp".
         explicit_stop: True. Selecting the depot while already at the depot ends the day.
     """
 
-    NAME: str = "cptp"
-    name: str = "cptp"
+    NAME: str = "cmptp"
+    name: str = "cmptp"
     explicit_stop: bool = True
     mask_empty_bins: bool = False
 
@@ -53,7 +53,7 @@ class CPTPEnv(PTPEnv):
     ) -> None:
         generator_params = generator_params or kwargs
         if generator is None:
-            generator = CPTPGenerator(**generator_params, device=device)
+            generator = CMPTPGenerator(**generator_params, device=device)
 
         super().__init__(
             generator=generator,
@@ -69,10 +69,10 @@ class CPTPEnv(PTPEnv):
         self.resources = (LoadResource(),)
 
 
-class CPTP(PTP):
-    """Capacitated Profitable Tour Problem (CPTP) task definition."""
+class CMPTP(PTP):
+    """Capacitated Multi-vehicle Profitable Tour Problem (CMPTP) task definition."""
 
-    NAME: str = "cptp"
+    NAME: str = "cmptp"
 
     @staticmethod
     def evaluate_tour(
@@ -83,7 +83,7 @@ class CPTP(PTP):
         capacity: Optional[float] = None,
         **kwargs: Any,
     ) -> Dict[str, torch.Tensor]:
-        """Evaluate a completed CPTP tour sequence with vectorized capacity checks."""
+        """Evaluate a completed CMPTP tour sequence with vectorized capacity checks."""
         return evaluate_profitable_tour(
             dataset,
             pi,
@@ -94,6 +94,6 @@ class CPTP(PTP):
         )
 
 
-PROBLEMS.register(CPTP_SPEC)
+PROBLEMS.register(CMPTP_SPEC)
 
-__all__ = ["CPTPGenerator", "CPTPEnv", "CPTP", "CPTP_SPEC"]
+__all__ = ["CMPTPGenerator", "CMPTPEnv", "CMPTP", "CMPTP_SPEC"]

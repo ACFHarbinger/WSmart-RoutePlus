@@ -4,7 +4,7 @@
 # =============================================================================
 # Configuration for reinforcement learning training with PyTorch Lightning.
 # Used by: python main.py train
-# CPTPTC:    python main.py train envs@train.env=cptptc
+# CMPTPTC:    python main.py train envs@train.env=cmptptc
 #          (swap the env group; do not only set train.env.name -- that keeps
 #          the previously composed YAML's other fields)
 #
@@ -198,7 +198,7 @@ rl:
     # - "model": the model's sampled rollout (trained the paper models)
     # - "expert": the expert's tours; the model rollout is skipped
     fill_from: "model"
-    # Directory of the expert solve cache (profitable_nn only), e.g. data/cache/expert/cptp100_emp.
+    # Directory of the expert solve cache (profitable_nn only), e.g. data/cache/expert/cmptp100_emp.
     expert_cache: null
     # Only fill the expert cache, without training (needs fill_from=expert and expert_cache).
     precompute: false

@@ -19,12 +19,12 @@ from omegaconf import OmegaConf
 )
 def test_top_level_model_settings_reach_constructor(hydra, settings):
     if hydra:
-        cfg = OmegaConf.create({"task": "train", "train": {"env": {"name": "cptp"}, "policy": {"model": settings}}})
+        cfg = OmegaConf.create({"task": "train", "train": {"env": {"name": "cmptp"}, "policy": {"model": settings}}})
     else:
         cfg = SimpleNamespace(
             task="train",
             train=SimpleNamespace(
-                env=SimpleNamespace(name="cptp"), policy=SimpleNamespace(model=SimpleNamespace(**settings))
+                env=SimpleNamespace(name="cmptp"), policy=SimpleNamespace(model=SimpleNamespace(**settings))
             ),
         )
 
@@ -32,4 +32,4 @@ def test_top_level_model_settings_reach_constructor(hydra, settings):
         _init_policy(cast(Any, cfg), None)
 
     kwargs = resolve.return_value.call_args.kwargs
-    assert kwargs == {"env_name": "cptp", **{k: v for k, v in settings.items() if k != "name"}}
+    assert kwargs == {"env_name": "cmptp", **{k: v for k, v in settings.items() if k != "name"}}

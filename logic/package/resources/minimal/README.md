@@ -6,7 +6,7 @@ plain Attention Model trained with REINFORCE on existing `.td` datasets. It is b
 WSmart-Route code by `logic/package/build_release.py --manifest logic/package/resources/minimal.yaml`.
 
 Not included: the other routing and packing algorithms, route improvement and acceptance
-criteria, time windows and time constraints (CPTPTC), experiment tracking, the Studio telemetry,
+criteria, time windows and time constraints (CMPTPTC), experiment tracking, the Studio telemetry,
 HPO, meta-learning, imitation learning, dataset generation and the `eval` and `gen_data` tasks.
 Results differ from the full release's, which improves every route with local search.
 
@@ -14,7 +14,7 @@ Results differ from the full release's, which improves every route with local se
 
 | Area | Components |
 | --- | --- |
-| Problems | `ptp` (Profitable Tour Problem), `cptp` (Capacitated PTP) |
+| Problems | `ptp` (Profitable Tour Problem), `cmptp` (Capacitated Multi-vehicle PTP) |
 | Routing algorithms | `na` (Attention Model), `swc_tcf` (Gurobi), `sans`, `pg_clns` |
 | Packing (which bins must be collected) | `last_minute`, `lookahead`, `service_level` |
 | Neural training | Attention Model (graph-attention encoder), REINFORCE with rollout baseline |
@@ -40,7 +40,7 @@ logic/test/              the package tests (see Running the tests)
 logic/submodules/wsmart_bin_analysis/
                          bin-analysis package (GridBase), used by the empirical distribution
 docs/release.md          the included components
-model_weights/           the paper's trained Attention Models (cptp<N>_<area>_plastic/<emp|gamma3>/amgat0-il-rl)
+model_weights/           the paper's trained Attention Models (cmptp<N>_<area>_plastic/<emp|gamma3>/amgat0-il-rl)
 assets/diagrams/         the two simulator diagrams (PDF)
 assets/files/FILE_LIST.txt
                          listing of the code files
@@ -110,15 +110,15 @@ python . test_sim sim.graph.area=riomaior sim.graph.num_loc=100 sim.graph.n_days
 ```
 
 ```bash
-# Train the Attention Model on the 20-bin CPTP sample dataset (REINFORCE, one epoch)
-python . train envs@train.env=cptp train.batch_size=16 train.num_workers=0 'train.env.eval_graphs=[]' \
+# Train the Attention Model on the 20-bin CMPTP sample dataset (REINFORCE, one epoch)
+python . train envs@train.env=cmptp train.batch_size=16 train.num_workers=0 'train.env.eval_graphs=[]' \
   train.env.curriculum_graphs.0.num_loc=20 train.env.curriculum_graphs.0.area=riomaior \
   train.env.curriculum_graphs.0.distance_method=file \
   'train.env.curriculum_graphs.0.dm_filepath="gmaps_distmat_plastic[riomaior].csv"' \
   train.env.curriculum_graphs.0.focus_graph=graphs_20V_1N_plastic.json \
   train.env.curriculum_graphs.0.focus_size=64 train.env.curriculum_graphs.0.n_samples=64 \
   train.env.curriculum_graphs.0.n_days=1 \
-  train.env.curriculum_graphs.0.load_dataset=data/datasets/cptp/cptp20_emp_smoke_seed42.td \
+  train.env.curriculum_graphs.0.load_dataset=data/datasets/cmptp/cmptp20_emp_smoke_seed42.td \
   train.model_weights_path=weights/ckpt train.final_model_path=weights/am/epoch-1.pt
 ```
 
@@ -131,7 +131,7 @@ the paper use `area=riomaior num_loc=170` and `area=figueiradafoz num_loc=350`
 matching dataset in `data/simulator/datasets/` and `data_distribution=gamma3` for Gamma-3.
 `na` reads its model from `model_path` in `logic/configs/policies/routing/learning_algorithms/policy_na.yaml` (the Rio Maior
 100 Empirical model by default). To simulate another scenario, edit that line to the scenario's
-model, e.g. `model_weights/cptp350_figueiradafoz_plastic/emp/amgat0-il-rl`. The simulator reads the
+model, e.g. `model_weights/cmptp350_figueiradafoz_plastic/emp/amgat0-il-rl`. The simulator reads the
 policy files themselves, so a command-line override of `model_path` does not reach it.
 
 Limit simulator parallelism on small machines with `sim.cpu_cores=4`; the default `0` starts one

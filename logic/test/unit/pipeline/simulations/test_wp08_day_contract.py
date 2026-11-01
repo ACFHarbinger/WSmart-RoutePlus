@@ -164,7 +164,7 @@ def test_converter_maps_days_and_drops_reward(tmp_path):
 
 
 def test_released_specs_import_without_torch():
-    """ptp/cptp/cptptc/cvrp resolve without importing PyTorch."""
+    """ptp/cmptp/cmptptc/cvrp resolve without importing PyTorch."""
     root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", ".."))
     code = (
         "import sys\n"
@@ -172,10 +172,10 @@ def test_released_specs_import_without_torch():
         "from logic.src.envs.spec import PROBLEMS\n"
         "ptp = PROBLEMS.get('ptp')\n"
         "cvrp = PROBLEMS.get('cvrp')\n"
-        "cptptc = PROBLEMS.get('cptptc')\n"
+        "cmptptc = PROBLEMS.get('cmptptc')\n"
         "assert ptp.expand_pool is True\n"
         "assert cvrp.expand_pool is False\n"
-        "assert cptptc.per_trip_shift is True\n"
+        "assert cmptptc.per_trip_shift is True\n"
         "assert 'torch' not in sys.modules or sys.modules['torch'] is None\n"
     )
     env = os.environ.copy()
@@ -208,11 +208,11 @@ def test_invalid_pipeline_does_not_change_rng_or_expand_pool(monkeypatch):
 
 
 def test_neural_import_does_not_replace_classical_spec():
-    from logic.src.envs.cptptc import CPTPTC_SPEC
+    from logic.src.envs.cmptptc import CMPTPTC_SPEC
     from logic.src.envs.spec import PROBLEMS
 
-    assert PROBLEMS.get("cptptc") is CPTPTC_SPEC
-    assert CPTPTC_SPEC.per_trip_shift is True
+    assert PROBLEMS.get("cmptptc") is CMPTPTC_SPEC
+    assert CMPTPTC_SPEC.per_trip_shift is True
 
 
 def test_converter_daily_horizons_and_std_are_not_whole_run_horizons():

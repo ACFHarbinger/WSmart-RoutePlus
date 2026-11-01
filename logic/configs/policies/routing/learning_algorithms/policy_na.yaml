@@ -1,6 +1,6 @@
 na:
   amgat:
-    model_path: model_weights/cptp100_riomaior_plastic/emp/amgat0-il-rl
+    model_path: model_weights/cmptp100_riomaior_plastic/emp/amgat0-il-rl
     decoding:
       strategy: greedy
       beam_width: 5

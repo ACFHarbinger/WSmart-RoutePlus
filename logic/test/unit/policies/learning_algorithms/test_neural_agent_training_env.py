@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional, cast
 
 import pytest
 import torch
-from logic.src.envs.cptp import CPTPEnv
+from logic.src.envs.cmptp import CMPTPEnv
 from logic.src.policies.routing.learning_algorithms.neural_agent.agent import NeuralAgent
 from tensordict import TensorDict
 
@@ -16,7 +16,7 @@ PROFIT_VARS = {"cost_km": 1.0, "revenue_kg": 0.5837, "bin_capacity": 47.5, "vehi
 class _RecordingModel(torch.nn.Module):
     """Stands in for a trained model: visits every valid bin in index order, then stops."""
 
-    env_name = "cptp"
+    env_name = "cmptp"
     problem = None
 
     def __init__(self) -> None:
@@ -24,7 +24,7 @@ class _RecordingModel(torch.nn.Module):
         self.encoder = torch.nn.Identity()
         self.calls = []
 
-    def forward(self, td: Any, env: CPTPEnv, strategy: Optional[str] = None, **kwargs: Any) -> Dict[str, Any]:
+    def forward(self, td: Any, env: CMPTPEnv, strategy: Optional[str] = None, **kwargs: Any) -> Dict[str, Any]:
         self.calls.append((td.clone(), env))
         actions = []
         while not td["done"].all():
@@ -50,7 +50,7 @@ def test_simulator_day_uses_the_training_env_with_the_simulator_capacity() -> No
     )
 
     td, env = model.calls[0]
-    assert isinstance(env, CPTPEnv)
+    assert isinstance(env, CMPTPEnv)
     assert td["capacity"].item() == pytest.approx(73.68)
     assert env.waste_weight == pytest.approx(0.5837 * 47.5)
     # Bins without waste are masked, so the route holds only bins 1 and 3.
@@ -68,7 +68,7 @@ def test_mandatory_bins_are_kept_even_when_empty() -> None:
 
 
 def test_empty_bin_mask_is_off_by_default() -> None:
-    env = CPTPEnv(generator_params={"num_loc": 3}, check_env_specs=False)
+    env = CMPTPEnv(generator_params={"num_loc": 3}, check_env_specs=False)
     td = TensorDict(
         {"locs": torch.rand(1, 3, 2), "depot": torch.zeros(1, 2), "waste": torch.tensor([[0.5, 0.0, 0.2]]), "capacity": torch.tensor([5.0])},
         batch_size=[1],

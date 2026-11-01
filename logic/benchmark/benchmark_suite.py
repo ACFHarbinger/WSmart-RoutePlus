@@ -121,7 +121,7 @@ def benchmark_ls_throughput(device="cpu", seed=42):
         device=device,
     )
 
-    policy = RandomLocalSearchPolicy(env_name="cptp", n_iterations=100, seed=seed).to(device)
+    policy = RandomLocalSearchPolicy(env_name="cmptp", n_iterations=100, seed=seed).to(device)
 
     class MockEnv:
         waste_weight = 1.0

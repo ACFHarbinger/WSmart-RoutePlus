@@ -5,7 +5,7 @@
 # Configuration for multi-day waste collection simulation testing.
 # =============================================================================
 # Used by: python main.py test_sim
-# CPTPTC:    python main.py test_sim sim.problem=cptptc
+# CMPTPTC:    python main.py test_sim sim.problem=cmptptc
 #          Time budget is a *problem-level* constraint, not a per-policy
 #          flag. Loads shift_hours/avg_speed_kmh/service_time_h via
 #          load_temporal_params() in InitializingState and enforces both
@@ -115,13 +115,13 @@ sim:
   cpu_cores: 0
   n_vehicles: 0
   no_cuda: false
-  problem: "ptp" # ptp | cptp | cptptc
-  shift_hours: 7.0 # CPTPTC per depot-to-depot trip, including return and service
+  problem: "ptp" # ptp | cmptp | cmptptc
+  shift_hours: 7.0 # CMPTPTC per depot-to-depot trip, including return and service
   avg_speed_kmh: 35.0 # Uniform fallback for every bin and depot leg
   service_time_h: 0.025
   time_windows: null # Optional routing time windows: CSV/Excel path or [start_day, days_after, interval_between]
-  # CPTPTC keeps this file's graph/policy lists; only the problem tag changes.
-  #   python main.py test_sim sim.problem=cptptc
+  # CMPTPTC keeps this file's graph/policy lists; only the problem tag changes.
+  #   python main.py test_sim sim.problem=cmptptc
   # Do not flip the committed default -- the paper's 30-day factorial is ptp.
   output_dir: "outputs/simulations"
   run_name: "lm_cls"

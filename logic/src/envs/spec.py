@@ -18,16 +18,16 @@ class ProblemSpec:
     """Declarative specification of a routing problem.
 
     Attributes:
-        name: Canonical problem identifier (e.g. "cptp", "ptp", "cvrp", "cptptc").
+        name: Canonical problem identifier (e.g. "cmptp", "ptp", "cvrp", "cmptptc").
         objective: Pure economic / cost objective function.
         constraints: Tuple of declarative Resource constraints.
         repair: Optional repair operator for invalid/overweight tours.
         metrics: Tuple of reported KPI metric names.
         env_target: Lazy import target string for the RL environment class
-            (e.g. "logic.src.envs.cptp:CPTPEnv").
+            (e.g. "logic.src.envs.cmptp:CMPTPEnv").
         features: Optional feature specification for embedding projections.
-        expand_pool: Whether unvisited candidate pools may expand dynamically (True for PTP/CPTP/CPTPTC, False for CVRP).
-        per_trip_shift: Repair and validate each trip against the shift budget (CPTPTC).
+        expand_pool: Whether unvisited candidate pools may expand dynamically (True for PTP/CMPTP/CMPTPTC, False for CVRP).
+        per_trip_shift: Repair and validate each trip against the shift budget (CMPTPTC).
     """
 
     name: str
@@ -91,12 +91,12 @@ class ProblemRegistry:
 PROBLEMS = ProblemRegistry(
     {
         "ptp": "logic.src.envs.common.released_specs:PTP_SPEC",
-        "cptp": "logic.src.envs.common.released_specs:CPTP_SPEC",
-        "cptptc": "logic.src.envs.common.released_specs:CPTPTC_SPEC",
+        "cmptp": "logic.src.envs.common.released_specs:CMPTP_SPEC",
+        "cmptptc": "logic.src.envs.common.released_specs:CMPTPTC_SPEC",
         "cvrp": "logic.src.envs.common.released_specs:CVRP_SPEC",
         **{
             name: f"logic.src.envs.{name}:{name.upper()}_SPEC"
-            for name in ("cptptwtc", "tsp", "atsp", "op", "pctsp", "spctsp", "pdp", "irp")
+            for name in ("cmptptwtc", "tsp", "atsp", "op", "pctsp", "spctsp", "pdp", "irp")
         },
         "thop": "logic.src.envs.thop:ThOP_SPEC",
     }

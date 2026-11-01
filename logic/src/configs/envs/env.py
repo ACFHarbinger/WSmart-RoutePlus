@@ -26,19 +26,19 @@ class EnvConfig:
     ``curriculum_graphs`` acts as the primary training graph.
 
     Attributes:
-        name: Name of the environment (e.g., 'ptp', 'cptp', 'cptptc').
+        name: Name of the environment (e.g., 'ptp', 'cmptp', 'cmptptc').
         min_loc: Minimum coordinate value.
         max_loc: Maximum coordinate value.
-        capacity: Vehicle capacity (optional). For ``cptptc`` this is the same
-            per-trip vehicle capacity as CPTP; it is not replaced by the
+        capacity: Vehicle capacity (optional). For ``cmptptc`` this is the same
+            per-trip vehicle capacity as CMPTP; it is not replaced by the
             time budget.
-        shift_hours: Optional per-trip time budget in hours (``cptptc`` only).
+        shift_hours: Optional per-trip time budget in hours (``cmptptc`` only).
             ``None`` falls through to ``SimulationRepository.get_temporal_params()``.
-        avg_speed_kmh: Optional average driving speed in km/h (``cptptc`` only).
-        service_time_h: Optional per-bin service time in hours (``cptptc`` only).
-        day_hours: Optional working-day length in hours; the depot's time window (``cptptwtc`` only).
-        tw_min_width_h: Optional shortest bin time window in hours (``cptptwtc`` only).
-        tw_max_width_h: Optional longest bin time window in hours (``cptptwtc`` only).
+        avg_speed_kmh: Optional average driving speed in km/h (``cmptptc`` only).
+        service_time_h: Optional per-bin service time in hours (``cmptptc`` only).
+        day_hours: Optional working-day length in hours; the depot's time window (``cmptptwtc`` only).
+        tw_min_width_h: Optional shortest bin time window in hours (``cmptptwtc`` only).
+        tw_max_width_h: Optional longest bin time window in hours (``cmptptwtc`` only).
         distance_method: Optional distance computation method for meta-RL envs.
         curriculum_graphs: Ordered list of graphs for sequential curriculum
             learning. The **first entry** is used for single-stage training.
@@ -52,12 +52,12 @@ class EnvConfig:
     min_loc: float = 0.0
     max_loc: float = 1.0
     capacity: Optional[float] = None
-    # cptptc temporal resource (ignored by every other problem; None = use
+    # cmptptc temporal resource (ignored by every other problem; None = use
     # SimulationRepository.get_temporal_params() when the env actually reads them)
     shift_hours: Optional[float] = None
     avg_speed_kmh: Optional[float] = None
     service_time_h: Optional[float] = None
-    # cptptwtc time windows (ignored by every other problem; None = the generator's defaults)
+    # cmptptwtc time windows (ignored by every other problem; None = the generator's defaults)
     day_hours: Optional[float] = None
     tw_min_width_h: Optional[float] = None
     tw_max_width_h: Optional[float] = None

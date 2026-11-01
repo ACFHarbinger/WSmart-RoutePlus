@@ -2,7 +2,7 @@
 
 import pytest
 import torch
-from logic.src.envs.cptp import CPTPEnv
+from logic.src.envs.cmptp import CMPTPEnv
 from logic.src.policies.vectorized.routing.expert_cache import CachedExpert
 from logic.src.policies.vectorized.routing.profitable_nearest_neighbour import ProfitableNearestNeighbourPolicy
 from tensordict import TensorDict
@@ -10,9 +10,9 @@ from tensordict import TensorDict
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
-def _reset(waste: torch.Tensor, dm: torch.Tensor) -> tuple[CPTPEnv, TensorDict]:
+def _reset(waste: torch.Tensor, dm: torch.Tensor) -> tuple[CMPTPEnv, TensorDict]:
     batch, n = waste.shape
-    env = CPTPEnv(generator_params={"num_loc": n}, check_env_specs=False, waste_weight=10.0, cost_weight=1.0)
+    env = CMPTPEnv(generator_params={"num_loc": n}, check_env_specs=False, waste_weight=10.0, cost_weight=1.0)
     td = TensorDict(
         {
             "locs": torch.rand(batch, n, 2, generator=torch.Generator().manual_seed(1)),
@@ -36,8 +36,8 @@ def _state(seed: int = 0, batch: int = 6, n: int = 12):
 def test_hits_give_the_fresh_solve_and_change_nothing(tmp_path) -> None:
     waste, dm = _state()
     env, td = _reset(waste, dm)
-    fresh = ProfitableNearestNeighbourPolicy("cptp")(td, env)
-    cached = CachedExpert(ProfitableNearestNeighbourPolicy("cptp"), str(tmp_path))
+    fresh = ProfitableNearestNeighbourPolicy("cmptp")(td, env)
+    cached = CachedExpert(ProfitableNearestNeighbourPolicy("cmptp"), str(tmp_path))
 
     first = cached(td, env)
     second = cached(td, env)
@@ -50,7 +50,7 @@ def test_hits_give_the_fresh_solve_and_change_nothing(tmp_path) -> None:
 
 def test_any_change_to_the_expert_input_misses(tmp_path) -> None:
     waste, dm = _state()
-    cached = CachedExpert(ProfitableNearestNeighbourPolicy("cptp"), str(tmp_path))
+    cached = CachedExpert(ProfitableNearestNeighbourPolicy("cmptp"), str(tmp_path))
     cached(*reversed(_reset(waste, dm)))
 
     changed = waste.clone()
@@ -67,7 +67,7 @@ def test_any_change_to_the_expert_input_misses(tmp_path) -> None:
     cached(td, env)
     assert cached.misses == 19
 
-    other_passes = CachedExpert(ProfitableNearestNeighbourPolicy("cptp", two_opt_passes=1), str(tmp_path))
+    other_passes = CachedExpert(ProfitableNearestNeighbourPolicy("cmptp", two_opt_passes=1), str(tmp_path))
     other_passes(*reversed(_reset(waste, dm)))
     assert other_passes.hits == 0
 
@@ -75,12 +75,12 @@ def test_any_change_to_the_expert_input_misses(tmp_path) -> None:
 def test_records_survive_reopening_the_directory(tmp_path) -> None:
     waste, dm = _state(seed=3)
     env, td = _reset(waste, dm)
-    cached = CachedExpert(ProfitableNearestNeighbourPolicy("cptp"), str(tmp_path))
+    cached = CachedExpert(ProfitableNearestNeighbourPolicy("cmptp"), str(tmp_path))
     expected = cached(td, env)["actions"]
     assert cached.flush() is not None
     assert cached.flush() is None  # nothing pending
 
-    reopened = CachedExpert(ProfitableNearestNeighbourPolicy("cptp"), str(tmp_path))
+    reopened = CachedExpert(ProfitableNearestNeighbourPolicy("cmptp"), str(tmp_path))
     assert len(reopened) == 6
     assert torch.equal(reopened(td, env)["actions"], expected)
     assert (reopened.misses, reopened.hits) == (0, 6)

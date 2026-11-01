@@ -10,7 +10,7 @@ Attributes:
     ShiftTimeResource: Per-trip time budget (travel + service time).
 
 Example:
-    >>> env = CPTPEnv(resources=(LoadResource(),))
+    >>> env = CMPTPEnv(resources=(LoadResource(),))
 """
 
 from __future__ import annotations
@@ -305,7 +305,7 @@ class ShiftTimeResource(Resource):
 
 
 class TimeWindowResource(Resource):
-    """Day clock with per-node time windows (CPTPTWTC).
+    """Day clock with per-node time windows (CMPTPTWTC).
 
     ``current_time`` is the time of day (h). It runs across trips: a depot return resets the
     shift budget (``ShiftTimeResource``), not the clock. Service at a node starts at

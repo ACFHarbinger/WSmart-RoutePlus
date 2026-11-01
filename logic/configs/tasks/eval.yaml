@@ -4,7 +4,7 @@
 # =============================================================================
 # Configuration for evaluating trained models on test datasets.
 # Used by: python main.py eval
-# CPTPTC:    python main.py eval envs@eval.env=cptptc eval.env.name=cptptc eval.problem=cptptc
+# CMPTPTC:    python main.py eval envs@eval.env=cmptptc eval.env.name=cmptptc eval.problem=cmptptc
 #          eval.env.name and eval.problem below are hardcoded and must stay
 #          in lockstep with the composed /envs@eval.env group.
 #
@@ -36,7 +36,7 @@ eval:
   # =============================================================================
   env:
     name: "ptp" # Problem type to evaluate. Should match training environment.
-    # CPTPTC: set to "cptptc" together with /envs@eval.env=cptptc and eval.problem=cptptc.
+    # CMPTPTC: set to "cmptptc" together with /envs@eval.env=cmptptc and eval.problem=cmptptc.
 
   # Decoding Strategy
   decoding:
@@ -79,7 +79,7 @@ eval:
     # Can specify multiple for batch evaluation.
 
   # Problem Configuration
-  problem: "ptp" # Problem type (should match env.name). Options include cptptc.
+  problem: "ptp" # Problem type (should match env.name). Options include cmptptc.
 
   # =============================================================================
   # Execution Flags

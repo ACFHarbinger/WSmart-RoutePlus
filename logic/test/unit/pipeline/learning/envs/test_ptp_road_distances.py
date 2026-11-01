@@ -5,7 +5,7 @@ from typing import cast
 import pytest
 import torch
 from logic.src.envs import PTPGenerator
-from logic.src.envs.cptp import CPTPEnv
+from logic.src.envs.cmptp import CMPTPEnv
 from logic.src.pipeline.simulations.repository import load_area_and_waste_type_params
 from tensordict import TensorDict, TensorDictBase
 
@@ -40,11 +40,11 @@ def _instances(node_ids: list[list[float]]) -> TensorDict:
     )
 
 
-def _env(dm_filepath=None) -> CPTPEnv:
+def _env(dm_filepath=None) -> CMPTPEnv:
     params = {"num_loc": 3}
     if dm_filepath is not None:
         params["dm_filepath"] = dm_filepath
-    return CPTPEnv(generator_params=params, check_env_specs=False)
+    return CMPTPEnv(generator_params=params, check_env_specs=False)
 
 
 def test_tour_length_uses_road_km_in_dataset_bin_order(tmp_path) -> None:

@@ -681,7 +681,7 @@ Phases 3-7 (docs, types, architecture, deps, tooling) can proceed in parallel wi
 
 - ✅ Completed multi-agent NOC/Orion Telemetry & UX Overhaul specification ([`FINAL-PLAN.md`](../.agent/reports/studio-ux-brainstorm/FINAL-PLAN.md))
 - ✅ Integrated §G.20 into Studio Roadmap: Slices V0 through V8 covering live pipeline optimization, dual light/dark WCAG AA tokens, ECharts/Canvas DotMatrixHeatmap, direction-aware radar scaling, and 5-task workflow sitemap
-- ✅ Synchronized domain nomenclature in GUI roadmap: deprecated legacy problem names (`vrpp`, `wcvrp`, `scwcvrp`) in favor of active logic problem classes (`ptp`, `cptp`, `cptptc`, `cptptwtc`, `cvrp`) and model configurations (`deep_decoder` in place of `ddam`)
+- ✅ Synchronized domain nomenclature in GUI roadmap: deprecated legacy problem names (`vrpp`, `wcvrp`, `scwcvrp`) in favor of active logic problem classes (`ptp`, `cmptp`, `cmptptc`, `cmptptwtc`, `cvrp`) and model configurations (`deep_decoder` in place of `ddam`)
 - 📋 Planned a checked allowlist for the 34 modules over 500 lines (built in slice V0, #146; tracking issue #145)
 
 ### 2026-02-07 (v4.0)

@@ -1,19 +1,19 @@
-"""Profitable nearest-neighbour expert: selective tours that the CPTP environment accepts."""
+"""Profitable nearest-neighbour expert: selective tours that the CMPTP environment accepts."""
 
 import pytest
 import torch
-from logic.src.envs.cptp import CPTPEnv
+from logic.src.envs.cmptp import CMPTPEnv
 from logic.src.policies.vectorized.routing.profitable_nearest_neighbour import ProfitableNearestNeighbourPolicy
 from tensordict import TensorDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
-def _reset(waste: list[list[float]], waste_weight: float = 10.0) -> tuple[CPTPEnv, TensorDict]:
+def _reset(waste: list[list[float]], waste_weight: float = 10.0) -> tuple[CMPTPEnv, TensorDict]:
     # Depot at the origin; bins 1-3 sit together one unit away, bin 4 is five units away.
     locs = torch.tensor([[1.0, 0.0], [1.0, 0.1], [1.1, 0.0], [0.0, 5.0]])
     batch = len(waste)
-    env = CPTPEnv(generator_params={"num_loc": 4}, check_env_specs=False, waste_weight=waste_weight, cost_weight=1.0)
+    env = CMPTPEnv(generator_params={"num_loc": 4}, check_env_specs=False, waste_weight=waste_weight, cost_weight=1.0)
     td = TensorDict(
         {
             "locs": locs.expand(batch, 4, 2).clone(),
@@ -28,7 +28,7 @@ def _reset(waste: list[list[float]], waste_weight: float = 10.0) -> tuple[CPTPEn
 
 def test_skips_the_far_bin_and_stays_home_when_no_tour_pays() -> None:
     env, td = _reset([[0.5, 0.5, 0.5, 0.1], [0.01, 0.0, 0.0, 0.01]])
-    out = ProfitableNearestNeighbourPolicy("cptp")(td, env)
+    out = ProfitableNearestNeighbourPolicy("cmptp")(td, env)
 
     visited = [set(a.tolist()) - {0} for a in out["actions"]]
     assert visited[0] == {1, 2, 3}
@@ -40,7 +40,7 @@ def test_skips_the_far_bin_and_stays_home_when_no_tour_pays() -> None:
 
 def test_every_expert_action_is_valid_so_teacher_forcing_is_finite() -> None:
     env, td = _reset([[0.5, 0.5, 0.5, 0.1], [0.01, 0.0, 0.0, 0.01], [0.9, 0.0, 0.9, 0.9]])
-    actions = ProfitableNearestNeighbourPolicy("cptp")(td, env)["actions"]
+    actions = ProfitableNearestNeighbourPolicy("cmptp")(td, env)["actions"]
 
     state = td.clone()
     for step in range(actions.size(1)):
@@ -53,7 +53,7 @@ def test_every_expert_action_is_valid_so_teacher_forcing_is_finite() -> None:
 
 def test_ignores_bins_without_waste() -> None:
     env, td = _reset([[0.9, 0.0, 0.9, 0.0]])
-    actions = ProfitableNearestNeighbourPolicy("cptp")(td, env)["actions"][0].tolist()
+    actions = ProfitableNearestNeighbourPolicy("cmptp")(td, env)["actions"][0].tolist()
 
     assert set(actions) - {0} == {1, 3}
     # The tour returns to the depot and then ends the day there.

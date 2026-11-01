@@ -1,17 +1,17 @@
-"""Capacity and action-shape physics for CPTP."""
+"""Capacity and action-shape physics for CMPTP."""
 
 from typing import cast
 
 import pytest
 import torch
-from logic.src.envs.cptp import CPTPEnv
+from logic.src.envs.cmptp import CMPTPEnv
 from tensordict import TensorDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
-def test_cptp_remaining_capacity_never_goes_negative() -> None:
-    env = CPTPEnv(generator_params={"num_loc": 2}, check_env_specs=False)
+def test_cmptp_remaining_capacity_never_goes_negative() -> None:
+    env = CMPTPEnv(generator_params={"num_loc": 2}, check_env_specs=False)
     td = TensorDict(
         {
             "locs": torch.tensor([[[0.0, 0.0], [1.0, 0.0]]]),

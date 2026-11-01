@@ -362,7 +362,7 @@ Temporal data loading for the simulator.
 
 ### `logic.src.data.time.node_time_windows`
 
-Per-node service time windows within a working day (CPTPTWTC).
+Per-node service time windows within a working day (CMPTPTWTC).
 
 - `sample_node_time_windows()` — Draw a time window per bin: width uniform in ``[min_width_h, max_width_h]``, placed uniformly in the day.
 

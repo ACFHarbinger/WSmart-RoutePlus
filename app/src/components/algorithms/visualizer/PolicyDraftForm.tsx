@@ -41,7 +41,7 @@ interface PolicyDraftFormProps {
   onRun: () => void;
 }
 
-const PROBLEMS = ["ptp", "cptp", "cptptc", "cptptwtc", "cvrp"] as const;
+const PROBLEMS = ["ptp", "cmptp", "cmptptc", "cmptptwtc", "cvrp"] as const;
 
 function CatalogSelect({
   id,

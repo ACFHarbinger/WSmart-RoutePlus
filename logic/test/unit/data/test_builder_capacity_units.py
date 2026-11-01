@@ -14,7 +14,7 @@ def _build(problem, area, waste_type):
     return builder, builder.build_td()
 
 
-@pytest.mark.parametrize("problem", ["cptp", "cvrp"])
+@pytest.mark.parametrize("problem", ["cmptp", "cvrp"])
 @pytest.mark.parametrize(("area", "waste_type"), [("riomaior", "plastic"), ("figueiradafoz", "paper")])
 def test_capacity_is_the_simulator_value_in_bin_fractions(problem, area, waste_type):
     _, td = _build(problem, area, waste_type)
@@ -26,6 +26,6 @@ def test_capacity_is_the_simulator_value_in_bin_fractions(problem, area, waste_t
 
 
 def test_unknown_area_falls_back_to_the_builder_default():
-    builder, td = _build("cptp", "nowhere", "plastic")
+    builder, td = _build("cmptp", "nowhere", "plastic")
 
     assert torch.allclose(td["capacity"], torch.full_like(td["capacity"], builder.vehicle_cap / 100.0 * MAX_WASTE))

@@ -1,15 +1,15 @@
-"""CPTPTWTC Embedding module.
+"""CMPTPTWTC Embedding module.
 
-This module provides the CPTPTWTCInitEmbedding layer, which encodes locations, waste levels
-and time windows for the Capacitated Profitable Tour Problem with Time Windows and Time
+This module provides the CMPTPTWTCInitEmbedding layer, which encodes locations, waste levels
+and time windows for the Capacitated Multi-vehicle Profitable Tour Problem with Time Windows and Time
 Constraints.
 
 Attributes:
-    CPTPTWTCInitEmbedding: Initial feature encoder for CPTPTWTC instances.
+    CMPTPTWTCInitEmbedding: Initial feature encoder for CMPTPTWTC instances.
 
 Example:
-    >>> from logic.src.models.subnets.embeddings.cptptwtc import CPTPTWTCInitEmbedding
-    >>> embed = CPTPTWTCInitEmbedding(embed_dim=128)
+    >>> from logic.src.models.subnets.embeddings.cmptptwtc import CMPTPTWTCInitEmbedding
+    >>> embed = CMPTPTWTCInitEmbedding(embed_dim=128)
     >>> h = embed(td)
 """
 
@@ -19,11 +19,11 @@ from typing import Any
 
 import torch
 
-from logic.src.models.subnets.embeddings.cptp import CPTPInitEmbedding
+from logic.src.models.subnets.embeddings.cmptp import CMPTPInitEmbedding
 
 
-class CPTPTWTCInitEmbedding(CPTPInitEmbedding):
-    """Initial embedding for CPTPTWTC: CPTP's node features plus each node's time window.
+class CMPTPTWTCInitEmbedding(CMPTPInitEmbedding):
+    """Initial embedding for CMPTPTWTC: CMPTP's node features plus each node's time window.
 
     Node features are x, y, waste, and the window's opening and closing times as fractions of
     the working day (``tw_early / day_hours``, ``tw_late / day_hours``). The depot's window
@@ -57,4 +57,4 @@ class CPTPTWTCInitEmbedding(CPTPInitEmbedding):
         return [(early / day).unsqueeze(-1), (late / day).unsqueeze(-1)]
 
 
-__all__ = ["CPTPTWTCInitEmbedding"]
+__all__ = ["CMPTPTWTCInitEmbedding"]

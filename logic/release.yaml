@@ -7,7 +7,7 @@
 # — not the BB/BC/BPC acronyms of the retired `ci/export_config.json` flow.
 #
 # Scope (owner ruling Q-1/Q-2): only the components tested in the paper
-# simulations. Problems: PTP, CPTP, CPTPTC and CVRP.
+# simulations. Problems: PTP, CMPTP, CMPTPTC and CVRP.
 
 version: "1.0.2"
 
@@ -28,8 +28,8 @@ dropped_requirements:
 # Problems released. These are `envs/<name>.py` problem names.
 problems:
   - ptp
-  - cptp
-  - cptptc
+  - cmptp
+  - cmptptc
   - cvrp
 
 # Registry keys released per stage. The stage names match the generated
@@ -93,8 +93,8 @@ infrastructure:
   - logic.src.envs.base.routing     # shared routing base env + generator (P-23, Q-3a)
   - logic.src.envs.base.resources   # load and shift-time resource constraints
   - logic.src.envs.ptp
-  - logic.src.envs.cptp
-  - logic.src.envs.cptptc
+  - logic.src.envs.cmptp
+  - logic.src.envs.cmptptc
   - logic.src.envs.cvrp
   - logic.src.models.common.policy_contract   # the P-24 forward/output contract and its check
   - logic.controllers.cli               # the CLI: main.py's parsers (Q-11b)

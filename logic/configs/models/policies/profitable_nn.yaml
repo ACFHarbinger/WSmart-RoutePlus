@@ -4,7 +4,7 @@
 # Profitable Nearest-Neighbour Expert Policy Configuration for RL Training
 # =============================================================================
 # PURPOSE:
-#   Selective expert for Imitation Learning on PTP and CPTP: a nearest-neighbour
+#   Selective expert for Imitation Learning on PTP and CMPTP: a nearest-neighbour
 #   tour over the bins with waste on road distances, shortened with 2-opt, minus
 #   each bin whose detour costs more than its waste is worth. It stays at the
 #   depot when the tour does not pay.

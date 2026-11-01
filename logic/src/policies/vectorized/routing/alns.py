@@ -4,7 +4,7 @@ Attributes:
     VectorizedALNS: Batched ALNS expert configured by ``ALNSConfig``.
 
 Example:
-    >>> policy = VectorizedALNS(env_name="cptp", max_iterations=200, time_limit=5.0)
+    >>> policy = VectorizedALNS(env_name="cmptp", max_iterations=200, time_limit=5.0)
     >>> out = policy(td, env)
 """
 

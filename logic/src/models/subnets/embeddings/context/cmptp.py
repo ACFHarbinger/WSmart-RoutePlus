@@ -1,19 +1,19 @@
-"""CPTP-specific context embedding module.
+"""CMPTP-specific context embedding module.
 
-This module provides ``CPTPContextEmbedder``, a capacity-aware extension of
-``PTPContextEmbedder`` for the Capacitated Profitable Tour Problem (CPTP).
+This module provides ``CMPTPContextEmbedder``, a capacity-aware extension of
+``PTPContextEmbedder`` for the Capacitated Multi-vehicle Profitable Tour Problem (CMPTP).
 
-While the uncapacitated PTP context uses (unvisited waste, mean travel distance)
-to guide early termination, the CPTP additionally exposes the vehicle's remaining
+While the uncapacitated multi-vehicle PTP context uses (unvisited waste, mean travel distance)
+to guide early termination, the CMPTP additionally exposes the vehicle's remaining
 capacity so the decoder can learn to stop visiting bins when the vehicle is nearly
 full even if profitable nodes remain.
 
 Attributes:
-    CPTPContextEmbedder: Context embedder for CPTP / orienteering with capacity.
+    CMPTPContextEmbedder: Context embedder for CMPTP / orienteering with capacity.
 
 Example:
-    >>> from logic.src.models.subnets.embeddings.context.cptp import CPTPContextEmbedder
-    >>> embedder = CPTPContextEmbedder(embed_dim=128)
+    >>> from logic.src.models.subnets.embeddings.context.cmptp import CMPTPContextEmbedder
+    >>> embedder = CMPTPContextEmbedder(embed_dim=128)
     >>> context = embedder(embeddings, state)   # [B, 1, 128]
 """
 
@@ -24,13 +24,13 @@ from typing import Any, cast
 import torch
 from torch import nn
 
-from logic.src.constants.models import CPTP_STEP_CONTEXT_OFFSET, NODE_DIM
+from logic.src.constants.models import CMPTP_STEP_CONTEXT_OFFSET, NODE_DIM
 
 from .ptp import PTPContextEmbedder
 
 
-class CPTPContextEmbedder(PTPContextEmbedder):
-    """Context embedder for Capacitated Profitable Tour Problem (CPTP).
+class CMPTPContextEmbedder(PTPContextEmbedder):
+    """Context embedder for Capacitated Multi-vehicle Profitable Tour Problem (CMPTP).
 
     Extends PTPContextEmbedder with a vehicle remaining-capacity scalar,
     giving the decoder three dynamic signals per decoding step:
@@ -46,7 +46,7 @@ class CPTPContextEmbedder(PTPContextEmbedder):
     """
 
     def __init__(self, embed_dim: int, node_dim: int = NODE_DIM, temporal_horizon: int = 0) -> None:
-        """Initializes CPTPContextEmbedder.
+        """Initializes CMPTPContextEmbedder.
 
         Args:
             embed_dim: Target embedding dimensionality.
@@ -54,20 +54,20 @@ class CPTPContextEmbedder(PTPContextEmbedder):
             temporal_horizon: Size of temporal feature window (if any).
         """
         super().__init__(embed_dim, node_dim, temporal_horizon)
-        # Override project_step_context for CPTP's step_context_dim (embed_dim + 3)
+        # Override project_step_context for CMPTP's step_context_dim (embed_dim + 3)
         self.project_step_context = nn.Linear(self.step_context_dim, embed_dim)
 
     @property
     def step_context_dim(self) -> int:
-        """Gets the dimensionality of the fused CPTP step context.
+        """Gets the dimensionality of the fused CMPTP step context.
 
         Returns:
-            int: ``embed_dim + CPTP_STEP_CONTEXT_OFFSET`` (= embed_dim + 3).
+            int: ``embed_dim + CMPTP_STEP_CONTEXT_OFFSET`` (= embed_dim + 3).
         """
-        return self.embed_dim + CPTP_STEP_CONTEXT_OFFSET
+        return self.embed_dim + CMPTP_STEP_CONTEXT_OFFSET
 
     def _step_context(self, embeddings: torch.Tensor, state: Any) -> torch.Tensor:
-        """Extracts current CPTP step context.
+        """Extracts current CMPTP step context.
 
         Fuses four signals at each decoding step:
         1. Current node embedding.
@@ -153,4 +153,4 @@ class CPTPContextEmbedder(PTPContextEmbedder):
         return self.project_step_context(combined)
 
 
-__all__ = ["CPTPContextEmbedder"]
+__all__ = ["CMPTPContextEmbedder"]

@@ -178,7 +178,7 @@ METRICS = MetricRegistry(
     )
 )
 
-# No mixed-unit reward or ambiguous `days` key. Shift time is opt-in for CPTPTC.
+# No mixed-unit reward or ambiguous `days` key. Shift time is opt-in for CMPTPTC.
 DEFAULT_METRICS: Tuple[str, ...] = tuple(name for name in METRICS if name != "time_spent")
 
 

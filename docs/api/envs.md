@@ -8,7 +8,7 @@
 Environments, instance generators and problem tasks.
 
 - `get_env()` — Build an environment by name, importing only that env module.
-- `get_generator()` — Build an instance generator by name (e.g. "ptp", "cptp", "tsp", "irp", "atsp", "cvrp").
+- `get_generator()` — Build an instance generator by name (e.g. "ptp", "cmptp", "tsp", "irp", "atsp", "cvrp").
 
 ### `logic.src.envs.atsp`
 
@@ -67,7 +67,7 @@ Declarative resource constraints of the routing environments.
 - **class `Resource`** — Declarative resource constraint of a routing environment.
 - **class `LoadResource`** — Vehicle capacity / load resource constraint.
 - **class `ShiftTimeResource`** — Per-trip time budget resource constraint (travel + service time).
-- **class `TimeWindowResource`** — Day clock with per-node time windows (CPTPTWTC).
+- **class `TimeWindowResource`** — Day clock with per-node time windows (CMPTPTWTC).
 
 ### `logic.src.envs.base.routing`
 
@@ -124,30 +124,30 @@ Shared utilities, economic objectives, and tour evaluation for Profitable Tour P
 - `calc_cumulative_trip_load()` — Vectorized per-trip cumulative load calculation.
 - `evaluate_profitable_tour()` — Vectorized evaluation of a completed tour sequence for profitable tour problems.
 
-### `logic.src.envs.cptp`
+### `logic.src.envs.cmptp`
 
-Capacitated Profitable Tour Problem (CPTP) environment, generator, and task specification.
+Capacitated Multi-vehicle Profitable Tour Problem (CMPTP) environment, generator, and task specification.
 
-- **class `CPTPGenerator`** — Generator for Capacitated Profitable Tour Problem (CPTP) instances.
-- **class `CPTPEnv`** — Capacitated Profitable Tour Problem Environment.
-- **class `CPTP`** — Capacitated Profitable Tour Problem (CPTP) task definition.
+- **class `CMPTPGenerator`** — Generator for Capacitated Multi-vehicle Profitable Tour Problem (CMPTP) instances.
+- **class `CMPTPEnv`** — Capacitated Multi-vehicle Profitable Tour Problem Environment.
+- **class `CMPTP`** — Capacitated Multi-vehicle Profitable Tour Problem (CMPTP) task definition.
 
-### `logic.src.envs.cptptc`
+### `logic.src.envs.cmptptc`
 
-Capacitated Profitable Tour Problem with Time Constraints (CPTPTC) environment, generator, and task specification.
+Capacitated Multi-vehicle Profitable Tour Problem with Time Constraints (CMPTPTC) environment, generator, and task specification.
 
-- **class `CPTPTCGenerator`** — Generator for Capacitated Profitable Tour Problem with Time Constraints (CPTPTC) instances.
-- **class `CPTPTCEnv`** — Capacitated Profitable Tour Problem with Time Constraints Environment.
-- **class `CPTPTC`** — Capacitated Profitable Tour Problem with Time Constraints (CPTPTC) task definition.
+- **class `CMPTPTCGenerator`** — Generator for Capacitated Multi-vehicle Profitable Tour Problem with Time Constraints (CMPTPTC) instances.
+- **class `CMPTPTCEnv`** — Capacitated Multi-vehicle Profitable Tour Problem with Time Constraints Environment.
+- **class `CMPTPTC`** — Capacitated Multi-vehicle Profitable Tour Problem with Time Constraints (CMPTPTC) task definition.
 
-### `logic.src.envs.cptptwtc`
+### `logic.src.envs.cmptptwtc`
 
-Capacitated Profitable Tour Problem with Time Windows and Time Constraints (CPTPTWTC).
+Capacitated Multi-vehicle Profitable Tour Problem with Time Windows and Time Constraints (CMPTPTWTC).
 
-- **class `CPTPTWTCGenerator`** — Generator for CPTPTWTC instances: CPTPTC fields plus per-bin time windows.
-- **class `CPTPTWTCEnv`** — CPTPTWTC environment: CPTPTC's capacity and shift budget plus bin time windows.
+- **class `CMPTPTWTCGenerator`** — Generator for CMPTPTWTC instances: CMPTPTC fields plus per-bin time windows.
+- **class `CMPTPTWTCEnv`** — CMPTPTWTC environment: CMPTPTC's capacity and shift budget plus bin time windows.
 - `time_window_violations()` — Count, per instance, the visits of ``pi`` that start after their window closes.
-- **class `CPTPTWTC`** — Capacitated Profitable Tour Problem with Time Windows and Time Constraints task definition.
+- **class `CMPTPTWTC`** — Capacitated Multi-vehicle Profitable Tour Problem with Time Windows and Time Constraints task definition.
 
 ### `logic.src.envs.cvrp`
 

@@ -54,7 +54,7 @@ class PTPInitEmbedding(nn.Module):
         self.depot_embed = nn.Linear(2, embed_dim)
 
     def _extra_node_features(self, td: Any, locs: torch.Tensor, waste: torch.Tensor) -> list:
-        """Further per-node features [B, N, k] after x, y and waste (none for PTP; see CPTPTWTC)."""
+        """Further per-node features [B, N, k] after x, y and waste (none for PTP; see CMPTPTWTC)."""
         return []
 
     def forward(self, td: Union[TensorDict, Dict[str, Any]], temporal_features: bool = True) -> torch.Tensor:

@@ -218,7 +218,7 @@ class VRPInstanceBuilder:
         return self
 
     def set_problem_name(self, problem_name: str):
-        """Sets the name of the problem (e.g., 'ptp', 'cptp').
+        """Sets the name of the problem (e.g., 'ptp', 'cmptp').
 
         Args:
             problem_name: Description of problem_name.
@@ -345,7 +345,7 @@ class VRPInstanceBuilder:
             }
         )
 
-        if self._problem_name == "cptptwtc":  # bin time windows within the working day
+        if self._problem_name == "cmptptwtc":  # bin time windows within the working day
             from logic.src.data.time.node_time_windows import DEFAULT_DAY_HOURS, sample_node_time_windows
 
             early, late = sample_node_time_windows(

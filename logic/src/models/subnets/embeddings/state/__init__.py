@@ -1,7 +1,7 @@
 """State embedding modules for environment representations.
 
 This package provides classes that encapsulate environment states (e.g., PTP,
-CPTP) for consistent processing by RL models and context embedders.
+CMPTP) for consistent processing by RL models and context embedders.
 
 Attributes:
     STATE_EMBEDDING_REGISTRY (Dict[str, Any]): Mapping of environment names
@@ -16,20 +16,20 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from .cptp import CPTPState
+from .cmptp import CMPTPState
 from .env import EnvState
 from .ptp import PTPState
 
 STATE_EMBEDDING_REGISTRY: Dict[str, Any] = {
     "ptp": PTPState,
-    "cptp": CPTPState,
-    "cptptc": CPTPState,
-    "cptptwtc": CPTPState,
+    "cmptp": CMPTPState,
+    "cmptptc": CMPTPState,
+    "cmptptwtc": CMPTPState,
 }
 
 __all__: list[str] = [
     "EnvState",
     "PTPState",
-    "CPTPState",
+    "CMPTPState",
     "STATE_EMBEDDING_REGISTRY",
 ]

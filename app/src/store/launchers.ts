@@ -25,15 +25,15 @@ export const PAPER_BENCHMARK_POLICIES = [
 ] as const;
 
 /** Problems `logic/configs/tasks/gen_data.yaml` accepts. */
-export const DATA_GEN_PROBLEMS = ["ptp", "cptp", "cptptc", "all"] as const;
+export const DATA_GEN_PROBLEMS = ["ptp", "cmptp", "cmptptc", "all"] as const;
 
 const RETIRED_PROBLEM_IDS = new Set(["vrpp", "wcvrp", "scwcvrp", "cwcvrp"]);
 
 export const TRAIN_PROBLEMS = [
   "ptp",
-  "cptp",
-  "cptptc",
-  "cptptwtc",
+  "cmptp",
+  "cmptptc",
+  "cmptptwtc",
   "cvrp",
 ] as const;
 

@@ -1,8 +1,8 @@
-"""Regression tests for Capacitated Profitable Tour Problem with Time Constraints feasibility."""
+"""Regression tests for Capacitated Multi-vehicle Profitable Tour Problem with Time Constraints feasibility."""
 
 import pytest
 import torch
-from logic.src.envs.cptptc import CPTPTC, CPTPTCEnv, CPTPTCGenerator
+from logic.src.envs.cmptptc import CMPTPTC, CMPTPTCEnv, CMPTPTCGenerator
 from tensordict import TensorDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
@@ -27,24 +27,24 @@ class TestCTOPCosts:
     def test_time_matrix_overrides_distance_and_includes_return(self, tour):
         data = _dataset(shift_hours=1.0)
         data["time_matrix"] = torch.tensor([[[0.0, 0.2], [0.7, 0.0]]])
-        costs = CPTPTC.evaluate_tour(data, torch.tensor(tour), None, check_feasibility=True)
+        costs = CMPTPTC.evaluate_tour(data, torch.tensor(tour), None, check_feasibility=True)
         assert costs["time"].item() == pytest.approx(0.9)
         data["time_matrix"][0, 1, 0] = 0.9
         with pytest.raises(AssertionError, match="trip time"):
-            CPTPTC.evaluate_tour(data, torch.tensor(tour), None, check_feasibility=True)
+            CMPTPTC.evaluate_tour(data, torch.tensor(tour), None, check_feasibility=True)
 
     def test_final_depot_return_is_time_feasible(self):
         """A route that cannot return before shift end is rejected."""
         data = _dataset()
         data["locs"] = torch.tensor([[[0.6, 0.0]]])
         with pytest.raises(AssertionError, match="trip time"):
-            CPTPTC.evaluate_tour(data, torch.tensor([[1, 0]]), None, check_feasibility=True)
+            CMPTPTC.evaluate_tour(data, torch.tensor([[1, 0]]), None, check_feasibility=True)
 
     def test_road_distance_matrix_governs_time_feasibility(self):
         """Time validation follows supplied road legs rather than coordinates."""
         dist_matrix = torch.tensor([[[0.0, 2.0], [2.0, 0.0]]])
         with pytest.raises(AssertionError, match="trip time"):
-            CPTPTC.evaluate_tour(
+            CMPTPTC.evaluate_tour(
                 _dataset(shift_hours=3.0), torch.tensor([[1, 0]]), dist_matrix=dist_matrix, check_feasibility=True
             )
 
@@ -52,12 +52,12 @@ class TestCTOPCosts:
         """The documented 1e-6 feasibility tolerance remains inclusive."""
         data = _dataset()
         data["locs"] = torch.tensor([[[0.5000005, 0.0]]])
-        costs = CPTPTC.evaluate_tour(data, torch.tensor([[1, 0]]), None, check_feasibility=True)
+        costs = CMPTPTC.evaluate_tour(data, torch.tensor([[1, 0]]), None, check_feasibility=True)
         assert costs["time"].item() == pytest.approx(1.000001, abs=1e-6)
 
 
 class TestCTOPEnvironment:
-    """Live CPTPTC state uses the same physical constraints as its evaluator."""
+    """Live CMPTPTC state uses the same physical constraints as its evaluator."""
 
     def test_time_matrix_controls_mask_and_resource_consumption(self):
         data = _dataset(shift_hours=1.0)
@@ -76,9 +76,9 @@ class TestCTOPEnvironment:
         assert not state["action_mask"][0, 1]
 
     @staticmethod
-    def _env() -> CPTPTCEnv:
-        return CPTPTCEnv(
-            generator=CPTPTCGenerator(
+    def _env() -> CMPTPTCEnv:
+        return CMPTPTCEnv(
+            generator=CMPTPTCGenerator(
                 num_loc=1,
                 capacity=10.0,
                 shift_hours=2.5,
@@ -88,17 +88,17 @@ class TestCTOPEnvironment:
         )
 
     def test_generator_and_env_import_without_simulation_repository_cycle(self):
-        """CPTPTC remains constructible without initializing simulation repositories."""
+        """CMPTPTC remains constructible without initializing simulation repositories."""
         td = self._env().reset(batch_size=[1])
         assert {"shift_hours", "avg_speed_kmh", "service_time_h"} <= set(td.keys())
         assert td["shift_hours"].item() == 2.5
         assert td["avg_speed_kmh"].item() == 20.0
         assert td["service_time_h"].item() == pytest.approx(0.1)
 
-    def test_get_env_factory_builds_a_cptptc_generator_not_a_plain_ptp_one(self):
-        """get_env("cptptc", **kwargs) must route through CPTPTCGenerator.
+    def test_get_env_factory_builds_a_cmptptc_generator_not_a_plain_ptp_one(self):
+        """get_env("cmptptc", **kwargs) must route through CMPTPTCGenerator.
 
-        Regression test: CPTPTCEnv previously had no __init__ override, so it
+        Regression test: CMPTPTCEnv previously had no __init__ override, so it
         inherited PTPEnv's, which always built a plain PTPGenerator. Any
         shift_hours/avg_speed_kmh/service_time_h kwarg passed through
         get_env (including a Hydra-composed override) was silently
@@ -108,8 +108,8 @@ class TestCTOPEnvironment:
         """
         from logic.src.envs import get_env
 
-        env = get_env("cptptc", num_loc=5, shift_hours=3.5, avg_speed_kmh=40.0)
-        assert isinstance(env.generator, CPTPTCGenerator)
+        env = get_env("cmptptc", num_loc=5, shift_hours=3.5, avg_speed_kmh=40.0)
+        assert isinstance(env.generator, CMPTPTCGenerator)
         assert env.generator.shift_hours == 3.5
         assert env.generator.avg_speed_kmh == 40.0
 

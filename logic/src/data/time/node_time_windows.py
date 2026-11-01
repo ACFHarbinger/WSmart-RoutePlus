@@ -1,4 +1,4 @@
-"""Per-node service time windows within a working day (CPTPTWTC).
+"""Per-node service time windows within a working day (CMPTPTWTC).
 
 Unlike :mod:`logic.src.data.time.time_windows`, which says on which simulation days routing is
 allowed, these windows say when, within one day, each bin can be served: ``[tw_early, tw_late]``

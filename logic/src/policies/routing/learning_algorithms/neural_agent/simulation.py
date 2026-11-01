@@ -282,7 +282,7 @@ class SimulationMixin:
         from logic.src.envs import get_env
 
         env_name = getattr(self.model, "env_name", None) or getattr(self.problem, "NAME", None)
-        if env_name not in ("ptp", "cptp"):
+        if env_name not in ("ptp", "cmptp"):
             return None
         pv = profit_vars or {}
         cache_key = (

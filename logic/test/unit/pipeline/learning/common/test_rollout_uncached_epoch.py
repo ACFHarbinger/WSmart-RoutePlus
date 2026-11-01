@@ -25,9 +25,9 @@ class _Mandatory:
 @pytest.mark.parametrize("packed", [False, True])
 def test_uncached_epoch_preserves_rng_values_actions_and_gradients(packed):
     torch.manual_seed(42)
-    env = get_env("cptp", generator_params={"num_loc": 5}, check_env_specs=False)
+    env = get_env("cmptp", generator_params={"num_loc": 5}, check_env_specs=False)
     policy = AttentionModelPolicy(
-        env_name="cptp", embed_dim=16, hidden_dim=32, n_encode_layers=1, n_heads=4, normalization="layer"
+        env_name="cmptp", embed_dim=16, hidden_dim=32, n_encode_layers=1, n_heads=4, normalization="layer"
     )
     module = REINFORCE(env=env, policy=policy, baseline="rollout", mandatory_selector=_Mandatory() if packed else None)
     module.log = lambda *args, **kwargs: None
@@ -111,10 +111,10 @@ def test_stochastic_custom_dataset_keeps_precomputation_rng_consumption():
             return row
 
     torch.manual_seed(42)
-    env = get_env("cptp", generator_params={"num_loc": 2}, check_env_specs=False)
+    env = get_env("cmptp", generator_params={"num_loc": 2}, check_env_specs=False)
     env.batch_size = torch.Size([2])
     policy = AttentionModelPolicy(
-        env_name="cptp", embed_dim=16, hidden_dim=32, n_encode_layers=1, n_heads=4, normalization="layer"
+        env_name="cmptp", embed_dim=16, hidden_dim=32, n_encode_layers=1, n_heads=4, normalization="layer"
     )
     baseline = RolloutBaseline(policy)
     raw = env.generator(batch_size=2)

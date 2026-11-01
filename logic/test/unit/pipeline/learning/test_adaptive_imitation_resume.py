@@ -13,7 +13,7 @@ def _module(monkeypatch):
     monkeypatch.setattr(AdaptiveImitation, "_create_expert_policy", lambda *args: torch.nn.Identity())
     module = AdaptiveImitation(
         policy_config=None,
-        env_name="cptp",
+        env_name="cmptp",
         env=SimpleNamespace(),
         policy=torch.nn.Linear(1, 1),
         baseline="none",

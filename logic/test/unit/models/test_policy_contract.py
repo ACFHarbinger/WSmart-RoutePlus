@@ -2,7 +2,7 @@
 
 import pytest
 import torch
-from logic.src.envs.cptp import CPTPEnv
+from logic.src.envs.cmptp import CMPTPEnv
 from logic.src.models.common.policy_contract import check_policy_output
 from logic.src.models.core.attention_model import AttentionModel
 from logic.src.policies.vectorized.routing.expert_cache import CachedExpert
@@ -14,11 +14,11 @@ pytestmark = [pytest.mark.unit, pytest.mark.fast]
 BATCH, BINS = 4, 8
 
 
-def _setup() -> tuple[AttentionModel, CPTPEnv, TensorDict]:
+def _setup() -> tuple[AttentionModel, CMPTPEnv, TensorDict]:
     torch.manual_seed(0)
-    model = AttentionModel(embed_dim=32, hidden_dim=64, problem="cptp", n_encode_layers=1, n_heads=4)
+    model = AttentionModel(embed_dim=32, hidden_dim=64, problem="cmptp", n_encode_layers=1, n_heads=4)
     model.eval()  # no dropout, so teacher forcing scores the sampled actions exactly
-    env = CPTPEnv(generator_params={"num_loc": BINS}, check_env_specs=False, waste_weight=10.0, cost_weight=1.0)
+    env = CMPTPEnv(generator_params={"num_loc": BINS}, check_env_specs=False, waste_weight=10.0, cost_weight=1.0)
     g = torch.Generator().manual_seed(1)
     td = TensorDict(
         {
@@ -68,7 +68,7 @@ def test_teacher_forcing_scores_the_given_actions() -> None:
 @pytest.mark.parametrize("cached", [False, True])
 def test_expert_output_is_teacher_forceable(tmp_path, cached: bool) -> None:
     model, env, td = _setup()
-    expert = ProfitableNearestNeighbourPolicy("cptp")
+    expert = ProfitableNearestNeighbourPolicy("cmptp")
     if cached:
         expert = CachedExpert(expert, str(tmp_path))
     state = env.reset(td.clone())

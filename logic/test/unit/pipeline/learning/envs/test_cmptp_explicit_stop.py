@@ -1,17 +1,17 @@
-"""CPTP day end: a depot visit unloads, depot-from-depot stops, and the stop is permanent."""
+"""CMPTP day end: a depot visit unloads, depot-from-depot stops, and the stop is permanent."""
 
 from typing import List, Tuple, cast
 
 import pytest
 import torch
-from logic.src.envs.cptp import CPTPEnv
+from logic.src.envs.cmptp import CMPTPEnv
 from tensordict import TensorDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
-def _reset(batch: int = 2, num_loc: int = 4, capacity: float = 0.5) -> Tuple[CPTPEnv, TensorDict]:
-    env = CPTPEnv(generator_params={"num_loc": num_loc}, check_env_specs=False)
+def _reset(batch: int = 2, num_loc: int = 4, capacity: float = 0.5) -> Tuple[CMPTPEnv, TensorDict]:
+    env = CMPTPEnv(generator_params={"num_loc": num_loc}, check_env_specs=False)
     gen = torch.Generator().manual_seed(0)
     td = TensorDict(
         {
@@ -25,7 +25,7 @@ def _reset(batch: int = 2, num_loc: int = 4, capacity: float = 0.5) -> Tuple[CPT
     return env, cast(TensorDict, env.reset(td))
 
 
-def _step(env: CPTPEnv, td: TensorDict, actions: List[int]) -> TensorDict:
+def _step(env: CMPTPEnv, td: TensorDict, actions: List[int]) -> TensorDict:
     td["action"] = torch.tensor(actions)
     return cast(TensorDict, env.step(td)["next"])  # successor is stored under "next"
 

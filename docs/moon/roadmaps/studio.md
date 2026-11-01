@@ -922,7 +922,7 @@ Source files ported from: `logic/src/ui/pages/experiment_tracker.py`, `logic/src
 #### §G.20.7 — Slice V7: Launchers, Cloud & Report Studio (#153)
 - [ ] `SimulationLauncher.tsx` (591 LoC $\rightarrow \le 500$ LoC): expose `sim.days` field, real-time `.npz` dataset path verification, and dual policy selection mode (family-grouped 8-policy Paper Benchmark preset vs advanced 89-policy grid with "Select All" confirmation barrier).
 - [ ] Replace 5-second automatic redirect with an explicit "Open in Summary" action button.
-- [ ] Synchronize `TrainingHub.tsx` (816 LoC $\rightarrow \le 500$ LoC) with live Python logic tree: problem options `ptp`, `cptp`, `cptptc`, `cptptwtc`, `cvrp` (sent as `envs@train.env=<name>`) and model `deep_decoder` (replacing `ddam`).
+- [ ] Synchronize `TrainingHub.tsx` (816 LoC $\rightarrow \le 500$ LoC) with live Python logic tree: problem options `ptp`, `cmptp`, `cmptptc`, `cmptptwtc`, `cvrp` (sent as `envs@train.env=<name>`) and model `deep_decoder` (replacing `ddam`).
 - [ ] Bind `ReportStudio.tsx` directly to the active `loadedRun` record.
 
 #### §G.20.8 — Slice V8: System Tools, Files & Final Compliance (#154)

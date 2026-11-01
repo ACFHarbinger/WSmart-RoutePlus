@@ -1,13 +1,13 @@
-"""The released PTP and CPTPTC keep the dynamics of the pre-WP-07 envs (review CR-12).
+"""The released PTP and CMPTPTC keep the dynamics of the pre-WP-07 envs (review CR-12).
 
-Checked against rollouts of ``envs/routing/{ptp,cptptc}.py`` at a5eb27eec: PTP never offers an
-empty bin unless it is mandatory, and a CPTPTC day continues after a depot return while a
+Checked against rollouts of ``envs/routing/{ptp,cmptptc}.py`` at a5eb27eec: PTP never offers an
+empty bin unless it is mandatory, and a CMPTPTC day continues after a depot return while a
 customer is still reachable on a fresh trip.
 """
 
 import pytest
 import torch
-from logic.src.envs.cptptc import CPTPTCEnv
+from logic.src.envs.cmptptc import CMPTPTCEnv
 from logic.src.envs.ptp import PTPEnv
 from tensordict import TensorDict
 
@@ -37,8 +37,8 @@ def test_ptp_masks_empty_bins_unless_mandatory():
     assert td["action_mask"].tolist() == [[False, True, True, True]]
 
 
-def test_cptptc_day_continues_after_a_depot_return():
-    env = CPTPTCEnv(generator_params={"num_loc": 2}, check_env_specs=False)
+def test_cmptptc_day_continues_after_a_depot_return():
+    env = CMPTPTCEnv(generator_params={"num_loc": 2}, check_env_specs=False)
     td = env.reset(_raw([0.6, 0.6]))
     # Capacity 1 fits one bin per trip: the first return to the depot must not end the day.
     for action, done in ((1, False), (0, False), (2, False), (0, True)):

@@ -11,7 +11,7 @@ import { normFamily } from "./linkRules";
 import { exportCompositionYaml, modulesWithoutRunner } from "./exportCompositionYaml";
 import { useBuilderGraph } from "./useBuilderGraph";
 
-const PROBLEMS = ["ptp", "cptp", "cptptc", "cptptwtc", "cvrp"] as const;
+const PROBLEMS = ["ptp", "cmptp", "cmptptc", "cmptptwtc", "cvrp"] as const;
 
 interface AlgorithmBuilderProps {
   initialCatalog?: PolicyCatalog;

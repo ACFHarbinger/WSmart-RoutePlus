@@ -5,7 +5,7 @@ from typing import cast
 
 import pytest
 import torch
-from logic.src.envs.cptp import CPTPEnv
+from logic.src.envs.cmptp import CMPTPEnv
 from logic.src.pipeline.learning.common.base.steps import StepMixin
 from tensordict import TensorDict
 
@@ -39,7 +39,7 @@ def test_reset_and_packing_select_each_instances_day(days, expected, consumer):
     )
     if days is not None:
         td["current_day"] = torch.tensor(days)
-    env = CPTPEnv(generator_params={"num_loc": 2}, check_env_specs=False)
+    env = CMPTPEnv(generator_params={"num_loc": 2}, check_env_specs=False)
     model = SimpleNamespace(env=env, mandatory_selector=ThresholdSelector())
     expected_waste = torch.cat([torch.zeros(2, 1), torch.tensor(expected)], dim=1)
     if consumer == "packing":

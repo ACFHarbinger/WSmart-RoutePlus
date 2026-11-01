@@ -25,7 +25,7 @@ def test_random_local_search_policy_basic():
     )
     td["waste"][:, 0] = 0.0  # Depot
 
-    policy = RandomLocalSearchPolicy(env_name="cptp", iterations=10, device=device).to(device)
+    policy = RandomLocalSearchPolicy(env_name="cmptp", iterations=10, device=device).to(device)
 
     # Mock environment
     class MockEnv:
@@ -69,7 +69,7 @@ def test_random_local_search_policy_custom_probs():
         "three_opt": 0.0,
     }
 
-    policy = RandomLocalSearchPolicy(env_name="cptp", iterations=5, params=op_probs, device=device).to(device)
+    policy = RandomLocalSearchPolicy(env_name="cmptp", iterations=5, params=op_probs, device=device).to(device)
 
     assert policy.cfg.params == op_probs
     assert policy.cfg.iterations == 5

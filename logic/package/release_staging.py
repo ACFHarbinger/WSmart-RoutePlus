@@ -420,7 +420,7 @@ def import_sweep(out: Path, python: Optional[str] = None) -> List[str]:
     """Import every shipped module of the staged tree with ``python``; return the failures.
 
     The closure check is static; a module-level import that resolves only through a lazy
-    registry (``from logic.src.envs import CPTPTWTC`` when that problem's
+    registry (``from logic.src.envs import CMPTPTWTC`` when that problem's
     module is pruned) passes it and still breaks at import time in the release.
     """
     import os

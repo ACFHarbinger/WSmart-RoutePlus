@@ -18,7 +18,7 @@ Attributes:
     parse_instance: Build a :class:`VRPPBatch` from an environment TensorDict.
     compact: Pack the bins of each giant tour to the left.
     profit_split: Split giant tours into routes; return routes, profit and cost.
-    routes_to_actions: CPTP action sequences for a batch of route lists.
+    routes_to_actions: CMPTP action sequences for a batch of route lists.
 
 Example:
     >>> inst = parse_instance(td, env)
@@ -402,7 +402,7 @@ def routes_to_tours(routes: List[List[List[int]]], n_bins: int, device: Any) -> 
 
 
 def routes_to_actions(routes: List[List[List[int]]], device: Any) -> torch.Tensor:
-    """Padded CPTP action sequences: each route then a depot return, then the day end.
+    """Padded CMPTP action sequences: each route then a depot return, then the day end.
 
     Same layout as the profitable nearest-neighbour expert: ``r1 0 r2 0 ... rk 0 0``;
     staying at the depot is a single ``0``.

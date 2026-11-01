@@ -11,7 +11,7 @@ from typing import Tuple
 
 import pytest
 import torch
-from logic.src.envs.cptp import CPTPEnv
+from logic.src.envs.cmptp import CMPTPEnv
 from logic.src.models.core.attention_model import (
     AttentionModel,
     build_attention_model_trace,
@@ -30,11 +30,11 @@ from tensordict import TensorDict
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
-def _make_cptp_instance(seed: int = 42, n_nodes: int = 5) -> Tuple[AttentionModel, CPTPEnv, TensorDict]:
+def _make_cmptp_instance(seed: int = 42, n_nodes: int = 5) -> Tuple[AttentionModel, CMPTPEnv, TensorDict]:
     torch.manual_seed(seed)
-    model = AttentionModel(embed_dim=32, hidden_dim=64, problem="cptp", n_encode_layers=1, n_heads=4)
+    model = AttentionModel(embed_dim=32, hidden_dim=64, problem="cmptp", n_encode_layers=1, n_heads=4)
     model.eval()
-    env = CPTPEnv(generator_params={"num_loc": n_nodes}, check_env_specs=False)
+    env = CMPTPEnv(generator_params={"num_loc": n_nodes}, check_env_specs=False)
     g = torch.Generator().manual_seed(seed)
     td = TensorDict(
         {
@@ -51,7 +51,7 @@ def _make_cptp_instance(seed: int = 42, n_nodes: int = 5) -> Tuple[AttentionMode
 
 def test_one_cpu_forward_records_encoder_and_decoder_steps():
     """One CPU forward records schema-1 trace with encoder stage and decoder steps."""
-    model, env, td = _make_cptp_instance(seed=42, n_nodes=5)
+    model, env, td = _make_cmptp_instance(seed=42, n_nodes=5)
 
     out = model(td.clone(), env, strategy="greedy", trace=True, seed=42)
     assert "trace" in out
@@ -62,7 +62,7 @@ def test_one_cpu_forward_records_encoder_and_decoder_steps():
     validate_trace(doc)
 
     assert doc["schema_version"] == SCHEMA_VERSION
-    assert doc["problem"] == "cptp"
+    assert doc["problem"] == "cmptp"
     assert doc["policies"]["model"] == "am"
 
     kinds = [e["kind"] for e in doc["events"]]
@@ -95,7 +95,7 @@ def test_one_cpu_forward_records_encoder_and_decoder_steps():
 
 def test_masked_nodes_stay_masked_across_decoding_steps():
     """Masked nodes remain masked in subsequent steps, and action is never masked."""
-    model, env, td = _make_cptp_instance(seed=42, n_nodes=5)
+    model, env, td = _make_cmptp_instance(seed=42, n_nodes=5)
 
     out = model(td.clone(), env, strategy="greedy", trace=True, seed=42)
     trace = out["trace"]
@@ -127,7 +127,7 @@ def test_masked_nodes_stay_masked_across_decoding_steps():
 
 def test_traced_forward_matches_untraced_forward_exact_seed():
     """Traced and untraced solve on same seed must produce identical actions, reward, and tours."""
-    model, env, td = _make_cptp_instance(seed=42, n_nodes=5)
+    model, env, td = _make_cmptp_instance(seed=42, n_nodes=5)
 
     out_untraced = model(td.clone(), env, strategy="greedy")
     out_traced = model(td.clone(), env, strategy="greedy", trace=True, seed=42)
@@ -146,7 +146,7 @@ def test_traced_forward_matches_untraced_forward_exact_seed():
 
 def test_sampling_strategy_seed_parity():
     """Sampling decoding with fixed manual seed matches exactly between untraced and traced."""
-    model, env, td = _make_cptp_instance(seed=123, n_nodes=6)
+    model, env, td = _make_cmptp_instance(seed=123, n_nodes=6)
 
     torch.manual_seed(999)
     out_untraced = model(td.clone(), env, strategy="sampling")
@@ -165,7 +165,7 @@ def test_sampling_strategy_seed_parity():
 
 def test_build_attention_model_trace_helper():
     """build_attention_model_trace helper constructs and runs a valid trace."""
-    trace, out = build_attention_model_trace(problem="cptp", graph_size=5, seed=1, strategy="greedy")
+    trace, out = build_attention_model_trace(problem="cmptp", graph_size=5, seed=1, strategy="greedy")
     doc = trace.to_dict()
     validate_trace(doc)
 
@@ -178,10 +178,10 @@ def test_build_attention_model_trace_helper():
 
 def test_custom_execution_trace_passed_in():
     """Passing a pre-constructed ExecutionTrace populates it correctly."""
-    model, env, td = _make_cptp_instance(seed=42, n_nodes=5)
+    model, env, td = _make_cmptp_instance(seed=42, n_nodes=5)
 
     custom_trace = ExecutionTrace(
-        problem="cptp",
+        problem="cmptp",
         policies={"model": "am"},
         seed=42,
         instance={"n_nodes": 5, "depot": [0.5, 0.5]},
@@ -205,7 +205,7 @@ def test_custom_execution_trace_passed_in():
 
 def test_default_training_loop_does_not_write_trace():
     """Default forward pass passes trace=None and writes no trace."""
-    model, env, td = _make_cptp_instance(seed=42, n_nodes=5)
+    model, env, td = _make_cmptp_instance(seed=42, n_nodes=5)
 
     out = model(td.clone(), env, strategy="greedy")
     assert "trace" not in out

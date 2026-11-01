@@ -1,11 +1,11 @@
-"""Profitable nearest-neighbour expert for imitation learning on PTP and CPTP.
+"""Profitable nearest-neighbour expert for imitation learning on PTP and CMPTP.
 
 Builds a nearest-neighbour tour over the bins that hold waste, shortens it with 2-opt, then
 drops each bin whose detour costs more than its waste is worth. When the remaining tour does
 not pay, the vehicle stays at the depot. Distances are the environment's road matrix ``dm``
 when present, otherwise the Euclidean distance between ``locs``.
 
-The action sequence follows the CPTP day end: the tour returns to the depot and the depot is
+The action sequence follows the CMPTP day end: the tour returns to the depot and the depot is
 chosen again to end the day; staying home is the depot chosen from the depot.
 
 The three phases run on the whole batch at once with NumPy. Each phase keeps the move order,
@@ -22,7 +22,7 @@ Attributes:
     ProfitableNearestNeighbourPolicy: Expert policy producing selective tours.
 
 Example:
-    >>> policy = ProfitableNearestNeighbourPolicy(env_name="cptp")
+    >>> policy = ProfitableNearestNeighbourPolicy(env_name="cmptp")
     >>> out = policy(env.reset(td), env)
 """
 
@@ -231,7 +231,7 @@ class ProfitableNearestNeighbourPolicy(torch.nn.Module):
 
     @staticmethod
     def actions(tours: List[List[int]], wastes: np.ndarray, caps: np.ndarray, device: Any) -> torch.Tensor:
-        """Padded CPTP action sequences for ``tours``: a depot return whenever the load would
+        """Padded CMPTP action sequences for ``tours``: a depot return whenever the load would
         exceed capacity, then the day end (depot, depot); staying home is a single depot."""
         sequences = []
         for b, tour in enumerate(tours):

@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import pytest
 import torch
 from logic.src.configs.models.normalization import NormalizationConfig
-from logic.src.envs.cptp import CPTPEnv
+from logic.src.envs.cmptp import CMPTPEnv
 from logic.src.models.core.attention_model.decoding import DecodingMixin
 from logic.src.models.subnets.decoders.gat.decoder import DeepGATDecoder
 from logic.src.models.subnets.decoders.glimpse.decoder import GlimpseDecoder
@@ -17,15 +17,15 @@ from logic.src.utils.decoding.batch_beam import BatchBeam
 def test_real_decoder_cache_follows_reordered_unequal_beams(kind):
     torch.manual_seed(13)
     decoder = (
-        GlimpseDecoder(embed_dim=16, hidden_dim=32, problem="cptp", n_heads=2)
+        GlimpseDecoder(embed_dim=16, hidden_dim=32, problem="cmptp", n_heads=2)
         if kind == "glimpse"
         else DeepGATDecoder(
             embed_dim=16, hidden_dim=32, n_heads=2, n_layers=1, norm_config=NormalizationConfig(norm_type="layer")
         )
     )
     decoder.eval()
-    env = CPTPEnv(generator_params={"num_loc": 4})
-    state = TensorDictStateWrapper(env.reset(batch_size=[2]), "cptp", env)
+    env = CMPTPEnv(generator_params={"num_loc": 4})
+    state = TensorDictStateWrapper(env.reset(batch_size=[2]), "cmptp", env)
     cache = decoder._precompute(torch.randn(2, 5, 16))
     model = SimpleNamespace(decoder=decoder)
     # Unequal widths and reordering are valid after expansion/pruning.
@@ -42,8 +42,8 @@ def test_real_decoder_cache_follows_reordered_unequal_beams(kind):
 
 
 def test_real_environment_preserves_ids_and_prunes_by_original_instance():
-    env = CPTPEnv(generator_params={"num_loc": 4})
-    state = TensorDictStateWrapper(env.reset(batch_size=[2]), "cptp", env)
+    env = CMPTPEnv(generator_params={"num_loc": 4})
+    state = TensorDictStateWrapper(env.reset(batch_size=[2]), "cmptp", env)
     beam = BatchBeam.initialize(state)
     parent = torch.tensor([0, 0, 0, 0, 1, 1])
     beam = beam.expand(parent, torch.tensor([1, 2, 3, 4, 1, 2]), torch.tensor([1.0, 4.0, 3.0, 2.0, 6.0, 5.0]))
@@ -64,18 +64,18 @@ def test_beam_loop_completes_heterogeneous_instances(kind):
 
     torch.manual_seed(2)
     decoder = (
-        GlimpseDecoder(embed_dim=16, hidden_dim=32, problem="cptp", n_heads=2)
+        GlimpseDecoder(embed_dim=16, hidden_dim=32, problem="cmptp", n_heads=2)
         if kind == "glimpse"
         else DeepGATDecoder(
             embed_dim=16, hidden_dim=32, n_heads=2, n_layers=1, norm_config=NormalizationConfig(norm_type="layer")
         )
     )
     decoder.eval()
-    env = CPTPEnv(generator_params={"num_loc": 4})
+    env = CMPTPEnv(generator_params={"num_loc": 4})
     td = env.reset(batch_size=[2])
     # One instance can only stop initially; the other has all five choices.
     td["action_mask"][0, 1:] = False
-    state = TensorDictStateWrapper(td, "cptp", env)
+    state = TensorDictStateWrapper(td, "cmptp", env)
     model = SimpleNamespace(decoder=decoder)
     cache = decoder._precompute(torch.randn(2, 5, 16))
 
@@ -93,15 +93,15 @@ def test_beam_loop_completes_heterogeneous_instances(kind):
     assert set(final_state.ids.reshape(-1).tolist()) == {0, 1}
 
 
-def test_public_cptp_beam_search_matches_individual_instances():
-    from logic.src.envs.cptp import CPTP
+def test_public_cmptp_beam_search_matches_individual_instances():
+    from logic.src.envs.cmptp import CMPTP
     from logic.src.models.core.attention_model.model import AttentionModel
 
     torch.manual_seed(5)
-    env = CPTPEnv(generator_params={"num_loc": 3})
+    env = CMPTPEnv(generator_params={"num_loc": 3})
     td = env.generator(batch_size=[2])
     model = AttentionModel(
-        embed_dim=16, hidden_dim=32, problem=CPTP, n_heads=2, n_encode_layers=1, normalization="layer"
+        embed_dim=16, hidden_dim=32, problem=CMPTP, n_heads=2, n_encode_layers=1, normalization="layer"
     )
     model.eval()
     with torch.no_grad():
@@ -129,12 +129,12 @@ def test_public_cptp_beam_search_matches_individual_instances():
 @pytest.mark.parametrize("reward_weight", [0.0, 1.0])
 def test_simulator_beam_width_larger_than_feasible_candidates(reward_weight):
     from logic.src.configs.policies.routing.learning_algorithms.na import NeuralAgentConfig
-    from logic.src.envs.cptp import CPTP
+    from logic.src.envs.cmptp import CMPTP
     from logic.src.models.core.attention_model.model import AttentionModel
     from logic.src.policies.routing.learning_algorithms.neural_agent.agent import NeuralAgent
 
     model = AttentionModel(
-        embed_dim=16, hidden_dim=32, problem=CPTP, n_heads=2, n_encode_layers=1, normalization="layer"
+        embed_dim=16, hidden_dim=32, problem=CMPTP, n_heads=2, n_encode_layers=1, normalization="layer"
     )
     model.eval()
     inputs = {"locs": torch.tensor([[[1.0, 0.0]]]), "depot": torch.zeros(1, 2), "waste": torch.tensor([[0.5]])}

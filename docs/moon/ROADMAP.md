@@ -21,7 +21,7 @@ IPC event storms and 28 MB polling; paired `--noc-*` design tokens enforce dual 
 contrast (V1); direction-aware telemetry primitives and shared metrics contracts (V2); 350×90 ECharts
 dot-matrix heatmap and direction-scaled radar (V3); 5-task workflow sitemap and global loaded-run chip (V4);
 decomposition of 34 grandfathered files >500 LoC (V5–V8); and synchronization with live Python problem
-names (`ptp`/`cptp`/`cptptc`/`cvrp`) and models (`deep_decoder`). See [`studio.md`](roadmaps/studio.md#g20--phase-20-nocorion-telemetry--operations-research-overhaul-slices-v0v8-).
+names (`ptp`/`cmptp`/`cmptptc`/`cvrp`) and models (`deep_decoder`). See [`studio.md`](roadmaps/studio.md#g20--phase-20-nocorion-telemetry--operations-research-overhaul-slices-v0v8-).
 
 Simulation corpus scenes landed on 2026-10-28 under §G.21 ([#175](https://github.com/ACFHarbinger/WSmart-Route/issues/175)–[#179](https://github.com/ACFHarbinger/WSmart-Route/issues/179)).
 Simulation Summary loads one JSON file, one run directory, or a merged set of runs under a scenario.

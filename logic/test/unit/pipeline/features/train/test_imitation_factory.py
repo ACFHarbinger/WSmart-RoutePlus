@@ -26,7 +26,7 @@ def _cfg(algorithm: str) -> SimpleNamespace:
     )
     return SimpleNamespace(
         task="train",
-        train=SimpleNamespace(env=SimpleNamespace(name="cptp")),
+        train=SimpleNamespace(env=SimpleNamespace(name="cmptp")),
         rl=SimpleNamespace(**{algorithm: rl_algo}),
         seed=7,
         device="cpu",

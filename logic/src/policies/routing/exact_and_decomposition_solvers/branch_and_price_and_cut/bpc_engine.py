@@ -338,7 +338,7 @@ def run_bpc(  # noqa: C901
     # 4. Initialize Branch-and-Bound Tree with search strategy
     bb_tree = BranchAndBoundTree(v_model=v_model, params=cfg)
 
-    # 5. Initialize cutting engine (the CPTP pricer keeps only the families it can price)
+    # 5. Initialize cutting engine (the CMPTP pricer keeps only the families it can price)
     cut_engine = make_cut_engine(cfg, v_model, sep_engine, red_dist)
     logger.info(f"BPC Solver started: full instance, {k_nodes} nodes, max BB nodes: {max_bb_nodes}")
 
@@ -370,7 +370,7 @@ def run_bpc(  # noqa: C901
 
     pricing_stats = getattr(priced, "stats", None)
     if pricing_stats:
-        logger.info(f"[BPC] CPTP pricing stats: {dict(pricing_stats)}")
+        logger.info(f"[BPC] CMPTP pricing stats: {dict(pricing_stats)}")
 
     # 6. Extract best integer solution
     if bb_tree.best_integer_node is None and not cfg.allow_fallback:

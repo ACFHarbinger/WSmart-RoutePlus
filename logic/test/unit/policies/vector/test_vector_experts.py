@@ -64,7 +64,7 @@ def test_every_expert_is_registered():
 @pytest.mark.parametrize("name", sorted(SMALL))
 def test_expert_takes_its_simulator_config(name):
     cfg = SMALL[name]()
-    policy = create_expert_policy(cfg, env_name="cptp", seed=1, device="cpu")
+    policy = create_expert_policy(cfg, env_name="cmptp", seed=1, device="cpu")
     assert type(policy).__name__ == EXPERT_TARGETS[name][1]
     if hasattr(policy, "cfg"):
         assert type(policy.cfg) is type(cfg)
@@ -75,13 +75,13 @@ def test_expert_takes_its_simulator_config(name):
 def test_expert_rejects_unknown_parameters(name):
     cls = load_expert_policy_cls(SMALL[name]())
     with pytest.raises(ValueError):
-        cls("cptp", population_size=10)
+        cls("cmptp", population_size=10)
 
 
 @pytest.mark.parametrize("name", sorted(SMALL))
 def test_expert_solutions_are_feasible(name):
     td = _td()
-    policy = create_expert_policy(SMALL[name](), env_name="cptp", seed=3, device="cpu")
+    policy = create_expert_policy(SMALL[name](), env_name="cmptp", seed=3, device="cpu")
     out = policy(td.clone())
     inst = parse_instance(td)
     B = td.batch_size[0]
@@ -100,8 +100,8 @@ def test_expert_solutions_are_feasible(name):
 @pytest.mark.parametrize("name", ["ALNSConfig", "ILSConfig", "RandomLocalSearchPostConfig", "KSparseACOConfig"])
 def test_expert_is_seed_deterministic(name):
     td = _td()
-    a = create_expert_policy(SMALL[name](), env_name="cptp", seed=5, device="cpu")(td.clone())
-    b = create_expert_policy(SMALL[name](), env_name="cptp", seed=5, device="cpu")(td.clone())
+    a = create_expert_policy(SMALL[name](), env_name="cmptp", seed=5, device="cpu")(td.clone())
+    b = create_expert_policy(SMALL[name](), env_name="cmptp", seed=5, device="cpu")(td.clone())
     assert torch.equal(a["actions"], b["actions"])
 
 

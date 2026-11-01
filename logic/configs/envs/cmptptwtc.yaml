@@ -1,9 +1,9 @@
 # =============================================================================
-# Capacitated Profitable Tour Problem with Time Constraints (CPTPTC) Environment Configuration
+# Capacitated Multi-vehicle Profitable Tour Problem with Time Windows and Time Constraints (CMPTPTWTC) Environment Configuration
 # =============================================================================
-# Single-vehicle, multi-trip variant of CPTP:
+# Single-vehicle, multi-trip variant of CMPTP:
 #   - Same node/waste layout, prize-collection objective, and per-trip
-#     vehicle capacity as CPTP. Capacity is UNCHANGED -- it is not
+#     vehicle capacity as CMPTP. Capacity is UNCHANGED -- it is not
 #     replaced by the time budget.
 #   - Additional independent per-trip time budget: travel time
 #     (distance / avg_speed_kmh) + service time (service_time_h per bin)
@@ -11,28 +11,27 @@
 #   - Both constraints hold simultaneously. The vehicle may return to the
 #     depot and start a new trip within the same period; the episode ends
 #     once nothing is reachable even with a freshly reset capacity AND
-#     time budget. See logic/src/envs/routing/cptptc.py.
+#     time budget. Every bin also has a time window: an early vehicle waits, service starts no later than
+#     the window closes, and the vehicle is back before the day (the depot window) ends.
+#     See logic/src/envs/cmptptwtc.py.
 #   - "Team" is one vehicle, multiple trips here -- not a concurrent fleet.
 #     See docs/moon/roadmaps/new_features.md §E.8 for the true-fleet variant.
 #
 # Select this env by swapping the Hydra env group (not only env.name --
 # that keeps the previously composed YAML's other fields):
-#   python main.py train envs@train.env=cptptc
-#   python main.py eval envs@eval.env=cptptc eval.env.name=cptptc eval.problem=cptptc
-#   python main.py hpo envs@hpo.env=cptptc
-#   python main.py meta_train envs@meta_rl.env=cptptc meta_rl.env.name=cptptc
-#   python main.py hpo_sim envs@hpo_sim.env=cptptc
-#   python main.py gen_data data.problem=cptptc
-#   python main.py test_sim sim.problem=cptptc
+#   python main.py train envs@train.env=cmptptwtc
+#   python main.py eval envs@eval.env=cmptptwtc eval.env.name=cmptptwtc eval.problem=cmptptwtc
+#   python main.py gen_data data.problem=cmptptwtc
+# Learning-side problem only: the simulator has no bin time windows, so test_sim does not take it.
 #     (#59 consumes this: dual capacity + T_max in get_multi_tour / CollectAction)
 # =============================================================================
 
-name: "cptptc" # Environment identifier
+name: "cmptptwtc" # Environment identifier
 mean: 0.0
 variance: 0.0
 
 # =============================================================================
-# Capacity Constraint (same as cptp.yaml -- CPTPTC does not drop this)
+# Capacity Constraint (same as cmptp.yaml -- CMPTPTWTC does not drop this)
 # =============================================================================
 capacity:
   100.0 # Normalized vehicle capacity.
@@ -43,7 +42,7 @@ capacity:
 # Temporal resource parameters
 # ===========================================================================
 # Keys must be present (even as null) so Hydra CLI can override them:
-#   python main.py train envs@train.env=cptptc train.env.shift_hours=6.5
+#   python main.py train envs@train.env=cmptptwtc train.env.shift_hours=6.5
 # null = use the Python default from
 # SimulationRepository.get_temporal_params() (7.0 h, 35 km/h, 0.025 h/bin).
 # Set a number only for an experiment that deliberately studies a different
@@ -53,14 +52,22 @@ avg_speed_kmh: null      # Average driving speed (km/h). Default 35.0
 service_time_h: null     # Time to visit and empty a single bin (h). Default 0.025
 
 # ===========================================================================
+# Time windows (CMPTPTWTC)
+# ===========================================================================
+# Hours from the start of the working day. null = the generator's defaults.
+day_hours: null          # Working-day length (h); the depot window. Default 10.0
+tw_min_width_h: null     # Shortest bin window (h). Default 2.0
+tw_max_width_h: null     # Longest bin window (h). Default 6.0
+
+# ===========================================================================
 # Curriculum Learning
 # ===========================================================================
 # The first entry is also used for single-stage training.
-# Graphs match ptp.yaml (Rio Maior 100/170) rather than cptp.yaml's
+# Graphs match ptp.yaml (Rio Maior 100/170) rather than cmptp.yaml's
 # 50-node stub -- those are the networks the rest of the framework trains
-# on. No cptptc-specific .td datasets exist yet; omit load_dataset so the
+# on. No cmptptwtc-specific .td datasets exist yet; omit load_dataset so the
 # generator builds instances on the fly. Produce them later with
-# `python main.py gen_data data.problem=cptptc`.
+# `python main.py gen_data data.problem=cmptptwtc`.
 curriculum_graphs:
   - num_loc: 100
     n_samples: 12800

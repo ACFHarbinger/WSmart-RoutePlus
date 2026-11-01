@@ -19,7 +19,7 @@ Attributes:
 
 Example:
     >>> from logic.src.envs import get_env, get_generator
-    >>> env = get_env("cptp", num_loc=20)
+    >>> env = get_env("cmptp", num_loc=20)
     >>> td = get_generator("ptp", num_loc=20)(batch_size=4)
 """
 
@@ -28,7 +28,7 @@ from typing import Any, Dict
 
 from logic.src.utils.registry import import_target, lazy_getattr
 
-_PROBLEMS = ("ptp", "cptp", "cptptc", "cptptwtc", "cvrp", "tsp", "atsp", "op", "pctsp", "spctsp", "pdp", "irp", "thop")
+_PROBLEMS = ("ptp", "cmptp", "cmptptc", "cmptptwtc", "cvrp", "tsp", "atsp", "op", "pctsp", "spctsp", "pdp", "irp", "thop")
 _CLASS_PREFIX = {name: name.upper() for name in _PROBLEMS} | {"thop": "ThOP"}
 # Problems whose generator lives in envs/generators/<name>.py (their env and task stay in envs/<name>.py).
 _SPLIT = ("irp", "thop")
@@ -104,7 +104,7 @@ def get_env(name: str, **kwargs: Any) -> Any:
 
 
 def get_generator(name: str, **kwargs: Any) -> Any:
-    """Build an instance generator by name (e.g. "ptp", "cptp", "tsp", "irp", "atsp", "cvrp").
+    """Build an instance generator by name (e.g. "ptp", "cmptp", "tsp", "irp", "atsp", "cvrp").
 
     Raises:
         ValueError: If the generator name is not found.

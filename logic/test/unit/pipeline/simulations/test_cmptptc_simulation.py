@@ -1,7 +1,7 @@
-"""Unit tests for Capacitated Profitable Tour Problem with Time Constraints (CPTPTC) simulation support.
+"""Unit tests for Capacitated Multi-vehicle Profitable Tour Problem with Time Constraints (CMPTPTC) simulation support.
 
 Validates:
-- Validation logic accepting 'cptptc' as a supported problem type.
+- Validation logic accepting 'cmptptc' as a supported problem type.
 - Route splitting with dual constraints (vehicle capacity + working-shift time budget).
 - CollectAction computing exact operational time spent (driving + service).
 - SimulationDayContext and get_daily_results logging time_spent additively.
@@ -25,14 +25,14 @@ pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
 class TestCTOPValidation:
-    """Tests that CPTPTC is a registered and validated problem variant."""
+    """Tests that CMPTPTC is a registered and validated problem variant."""
 
-    def test_cptptc_in_problems(self):
-        assert "cptptc" in PROBLEMS
+    def test_cmptptc_in_problems(self):
+        assert "cmptptc" in PROBLEMS
 
-    def test_validate_sim_config_accepts_cptptc(self):
+    def test_validate_sim_config_accepts_cmptptc(self):
         cfg = Config()
-        cfg.sim.problem = "cptptc"
+        cfg.sim.problem = "cmptptc"
         cfg.sim.graph.n_days = 5
         cfg.sim.graph.n_samples = 1
         cfg.sim.graph.area = "figueiradafoz"
@@ -40,7 +40,7 @@ class TestCTOPValidation:
         cfg.sim.cpu_cores = 1
 
         validate_sim_config(cfg)
-        assert cfg.sim.problem == "cptptc"
+        assert cfg.sim.problem == "cmptptc"
 
     def test_validate_sim_config_rejects_unknown_problem(self):
         cfg = Config()
@@ -115,7 +115,7 @@ class TestCTOPRouteSplitting:
 
 
 class TestCTOPCollectionAction:
-    """Tests operational time spent calculation and CPTPTC constraint validation in CollectAction."""
+    """Tests operational time spent calculation and CMPTPTC constraint validation in CollectAction."""
 
     def test_time_spent_calculation(self):
         bins = MagicMock()
@@ -136,7 +136,7 @@ class TestCTOPCollectionAction:
             "avg_speed_kmh": 30.0,  # 45 / 30 = 1.5 h driving
             "service_time_h": 0.25,  # 2 bins * 0.25 = 0.5 h service
             "shift_hours": 7.0,
-            "problem": "cptptc",
+            "problem": "cmptptc",
         }
 
         action = CollectAction()
@@ -146,7 +146,7 @@ class TestCTOPCollectionAction:
         assert context["ncol"] == 2
         assert context["time_spent"] == pytest.approx(1.5 + 0.5, rel=1e-5)
 
-    def test_cptptc_shift_violation_raises(self):
+    def test_cmptptc_shift_violation_raises(self):
         bins = MagicMock()
         bins.collect.return_value = ([1], 50.0, 1, 100.0)
 
@@ -164,14 +164,14 @@ class TestCTOPCollectionAction:
             "avg_speed_kmh": 20.0,  # 200 / 20 = 10.0 h driving
             "service_time_h": 0.5,  # 1 bin * 0.5 = 0.5 h -> total 10.5 h
             "shift_hours": 8.0,  # budget 8.0 h < 10.5 h
-            "problem": "cptptc",
+            "problem": "cmptptc",
         }
 
         action = CollectAction()
-        with pytest.raises(AssertionError, match="CPTPTC violation: trip duration"):
+        with pytest.raises(AssertionError, match="CMPTPTC violation: trip duration"):
             action.execute(context)
 
-    def test_cptptc_with_no_vehicle_capacity_skips_the_capacity_check(self):
+    def test_cmptptc_with_no_vehicle_capacity_skips_the_capacity_check(self):
         bins = MagicMock()
         bins.collect.return_value = ([1], 50.0, 1, 100.0)
         dist_matrix = np.array([[0.0, 10.0], [10.0, 0.0]])
@@ -182,7 +182,7 @@ class TestCTOPCollectionAction:
             "avg_speed_kmh": 20.0,
             "service_time_h": 0.5,
             "shift_hours": 8.0,
-            "problem": "cptptc",
+            "problem": "cmptptc",
             "vehicle_capacity": None,
         }
 
@@ -192,7 +192,7 @@ class TestCTOPCollectionAction:
 
 
 class TestCTOPLoggingAndContext:
-    """Tests daily logging and context tracking of CPTPTC metrics."""
+    """Tests daily logging and context tracking of CMPTPTC metrics."""
 
     def test_logging_preserves_intermediate_depot_returns(self):
         result = get_daily_results(
@@ -230,7 +230,7 @@ class TestCTOPLoggingAndContext:
         assert res["time_spent"] == 2.35
 
     def test_simulation_day_context_defaults(self):
-        ctx = SimulationDayContext(problem="cptptc", shift_hours=7.5, avg_speed_kmh=40.0)
-        assert ctx.problem == "cptptc"
+        ctx = SimulationDayContext(problem="cmptptc", shift_hours=7.5, avg_speed_kmh=40.0)
+        assert ctx.problem == "cmptptc"
         assert ctx.shift_hours == 7.5
         assert ctx.avg_speed_kmh == 40.0

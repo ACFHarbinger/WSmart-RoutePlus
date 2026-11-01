@@ -5,7 +5,7 @@ from typing import Any, List, Optional
 import pytest
 import torch
 from logic.src.configs.policies.vectorized.routing.profitable_nn import ProfitableNNConfig
-from logic.src.envs.cptp import CPTPEnv
+from logic.src.envs.cmptp import CMPTPEnv
 from logic.src.pipeline.learning.core.imitation import ImitationLearning
 from tensordict import TensorDict
 
@@ -34,10 +34,10 @@ class _StubPolicy(torch.nn.Module):
 
 
 def _module(fill_from: str, **kw: Any) -> tuple[ImitationLearning, TensorDict]:
-    env = CPTPEnv(generator_params={"num_loc": 4}, check_env_specs=False, waste_weight=10.0, cost_weight=1.0)
+    env = CMPTPEnv(generator_params={"num_loc": 4}, check_env_specs=False, waste_weight=10.0, cost_weight=1.0)
     module = ImitationLearning(
         policy_config=ProfitableNNConfig(),
-        env_name="cptp",
+        env_name="cmptp",
         fill_from=fill_from,
         env=env,
         policy=_StubPolicy(),
@@ -134,9 +134,9 @@ def test_every_vectorised_expert_drives_the_expert_fill(config: Any) -> None:
     RLS (a route improver: it never drops bins) and K-sparse ACO without profit-aware
     operators visit every bin, as their simulator counterparts do.
     """
-    env = CPTPEnv(generator_params={"num_loc": 4}, check_env_specs=False, waste_weight=10.0, cost_weight=1.0)
+    env = CMPTPEnv(generator_params={"num_loc": 4}, check_env_specs=False, waste_weight=10.0, cost_weight=1.0)
     module = ImitationLearning(
-        policy_config=config, env_name="cptp", fill_from="expert", env=env, policy=_StubPolicy(), train_time=True
+        policy_config=config, env_name="cmptp", fill_from="expert", env=env, policy=_StubPolicy(), train_time=True
     )
     module.log = lambda *a, **k: None
     _, batch = _module("expert")

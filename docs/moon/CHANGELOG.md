@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Renamed the capacitated PTP family to "Capacitated Multi-vehicle" (`2026-11-01`)
+
+- **Names and acronyms:** the Capacitated Profitable Tour Problem is now the Capacitated Multi-vehicle Profitable Tour Problem, with CPTP becoming **CMPTP**, CPTPTC becoming CMPTPTC and CPTPTWTC becoming CMPTPTWTC. This covers identifiers (`CPTPEnv` to `CMPTPEnv`, `CPTPTCGenerator`, the embedding and state classes, `*_SPEC` constants), the problem and env keys (`"cptp"`, `"cptptc"`, `"cptptwtc"` become `"cmptp"`, `"cmptptc"`, `"cmptptwtc"`), prose in the docs and docstrings, and the files (`envs/cmptp*.py`, `configs/envs/cmptp*.yaml`, the embedding modules and the tests).
+- **Compatibility:** the old problem keys are not kept as aliases, so a saved config or checkpoint that stores `cptp`, `cptptc` or `cptptwtc` as its problem name must be updated.
+- **Left unchanged on purpose:** the external BPC pricing solver (`logic/submodules/BPC-CPTP`, the `cptp` Python package, `pricing_engine: cptp`, `cptp_threads`, `cptp_options`, `cptp_pricer.py`, its tests, `pyproject.toml`, `uv.lock`, `.gitmodules`), the paper submodules and their titles, `bibliography/`, the cited-literature notes under `docs/moon/research` and `docs/moon/reports`, `docs/private`, `.agent` history, the minimal-package patch file, and `TCPTP` and `MPCPTP`, which are different problems.
+
 ### Docstring tooling moved to `logic/docs` (`2026-11-01`)
 
 - `add_docstrings_batch.py`, `check_docstrings.py`, `check_google_style.py` and the package `__init__.py` moved from `logic/src/utils/docs/` to `logic/docs/` (the empty `__init__.py` there is replaced). The import path is now `logic.docs`; the pre-commit hook, the tests and the module docs are updated.

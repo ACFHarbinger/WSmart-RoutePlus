@@ -5143,7 +5143,7 @@ Type IV unstringing operator.
 
 ### `logic.src.policies.vectorized.routing.profitable_nearest_neighbour`
 
-Profitable nearest-neighbour expert for imitation learning on PTP and CPTP.
+Profitable nearest-neighbour expert for imitation learning on PTP and CMPTP.
 
 - **class `ProfitableNearestNeighbourPolicy`** — Selective nearest-neighbour expert.
 
@@ -5268,6 +5268,6 @@ Batched VRPP primitives shared by the vectorised expert policies.
 - `profit_split()` — Split giant tours into capacity-feasible routes of maximum profit.
 - `route_list_distance()` — Total distance of depot-to-depot routes.
 - `routes_to_tours()` — Giant tours ``[B, N]`` that list the bins of ``routes`` in route order.
-- `routes_to_actions()` — Padded CPTP action sequences: each route then a depot return, then the day end.
+- `routes_to_actions()` — Padded CMPTP action sequences: each route then a depot return, then the day end.
 - `replay_reward()` — Reward of ``actions`` replayed through ``env``; ``fallback`` without an environment.
 - `hash_rows()` — Hashable key per giant tour, for visited-solution tracking.

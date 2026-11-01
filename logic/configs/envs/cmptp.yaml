@@ -1,5 +1,5 @@
 # =============================================================================
-# Capacitated Profitable Tour Problem (CPTP) Configuration
+# Capacitated Multi-vehicle Profitable Tour Problem (CMPTP) Configuration
 # =============================================================================
 # Waste-collecting routing WITH vehicle capacity constraints.
 #
@@ -13,7 +13,7 @@
 # Benchmark: Standard OR problem for testing capacity-aware algorithms.
 # =============================================================================
 
-name: "cptp" # Environment identifier
+name: "cmptp" # Environment identifier
 mean: 0.0
 variance: 0.0
 
@@ -32,7 +32,7 @@ variance: 0.0
 # Each entry may include a 'reward:' block to override objective weights.
 # Without focus_graph and load_dataset the instances are random points in the unit square,
 # not the real network. The datasets are built with:
-#   python main.py gen_data data.problem=cptp data.data_distributions=[emp] \
+#   python main.py gen_data data.problem=cmptp data.data_distributions=[emp] \
 #     data.dataset_type=train_time data.data_dir=datasets data.name=time data.seed=42 \
 #     data.graphs=[{num_loc:50,n_samples:12800,focus_size:12800,n_days:31,...}]
 curriculum_graphs:
@@ -44,7 +44,7 @@ curriculum_graphs:
     focus_size: 12800
     focus_graph: "graphs_50V_1N_plastic.json"
     dm_filepath: "gmaps_distmat_plastic[riomaior].csv"
-    load_dataset: "data/datasets/cptp/cptp50_emp_time31_seed42.td"
+    load_dataset: "data/datasets/cmptp/cmptp50_emp_time31_seed42.td"
     n_days: 31
     n_samples: 12800
     start_day: 0
@@ -91,7 +91,7 @@ eval_graphs:
     focus_size: 512
     focus_graph: "graphs_50V_1N_plastic.json"
     dm_filepath: "gmaps_distmat_plastic[riomaior].csv"
-    load_dataset: "data/datasets/cptp/cptp50_emp_val31_seed43.td"
+    load_dataset: "data/datasets/cmptp/cmptp50_emp_val31_seed43.td"
     n_days: 1
     n_samples: 512
     start_day: 0

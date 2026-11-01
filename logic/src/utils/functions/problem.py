@@ -7,7 +7,7 @@ Attributes:
 
 Example:
     >>> from logic.src.utils.functions import is_ptp_problem, is_tsp_problem
-    >>> is_ptp_problem("cptp")
+    >>> is_ptp_problem("cmptp")
     True
     >>> is_tsp_problem("tsp")
     True
@@ -28,7 +28,7 @@ def is_ptp_problem(problem: Any) -> bool:
     """
     name = problem if isinstance(problem, str) else getattr(problem, "NAME", "")
     name = name.lower()
-    # ptp, cptp and cptptc all contain "ptp"; cptptc subclasses CPTP and
+    # ptp, cmptp and cmptptc all contain "ptp"; cmptptc subclasses CMPTP and
     # shares the node layout and reward.
     return "ptp" in name or "pcvrp" in name
 

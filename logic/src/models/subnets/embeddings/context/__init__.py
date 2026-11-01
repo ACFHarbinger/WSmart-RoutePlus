@@ -17,20 +17,20 @@ from __future__ import annotations
 from typing import Any, Dict
 
 from .base import ContextEmbedder
-from .cptp import CPTPContextEmbedder
+from .cmptp import CMPTPContextEmbedder
 from .generic import GenericContextEmbedder
 from .ptp import PTPContextEmbedder
 
 CONTEXT_EMBEDDING_REGISTRY: Dict[str, Any] = {
     "ptp": PTPContextEmbedder,
-    "cptp": CPTPContextEmbedder,
-    "cptptc": CPTPContextEmbedder,
-    "cptptwtc": CPTPContextEmbedder,
+    "cmptp": CMPTPContextEmbedder,
+    "cmptptc": CMPTPContextEmbedder,
+    "cmptptwtc": CMPTPContextEmbedder,
 }
 
 __all__: list[str] = [
     "ContextEmbedder",
-    "CPTPContextEmbedder",
+    "CMPTPContextEmbedder",
     "PTPContextEmbedder",
     "CONTEXT_EMBEDDING_REGISTRY",
 ]

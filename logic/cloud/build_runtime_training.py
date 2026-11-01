@@ -3,7 +3,7 @@
 Usage::
 
     python logic/cloud/build_runtime_training.py \\
-        --ctl ~/Repositories/Doc/wsr-package/cptp-rerun/ctl ~/Repositories/Doc/wsr-package/acohh-rerun/ctl \\
+        --ctl ~/Repositories/Doc/wsr-package/cmptp-rerun/ctl ~/Repositories/Doc/wsr-package/acohh-rerun/ctl \\
         --summary docs/private/global/simulation/rerun-2026-10-19 \\
         --out logic/controllers/cloud/prediction/runtime_training.csv
 

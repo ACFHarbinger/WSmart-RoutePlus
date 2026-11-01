@@ -17,18 +17,18 @@ PTP_SPEC = ProblemSpec(
     env_target="logic.src.envs.ptp:PTPEnv",
     expand_pool=True,
 )
-CPTP_SPEC = ProblemSpec(
-    name="cptp",
+CMPTP_SPEC = ProblemSpec(
+    name="cmptp",
     objective=profit_objective,
     metrics=DEFAULT_METRICS,
-    env_target="logic.src.envs.cptp:CPTPEnv",
+    env_target="logic.src.envs.cmptp:CMPTPEnv",
     expand_pool=True,
 )
-CPTPTC_SPEC = ProblemSpec(
-    name="cptptc",
+CMPTPTC_SPEC = ProblemSpec(
+    name="cmptptc",
     objective=profit_objective,
     metrics=DEFAULT_METRICS + ("time_spent",),
-    env_target="logic.src.envs.cptptc:CPTPTCEnv",
+    env_target="logic.src.envs.cmptptc:CMPTPTCEnv",
     expand_pool=True,
     per_trip_shift=True,
 )
@@ -40,7 +40,7 @@ CVRP_SPEC = ProblemSpec(
     expand_pool=False,
 )
 
-_RELEASED = {spec.name: spec for spec in (PTP_SPEC, CPTP_SPEC, CPTPTC_SPEC, CVRP_SPEC)}
+_RELEASED = {spec.name: spec for spec in (PTP_SPEC, CMPTP_SPEC, CMPTPTC_SPEC, CVRP_SPEC)}
 
 
 def released_spec(name: str) -> Optional[ProblemSpec]:

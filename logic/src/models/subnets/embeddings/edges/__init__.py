@@ -19,15 +19,15 @@ from typing import Any, Dict
 from torch import nn
 
 from .base import EdgeEmbedding
-from .cptp import CPTPEdgeEmbedding
+from .cmptp import CMPTPEdgeEmbedding
 from .none import NoEdgeEmbedding
 from .tsp import TSPEdgeEmbedding
 
 EDGE_EMBEDDING_REGISTRY: Dict[str, Any] = {
     "ptp": TSPEdgeEmbedding,
-    "cptp": CPTPEdgeEmbedding,
-    "cptptc": CPTPEdgeEmbedding,
-    "cptptwtc": CPTPEdgeEmbedding,
+    "cmptp": CMPTPEdgeEmbedding,
+    "cmptptc": CMPTPEdgeEmbedding,
+    "cmptptwtc": CMPTPEdgeEmbedding,
     "none": NoEdgeEmbedding,
 }
 
@@ -59,7 +59,7 @@ def get_edge_embedding(
 
 __all__: list[str] = [
     "EdgeEmbedding",
-    "CPTPEdgeEmbedding",
+    "CMPTPEdgeEmbedding",
     "NoEdgeEmbedding",
     "TSPEdgeEmbedding",
     "EDGE_EMBEDDING_REGISTRY",

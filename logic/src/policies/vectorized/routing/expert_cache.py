@@ -19,7 +19,7 @@ Attributes:
     CachedExpert: Expert wrapper that reads and writes the cache.
 
 Example:
-    >>> expert = CachedExpert(ProfitableNearestNeighbourPolicy("cptp"), "data/cache/expert")
+    >>> expert = CachedExpert(ProfitableNearestNeighbourPolicy("cmptp"), "data/cache/expert")
     >>> out = expert(env.reset(td), env)
     >>> expert.flush()
 """

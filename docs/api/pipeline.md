@@ -742,9 +742,9 @@ Action for routing policy execution.
 
 ### `logic.src.pipeline.simulations.actions.time_constraints`
 
-Make the final route vehicle-feasible after construction and improvement (CPTPTC: also shift-feasible).
+Make the final route vehicle-feasible after construction and improvement (CMPTPTC: also shift-feasible).
 
-- **class `TimeConstraintAction`** — Insert depot returns so every trip fits the vehicle (and, for CPTPTC, the shift).
+- **class `TimeConstraintAction`** — Insert depot returns so every trip fits the vehicle (and, for CMPTPTC, the shift).
 
 ### `logic.src.pipeline.simulations.bins.__init__`
 
@@ -877,7 +877,7 @@ Validated day pipeline and the per-day inputs of the day loop.
 - `policy_seed()` — Seed for a routing policy. Does not affect the shared fill stream.
 - `seed_policy_rng()` — Seed Python and NumPy. Seed PyTorch only when it is installed.
 - `apply_shared_bin_rng()` — Reset the bin generator to the shared environment seed.
-- `per_trip_shift()` — True when each trip must fit the shift (CPTPTC).
+- `per_trip_shift()` — True when each trip must fit the shift (CMPTPTC).
 
 ### `logic.src.pipeline.simulations.progress`
 
