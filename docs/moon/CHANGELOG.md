@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Test suite: remaining errors fixed and a thorough teardown (`2026-11-01`)
+
+- **`HVPLConfig`:** a plain mapping passed as `aco_params` or `alns_params` (keyword arguments, or the fallback used when OmegaConf cannot build the schema) is now turned into its config class in `__post_init__`. Before, the fallback set `profit_aware_operators` on a `dict` and raised `AttributeError`, which failed `test_vectorized_hvpl`.
+- **`speed_monitor.py`:** imports `rank_zero_only` from `lightning_fabric` (a dependency of `pytorch-lightning`) instead of the separate `lightning` package, which is not installed.
+- **Dependencies:** `beautifulsoup4` (used by the HTML dataset and the dashboard crawler) is now a core dependency, and `tensorboard` (used by the embedding plots) joins the `viz` extra. `optuna`, `tensorboard` and `beautifulsoup4` were added to the local venv, so the HPO, plotting and HTML-dataset tests collect and pass. `uv.lock` is not refreshed here (a refresh also rewrites the workspace version entries).
+- **Test teardown (`logic/test/conftest.py`):** `test_out` and `test_output` are removed from the repo root, the working directory and `assets/` after the session (the old finalizer only looked inside `assets/`, so the root copies stayed behind). The session fixture also snapshots the top-level entries of the repo root, `assets/` and the working directory, and afterwards removes whatever new entry git ignores. Untracked files that git does not ignore, tool caches and anything that existed before the session are never touched.
+
 ### Renamed the capacitated PTP family to "Capacitated Multi-vehicle" (`2026-11-01`)
 
 - **Names and acronyms:** the Capacitated Profitable Tour Problem is now the Capacitated Multi-vehicle Profitable Tour Problem, with CPTP becoming **CMPTP**, CPTPTC becoming CMPTPTC and CPTPTWTC becoming CMPTPTWTC. This covers identifiers (`CPTPEnv` to `CMPTPEnv`, `CPTPTCGenerator`, the embedding and state classes, `*_SPEC` constants), the problem and env keys (`"cptp"`, `"cptptc"`, `"cptptwtc"` become `"cmptp"`, `"cmptptc"`, `"cmptptwtc"`), prose in the docs and docstrings, and the files (`envs/cmptp*.py`, `configs/envs/cmptp*.yaml`, the embedding modules and the tests).

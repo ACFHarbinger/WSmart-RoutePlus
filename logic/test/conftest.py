@@ -210,18 +210,69 @@ def check_license(backend):
         pytest.skip("Invalid backend")
 
 
+# Output directories that only tests write to, relative to the repo root, to the working directory or to assets/.
+# They are removed after the session whether or not they existed before it.
+_TEST_ONLY_DIRS = ("test_out", "test_output")
+
+# Tool caches that appear on their own and must never be swept as test leftovers.
+_SWEEP_KEEP = {".git", ".venv", ".pytest_cache", ".ruff_cache", ".mypy_cache", ".hypothesis", "__pycache__", "node_modules"}
+
+
+def _remove_path(path: Path) -> None:
+    """Delete a file or directory, ignoring errors."""
+    with contextlib.suppress(Exception):
+        if path.is_dir() and not path.is_symlink():
+            shutil.rmtree(path)
+        elif path.exists() or path.is_symlink():
+            path.unlink()
+
+
+def _remove_test_only_dirs() -> None:
+    """Remove the output directories that tests create (``test_out``, ``test_output``)."""
+    for base in {project_root, project_root / "assets", Path.cwd()}:
+        for name in _TEST_ONLY_DIRS:
+            _remove_path(base / name)
+
+
+def _sweep_dirs() -> list[Path]:
+    """Directories whose top-level entries are watched for files that the test run leaves behind."""
+    return sorted({project_root, project_root / "assets", Path.cwd()})
+
+
+def _snapshot_entries() -> dict[Path, set[Path]]:
+    """Top-level entries of the watched directories."""
+    return {d: set(d.iterdir()) for d in _sweep_dirs() if d.is_dir()}
+
+
+def _is_git_ignored(path: Path) -> bool:
+    """Whether git ignores the path (untracked files that are not ignored may be the user's work)."""
+    import subprocess
+
+    try:
+        return subprocess.run(["git", "check-ignore", "-q", str(path)], cwd=project_root, capture_output=True, timeout=20).returncode == 0
+    except Exception:
+        return False
+
+
+def _sweep_new_entries(before: dict[Path, set[Path]]) -> None:
+    """Remove the git-ignored entries that appeared in the watched directories during the session."""
+    for directory, known in before.items():
+        if not directory.is_dir():
+            continue
+        for entry in directory.iterdir():
+            if entry in known or entry.name in _SWEEP_KEEP or entry.suffix == ".pyc":
+                continue
+            if _is_git_ignored(entry):
+                _remove_path(entry)
+
+
 @pytest.fixture(scope="session", autouse=True)
 def cleanup_test_root(request):
     """Cleanup test root directory after session."""
 
     def finalizer():
         """Finalizer to clean up test output."""
-        path_to_clean = project_root / "assets" / "test_output"
-        if path_to_clean.exists():
-            shutil.rmtree(path_to_clean)
-        path_to_clean_out = project_root / "assets" / "test_out"
-        if path_to_clean_out.exists():
-            shutil.rmtree(path_to_clean_out)
+        _remove_test_only_dirs()
 
     request.addfinalizer(finalizer)
 
@@ -281,6 +332,7 @@ def session_cleanup():
     # "model_weights" hold simulation results and trained models; on 2026-10-13 a test run in
     # the main checkout deleted outputs/simulations this way.
     preexisting = {p for p in artifact_paths if p.exists()}
+    entries_before = _snapshot_entries()
     output_dir = project_root / "assets" / "output"
     preexisting_output = set(output_dir.iterdir()) if output_dir.exists() else set()
 
@@ -297,6 +349,9 @@ def session_cleanup():
                 pass
 
     _cleanup_leftover_simulator_graphs()
+    _remove_test_only_dirs()
+    # Anything else the session created in the repo root, assets/ or the working directory and that git ignores.
+    _sweep_new_entries(entries_before)
 
     # Clean up generated folders in assets/output/ (excluding the tracked folders:
     # 30days and the notebook dashboards/analytics results)

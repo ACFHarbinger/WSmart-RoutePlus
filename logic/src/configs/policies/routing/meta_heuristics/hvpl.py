@@ -17,7 +17,7 @@ Example:
 """
 
 from dataclasses import dataclass, field
-from typing import Any, List, Optional
+from typing import Any, List, Mapping, Optional
 
 from logic.src.configs.policies.acceptance_criteria import AcceptanceConfig, BoltzmannAcceptanceConfig
 from logic.src.configs.policies.routing.hyper_heuristics.aco_hh import HyperHeuristicACOConfig
@@ -113,6 +113,12 @@ class HVPLConfig:
         Returns:
             None.
         """
+        # A plain mapping (a policy YAML or keyword arguments that skipped schema construction) becomes its config class.
+        if isinstance(self.aco_params, Mapping):
+            self.aco_params = HyperHeuristicACOConfig(**dict(self.aco_params))
+        if isinstance(self.alns_params, Mapping):
+            self.alns_params = ALNSConfig(**dict(self.alns_params))
+
         if self.aco_params is None:
             self.aco_params = HyperHeuristicACOConfig(
                 n_ants=20,

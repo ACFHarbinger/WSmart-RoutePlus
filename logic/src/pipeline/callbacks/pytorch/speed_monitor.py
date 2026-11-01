@@ -12,7 +12,7 @@ import time
 from typing import Optional
 
 import pytorch_lightning as L
-from lightning.fabric.utilities.rank_zero import rank_zero_only
+from lightning_fabric.utilities.rank_zero import rank_zero_only
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.utilities.parsing import AttributeDict
 
