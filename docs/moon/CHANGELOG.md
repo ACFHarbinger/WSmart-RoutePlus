@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Docstring tooling moved to `logic/docs` (`2026-11-01`)
+
+- `add_docstrings_batch.py`, `check_docstrings.py`, `check_google_style.py` and the package `__init__.py` moved from `logic/src/utils/docs/` to `logic/docs/` (the empty `__init__.py` there is replaced). The import path is now `logic.docs`; the pre-commit hook, the tests and the module docs are updated.
+
 ### Fixed: SANS final 2-opt never terminated on directed matrices (`2026-10-31`)
 
 - `uncross_arcs_in_sans_routes` (the clean-up after the annealing loop, which the time limit does not cover) ran `two_opt_route(..., max_iter=None, tol=0.0)`. On an asymmetric distance matrix a zero tolerance accepts reversals whose gain is floating-point noise, so a reversal and its inverse can both look improving and the descent cycles forever. On the Rio Maior matrix 58 of 300 random routes never finished. In the Rio Maior 100 campaign this left the four SANS cells at about 93% CPU for 8 hours with no output. The tolerance is now `1e-9` (0 of 300 hang), and the descent stays uncapped because every accepted reversal now gains at least `1e-9`.

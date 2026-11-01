@@ -494,7 +494,7 @@ retrieved_state = cache.get(beam_index)
 
 ## 6. Documentation Utilities
 
-**Module**: `logic/src/utils/docs/`
+**Module**: `logic/docs/`
 
 Automated documentation generation, validation, and style enforcement.
 
@@ -504,10 +504,10 @@ Automated documentation generation, validation, and style enforcement.
 
 ```bash
 # Process single file
-python logic/src/utils/docs/add_docstrings_batch.py logic/src/models/my_model.py
+python logic/docs/add_docstrings_batch.py logic/src/models/my_model.py
 
 # Process directory (recursively)
-python logic/src/utils/docs/add_docstrings_batch.py logic/src/models/
+python logic/docs/add_docstrings_batch.py logic/src/models/
 ```
 
 **Features**:
@@ -523,7 +523,7 @@ python logic/src/utils/docs/add_docstrings_batch.py logic/src/models/
 
 ```bash
 # Check directory for missing docstrings
-python logic/src/utils/docs/check_docstrings.py logic/src/models
+python logic/docs/check_docstrings.py logic/src/models
 ```
 
 **Output**:
@@ -549,7 +549,7 @@ Total: 2 missing docstrings
 
 ```bash
 # Validate Google Style compliance
-python logic/src/utils/docs/check_google_style.py logic/src
+python logic/docs/check_google_style.py logic/src
 ```
 
 **Checks**:

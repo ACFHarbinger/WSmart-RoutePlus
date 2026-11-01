@@ -3,7 +3,7 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-from logic.src.utils.docs.check_google_style import (
+from logic.docs.check_google_style import (
     GoogleStyleValidator,
     analyze_file,
     display_report,
@@ -169,7 +169,7 @@ def test_display_report_with_violations():
 
 @pytest.mark.unit
 @patch("argparse.ArgumentParser.parse_args")
-@patch("logic.src.utils.docs.check_google_style.display_report")
+@patch("logic.docs.check_google_style.display_report")
 def test_main_scan_file(mock_display, mock_parse_args, clean_module):
     args = MagicMock()
     args.path = clean_module
@@ -184,7 +184,7 @@ def test_main_scan_file(mock_display, mock_parse_args, clean_module):
 
 @pytest.mark.unit
 @patch("argparse.ArgumentParser.parse_args")
-@patch("logic.src.utils.docs.check_google_style.display_report")
+@patch("logic.docs.check_google_style.display_report")
 def test_main_scan_directory(mock_display, mock_parse_args, tmp_path, clean_module):
     args = MagicMock()
     args.path = str(tmp_path.resolve())

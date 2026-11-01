@@ -1,6 +1,6 @@
 """Trim generated docstring boilerplate (P-03, owner ruling Q-7b).
 
-The batch generator (`utils/docs/add_docstrings_batch.py`) left three kinds of
+The batch generator (`logic/docs/add_docstrings_batch.py`) left three kinds of
 noise that the old checkers demanded and the new rule (Q-7b) rejects:
 
 1. ``Returns:``/``Yields:`` sections whose body is only ``None`` — removed.

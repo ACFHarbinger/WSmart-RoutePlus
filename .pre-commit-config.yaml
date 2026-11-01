@@ -33,6 +33,6 @@ repos:
     hooks:
       - id: check-docstrings
         name: Check Docstring Coverage
-        entry: uv run python logic/src/utils/docs/check_docstrings.py
+        entry: uv run python logic/docs/check_docstrings.py
         language: system
         files: ^logic/src/.*\.py$

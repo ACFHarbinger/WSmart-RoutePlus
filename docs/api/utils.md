@@ -185,18 +185,18 @@ Sampling decoding strategy implementation.
 
 - **class `Sampling`** — Sampling decoding: sample from the probability distribution.
 
-### `logic.src.utils.docs.__init__`
+### `logic.docs.__init__`
 
 Documentation utilities module.
 
-### `logic.src.utils.docs.add_docstrings_batch`
+### `logic.docs.add_docstrings_batch`
 
 Batch Docstring Adder (AST-Based)
 
 - **class `DocstringInjector`** — DocstringInjector class.
 - `main()` — Main.
 
-### `logic.src.utils.docs.check_docstrings`
+### `logic.docs.check_docstrings`
 
 Docstring Compliance Checker (P-03, owner ruling Q-7b).
 
@@ -204,7 +204,7 @@ Docstring Compliance Checker (P-03, owner ruling Q-7b).
 - `check_docstrings_recursive()` — Recursively collect violations from all .py files under *directory*.
 - `display_results()` — Render the violation report as a Rich table grouped by file.
 
-### `logic.src.utils.docs.check_google_style`
+### `logic.docs.check_google_style`
 
 Google Style Docstring Validator.
 

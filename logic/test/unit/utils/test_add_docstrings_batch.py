@@ -1,10 +1,10 @@
-"""Unit tests for logic/src/utils/docs/add_docstrings_batch.py."""
+"""Unit tests for logic/docs/add_docstrings_batch.py."""
 
 import tempfile
 from pathlib import Path
 
 import pytest
-from logic.src.utils.docs.add_docstrings_batch import DocstringInjector
+from logic.docs.add_docstrings_batch import DocstringInjector
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
