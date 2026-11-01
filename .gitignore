@@ -504,3 +504,8 @@ assets/telemetry.db
 .agents
 .claude
 .antigravity
+
+# Transient test files and directories
+/test_out
+/test_output
+/test_tracking
