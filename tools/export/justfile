@@ -1,4 +1,4 @@
-# WSmart+ Route — Export: automated algorithm export pipeline
+# WSmart Route+ — Export: automated algorithm export pipeline
 
 set unstable := true
 set working-directory := '../..'

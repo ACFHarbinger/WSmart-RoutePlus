@@ -1,6 +1,6 @@
-# WSmart+ Route — Public Website
+# WSmart Route+ — Public Website
 
-React documentation and product portal for **WSmart+ Route**: combinatorial
+React documentation and product portal for **WSmart Route+**: combinatorial
 optimization for waste collection vehicle routing (neural + classical OR).
 
 This site is **separate** from the Tauri desktop Studio in `app/`. The public

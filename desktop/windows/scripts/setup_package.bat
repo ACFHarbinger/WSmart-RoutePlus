@@ -1,5 +1,5 @@
 @echo off
-rem WSmart+ Route package setup for Windows (Command Prompt).
+rem WSmart Route+ package setup for Windows (Command Prompt).
 rem
 rem   scripts\windows\setup.bat
 rem

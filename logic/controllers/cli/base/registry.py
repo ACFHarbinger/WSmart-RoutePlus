@@ -1,5 +1,5 @@
 """
-Centralized registry for the WSmart+ Route CLI parser.
+Centralized registry for the WSmart Route+ CLI parser.
 
 Attributes:
     get_parser: Returns the main ConfigsParser with all subcommands registered.
@@ -31,7 +31,7 @@ def get_parser() -> ConfigsParser:
     Returns:
         The main ConfigsParser with all subcommands registered.
     """
-    parser = ConfigsParser(description="WSmart+ Route Unified CLI Framework")
+    parser = ConfigsParser(description="WSmart Route+ Unified CLI Framework")
     parser.add_argument("--profile", action="store_true", help="Enable function-level execution profiling")
     subparsers = parser.add_subparsers(dest="command", help="The command to execute", required=True)
 

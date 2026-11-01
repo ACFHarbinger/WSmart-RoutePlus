@@ -19,7 +19,7 @@ export default function Platform() {
           <em className="inline-em-route">the route.</em>
         </h1>
         <p>
-          WSmart+ Route separates computational logic from the Studio interface
+          WSmart Route+ separates computational logic from the Studio interface
           so research can evolve without turning experimentation into a black
           box.
         </p>

@@ -170,7 +170,7 @@ The `Config` class is the single source of truth for any execution. It composes 
 ```python
 @dataclass
 class Config:
-    """Root configuration for WSmart+ Route.
+    """Root configuration for WSmart Route+.
 
     Attributes:
         env: Environment configuration.
@@ -2095,5 +2095,5 @@ Config
 ---
 
 **Last Updated**: January 2026
-**Maintainer**: WSmart+ Route Development Team
+**Maintainer**: WSmart Route+ Development Team
 **Status**: ✅ Active - Comprehensive configuration system documentation

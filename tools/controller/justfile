@@ -1,4 +1,4 @@
-# WSmart+ Route — Controller: Hydra-based execution commands
+# WSmart Route+ — Controller: Hydra-based execution commands
 
 set unstable := true
 set working-directory := '../..'

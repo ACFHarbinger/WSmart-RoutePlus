@@ -4,7 +4,7 @@
 
 ## J — Cloud Runner (v1.1.0)
 
-> Run WSmart-Route simulations on GCP, AWS and Azure, with Firebase or Supabase as the control plane, and launch, monitor and manage them from WSmart-Route Studio. Feature set agreed with the owner on 2026-10-19. Epic: [#120](https://github.com/ACFHarbinger/WSmart-Route/issues/120), milestone `v1.1.0`, project "WSmart+ Route".
+> Run WSmart-Route simulations on GCP, AWS and Azure, with Firebase or Supabase as the control plane, and launch, monitor and manage them from WSmart-Route Studio. Feature set agreed with the owner on 2026-10-19. Epic: [#120](https://github.com/ACFHarbinger/WSmart-Route/issues/120), milestone `v1.1.0`, project "WSmart Route+".
 
 ### §J.1 — Design
 

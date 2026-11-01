@@ -1,7 +1,7 @@
 """Run WSR Simulator Tests.
 
 Attributes:
-    run_simulator_test: Main entry point for the WSmart+ Route simulator test engine.
+    run_simulator_test: Main entry point for the WSmart Route+ simulator test engine.
     _validate_sim_config: Validate and normalize ``cfg.sim`` fields in place.
     _resolve_data_size: Resolve the available data size for the given area and requested size.
     _expand_data_distribution: Expand the data distribution field.
@@ -48,7 +48,7 @@ logger = get_pylogger(__name__)
 
 def run_simulator_test(cfg: Config, sinks: Optional[List[Any]] = None) -> None:
     """
-    Main entry point for the WSmart+ Route simulator test engine.
+    Main entry point for the WSmart Route+ simulator test engine.
 
     This function orchestrates the end-to-end simulation testing workflow:
     1. Validates simulation configuration.
@@ -157,7 +157,7 @@ def run_simulator_test(cfg: Config, sinks: Optional[List[Any]] = None) -> None:
         run.__exit__(None, None, None)
     except Exception as e:
         run.__exit__(type(e), e, e.__traceback__)
-        raise Exception(f"failed to execute WSmart+ Route simulations due to {repr(e)}") from e
+        raise Exception(f"failed to execute WSmart Route+ simulations due to {repr(e)}") from e
 
 
 # ---------------------------------------------------------------------------

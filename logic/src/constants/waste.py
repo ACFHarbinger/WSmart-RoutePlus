@@ -77,7 +77,7 @@ WASTE_TYPES: Dict[str, str] = {
 CRITICAL_FILL_THRESHOLD: float = 0.9  # 90% capacity
 
 
-# County aliases for WSmart+ Route datasets
+# County aliases for WSmart Route+ datasets
 COUNTY_ALIASES = {
     "riomaior": "riomaior",
     "figueiradafoz": "figdafoz",

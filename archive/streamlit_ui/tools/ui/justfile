@@ -1,4 +1,4 @@
-# WSmart+ Route — UI: GUI and dashboard launchers
+# WSmart Route+ — UI: GUI and dashboard launchers
 
 set unstable := true
 set working-directory := '../..'

@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "React documentation and product portal for WSmart+ Route — combinatorial optimization for waste collection VRP.",
+  "description": "React documentation and product portal for WSmart Route+ — combinatorial optimization for waste collection VRP.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

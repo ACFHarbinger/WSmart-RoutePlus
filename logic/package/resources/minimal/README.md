@@ -1,6 +1,6 @@
-# WSmart+ Route 1.0.2 (minimal package)
+# WSmart Route+ 1.0.2 (minimal package)
 
-A lightweight version of the WSmart+ Route simulator: the multi-day waste-collection simulator
+A lightweight version of the WSmart Route+ simulator: the multi-day waste-collection simulator
 with four routing algorithms and three packing algorithms, run on existing datasets, and the
 plain Attention Model trained with REINFORCE on existing `.td` datasets. It is built from the
 WSmart-Route code by `logic/package/build_release.py --manifest logic/package/resources/minimal.yaml`.

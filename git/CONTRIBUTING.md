@@ -13,7 +13,7 @@
 > **Version**: 2.0
 > **Last Updated**: January 2026
 
-Thank you for your interest in contributing to WSmart+ Route! This document provides comprehensive guidelines for contributing to the project, from code style to the pull request process.
+Thank you for your interest in contributing to WSmart Route+! This document provides comprehensive guidelines for contributing to the project, from code style to the pull request process.
 
 ---
 
@@ -857,4 +857,4 @@ By contributing to WSmart-Route, you agree that your contributions will be licen
 
 ---
 
-**Thank you for contributing to WSmart+ Route!**
+**Thank you for contributing to WSmart Route+!**

@@ -1067,7 +1067,7 @@ index e1c1533..f37b086 100644
 -def run_simulator_test(cfg: Config, sinks: Optional[List[Any]] = None) -> None:
 +def run_simulator_test(cfg: Config) -> None:
      """
-     Main entry point for the WSmart+ Route simulator test engine.
+     Main entry point for the WSmart Route+ simulator test engine.
  
 @@ -61,18 +51,7 @@ def run_simulator_test(cfg: Config, sinks: Optional[List[Any]] = None) -> None:
      Args:
@@ -1142,7 +1142,7 @@ index e1c1533..f37b086 100644
 -        run.__exit__(None, None, None)
      except Exception as e:
 -        run.__exit__(type(e), e, e.__traceback__)
-         raise Exception(f"failed to execute WSmart+ Route simulations due to {repr(e)}") from e
+         raise Exception(f"failed to execute WSmart Route+ simulations due to {repr(e)}") from e
  
  
 @@ -239,98 +171,3 @@ def _ensure_directories(cfg: Config) -> None:

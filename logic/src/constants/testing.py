@@ -1,7 +1,7 @@
 """
 Test suite settings and constants.
 
-This module defines the test module registry for the WSmart+ Route test suite.
+This module defines the test module registry for the WSmart Route+ test suite.
 Used by:
 - logic/test/test_suite.py (pytest wrapper for selective test execution)
 - main.py (CLI command: python main.py test_suite --module <name>)

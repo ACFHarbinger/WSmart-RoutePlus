@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Create a bug report to help us improve WSmart+ Route
+about: Create a bug report to help us improve WSmart Route+
 title: "[BUG] "
 labels: 'bug'
 assignees: ''

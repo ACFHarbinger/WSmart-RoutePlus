@@ -90,7 +90,7 @@
 ---
 
 **Last Updated**: [Month Year]
-**Maintainer**: WSmart+ Route Development Team
+**Maintainer**: WSmart Route+ Development Team
 **Status**: ✅ Active
 ```
 
@@ -316,5 +316,5 @@ Now you can use it anywhere!
 
 ---
 
-**Maintainer**: WSmart+ Route Development Team
+**Maintainer**: WSmart Route+ Development Team
 **Last Updated**: February 2026

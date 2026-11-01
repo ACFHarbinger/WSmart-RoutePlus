@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# WSmart+ Route package setup for Linux.
+# WSmart Route+ package setup for Linux.
 #
 #   bash scripts/linux/setup.sh
 #

@@ -14,13 +14,13 @@
 > **Last Updated**: January 2026
 > **Purpose**: Comprehensive development setup and workflow documentation
 
-This guide provides everything you need to set up a development environment for WSmart+ Route and understand the development workflows.
+This guide provides everything you need to set up a development environment for WSmart Route+ and understand the development workflows.
 
 ---
 
 ## ⚡ < 5 Minute Quickstart
 
-**Get up and running with WSmart+ Route in under 5 minutes!**
+**Get up and running with WSmart Route+ in under 5 minutes!**
 
 ```bash
 # 1. Install uv package manager (< 1 min)

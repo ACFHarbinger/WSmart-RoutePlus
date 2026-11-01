@@ -47,7 +47,7 @@ export default function Research() {
         </h2>
         <p>
           Research is only useful when a policy survives the conditions it was
-          designed to navigate. WSmart+ Route keeps simulation and evaluation
+          designed to navigate. WSmart Route+ keeps simulation and evaluation
           close to the model.
         </p>
         <Link className="btn btn-secondary" to="/benchmarks">

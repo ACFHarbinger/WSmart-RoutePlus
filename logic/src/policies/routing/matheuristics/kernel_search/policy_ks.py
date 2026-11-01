@@ -2,7 +2,7 @@
 Simulator adapter for the Kernel Search matheuristic.
 
 This module provides the `KernelSearchPolicy` class, which acts as a bridge between the
-WSmart+ Route simulator environment and the Gurobi-based Kernel Search solver logic.
+WSmart Route+ simulator environment and the Gurobi-based Kernel Search solver logic.
 It handles configuration parsing, state extraction, and results formatting.
 
 Attributes:

@@ -1,7 +1,7 @@
 """
 Path constants for the project.
 
-This module provides platform-independent path resolution for the WSmart+ Route
+This module provides platform-independent path resolution for the WSmart Route+
 project root and asset locations. Used by:
 - Application icon loading for exported tooling
 - All modules needing project-relative paths (configs, data, outputs)

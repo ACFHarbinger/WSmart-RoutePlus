@@ -917,5 +917,5 @@ from logic.src.interfaces.packing import PackingContext
 ---
 
 **Last Updated**: February 2026
-**Maintainer**: WSmart+ Route Development Team
+**Maintainer**: WSmart Route+ Development Team
 **Status**: ✅ Active - Comprehensive interface documentation

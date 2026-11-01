@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest a new feature or enhancement for WSmart+ Route
+about: Suggest a new feature or enhancement for WSmart Route+
 title: "[FEATURE] "
 labels: 'enhancement'
 assignees: ''

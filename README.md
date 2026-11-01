@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="assets/images/logo-wsmartroute-white.png" alt="WSmart+ Route Logo" style="width: 35%; height: auto;">
+<img src="assets/images/logo-wsmartroute-white.png" alt="WSmart Route+ Logo" style="width: 35%; height: auto;">
 
-# WSmart+ Route
+# WSmart Route+
 
 **A High-Performance Framework for Combinatorial Optimization in Waste Collection Vehicle Routing**
 
@@ -73,7 +73,7 @@
 
 ## Documentation Hub
 
-Our comprehensive documentation covers every aspect of the WSmart+ Route system:
+Our comprehensive documentation covers every aspect of the WSmart Route+ system:
 
 ### Core Documentation
 
@@ -111,7 +111,7 @@ Detailed technical documentation for each subsystem. Essential for deep dives in
 
 ## Overview
 
-**WSmart+ Route** is a high-performance framework for solving complex Combinatorial Optimization (CO) problems, specifically the **Vehicle Routing Problem with Profits (VRPP)** and **Capacitated Waste Collection VRP (CWC VRP)**.
+**WSmart Route+** is a high-performance framework for solving complex Combinatorial Optimization (CO) problems, specifically the **Vehicle Routing Problem with Profits (VRPP)** and **Capacitated Waste Collection VRP (CWC VRP)**.
 
 The project bridges **Deep Reinforcement Learning (DRL)** with **Operations Research (OR)**, providing a benchmarking and deployment environment where neural models (PyTorch) compete with traditional solvers (Gurobi, Hexaly).
 
@@ -124,7 +124,7 @@ The project bridges **Deep Reinforcement Learning (DRL)** with **Operations Rese
 | **Simulation Environment**  | Test policies on realistic multi-day scenarios               |
 | **User-Friendly Interface** | WSmart-Route Studio (Tauri) desktop app for training, evaluation, and analytics |
 
-### Why WSmart+ Route?
+### Why WSmart Route+?
 
 1. **Neural + Classical**: Compare attention-based models with exact solvers and metaheuristics
 2. **Production-Ready**: CLI and the WSmart-Route Studio desktop app for researchers and practitioners

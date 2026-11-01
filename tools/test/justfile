@@ -1,4 +1,4 @@
-# WSmart+ Route — Test: pytest runners
+# WSmart Route+ — Test: pytest runners
 
 set unstable := true
 set working-directory := '../..'

@@ -31,7 +31,7 @@ def main() -> None:
     """Run all performance benchmarks."""
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print("=" * 70)
-    print(f"  WSmart+ Route Performance Benchmark Suite (Device: {device})")
+    print(f"  WSmart Route+ Performance Benchmark Suite (Device: {device})")
     print("=" * 70)
 
     start_time = time.time()

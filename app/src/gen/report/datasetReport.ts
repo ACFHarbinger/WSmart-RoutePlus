@@ -192,7 +192,7 @@ ${PLACEHOLDER}
     tocItems.push(`${alignmentSection}. [TD vs NPZ Alignment](#${alignmentSection}-td-vs-npz-alignment)`);
   }
 
-  const md = finalizeMarkdown(`# WSmart+ Route — Dataset Analysis Report
+  const md = finalizeMarkdown(`# WSmart Route+ — Dataset Analysis Report
 
 > **Scope:** NPZ simulator datasets and TensorDict training datasets
 > **Cities:** ${cityLabels.join(", ")}

@@ -1,6 +1,6 @@
 # Security
 
-Security posture and practices for WSmart+ Route.
+Security posture and practices for WSmart Route+.
 
 ## Scope
 

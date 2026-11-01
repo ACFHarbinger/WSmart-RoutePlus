@@ -2,7 +2,7 @@
 LKH-3 Policy Adapter.
 
 Adapts the Lin-Kernighan-Helsgaun 3 heuristic to the agnostic routing
-policy interface used by the WSmart+ Route simulator.
+policy interface used by the WSmart Route+ simulator.
 
 Reference:
     Helsgaun, K. (2017). An extension of the LKH-TSP solver for constrained

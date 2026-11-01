@@ -1,5 +1,5 @@
 """
-The Logic Layer of the WSmart+ Route framework.
+The Logic Layer of the WSmart Route+ framework.
 
 This package contains the core intelligence and simulation logic, organized into:
 - models/: Neural network architectures (AM, MandatoryManager, etc.)

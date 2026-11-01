@@ -1,4 +1,4 @@
-# WSmart+ Route — Reducer: codebase cleanup and maintenance
+# WSmart Route+ — Reducer: codebase cleanup and maintenance
 
 set unstable := true
 set working-directory := '../..'

@@ -222,7 +222,7 @@ export async function generateSimulationReport(
     `${ctx0.strategies.length} packing algorithms × ${ctx0.improvers.length} route improvers × ` +
     `${ctx0.constructors.length} routing algorithms`;
 
-  const header = `# WSmart+ Route — Simulation Analysis Report
+  const header = `# WSmart Route+ — Simulation Analysis Report
 
 > **Scope:** ${scope}
 ${horizons.map((h) => `> **Total logs analysed (${h.days}d):** ${h.nLogs}`).join("\n")}

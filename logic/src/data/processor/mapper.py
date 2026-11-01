@@ -44,7 +44,7 @@ from .formatting import format_coordinates
 
 class SimulationDataMapper:
     """
-    Data Mapper for the WSmart+ Route simulator.
+    Data Mapper for the WSmart Route+ simulator.
     Attributes:
         None
     """

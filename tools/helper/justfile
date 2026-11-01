@@ -1,4 +1,4 @@
-# WSmart+ Route — Helper: general-purpose commands and shortcuts
+# WSmart Route+ — Helper: general-purpose commands and shortcuts
 
 set unstable := true
 set working-directory := '../..'
@@ -6,7 +6,7 @@ set working-directory := '../..'
 [private]
 _print_header:
     @printf "\033[0;34m╔══════════════════════════════════════════════════════════════════════╗\033[0m\n"
-    @printf "\033[0;34m║                  WSmart+ Route Framework Control                     ║\033[0m\n"
+    @printf "\033[0;34m║                  WSmart Route+ Framework Control                     ║\033[0m\n"
     @printf "\033[0;34m╚══════════════════════════════════════════════════════════════════════╝\033[0m\n"
 
 # Print available commands with descriptions

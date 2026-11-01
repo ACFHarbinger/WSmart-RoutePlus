@@ -1,4 +1,4 @@
-# WSmart+ Route Field Repair Manual: Troubleshooting Guide
+# WSmart Route+ Field Repair Manual: Troubleshooting Guide
 
 [![Python](https://img.shields.io/badge/Python-3.9+-3776ab?logo=python&logoColor=white)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.2.2-ee4c2c?logo=pytorch&logoColor=white)](https://pytorch.org/get-started/locally/)
@@ -12,7 +12,7 @@
 
 > **Version**: 2.0 (Comprehensive Edition)
 > **Philosophy**: Diagnosis > Guesswork
-> This document maps "Symptoms" to "Root Causes" and "Cures" for WSmart+ Route.
+> This document maps "Symptoms" to "Root Causes" and "Cures" for WSmart Route+.
 
 This comprehensive troubleshooting guide is organized by symptom category. Use the table of contents to quickly navigate to your issue.
 

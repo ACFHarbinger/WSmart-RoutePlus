@@ -2,7 +2,7 @@
 Simulation and Physics constants.
 
 This module defines physical constants, problem constraints, and metric definitions
-for the WSmart+ Route simulation engine. Used by:
+for the WSmart Route+ simulation engine. Used by:
 - logic/src/pipeline/simulations/manager.py (multi-day simulation orchestrator)
 - logic/src/envs/*.py (problem environment physics)
 - logic/src/data/generators/*.py (instance generation)
@@ -67,7 +67,7 @@ EARTH_RADIUS: int = 6371  # km (mean radius)
 # Use when: Real-world GPS data (OpenStreetMap, Google Maps integration)
 EARTH_WMP_RADIUS: int = 6378137  # meters (equatorial radius, WGS84 datum)
 
-# WSmart+ Route Simulation Metrics
+# WSmart Route+ Simulation Metrics
 # ---------------------------------
 # Performance indicators for waste collection optimization.
 

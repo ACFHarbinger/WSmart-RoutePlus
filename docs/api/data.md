@@ -93,11 +93,11 @@ Abstract base class for simulation datasets.
 
 ### `logic.src.data.datasets.web.__init__`
 
-Web-based dataset loaders and crawlers for WSmart+ Route.
+Web-based dataset loaders and crawlers for WSmart Route+.
 
 ### `logic.src.data.datasets.web.dashboard_crawler`
 
-Crawler for WSmart+ Route HTML dashboards.
+Crawler for WSmart Route+ HTML dashboards.
 
 - `extract_dataframe()` — Parse the dashboard and return the 'Todos os Locais' table as a DataFrame.
 - `to_csv()` — Export 'Todos os Locais' data to a CSV file.
@@ -107,9 +107,9 @@ Crawler for WSmart+ Route HTML dashboards.
 
 ### `logic.src.data.datasets.web.html_sim_dataset`
 
-HTML simulation dataset class for loading simulation data directly from WSmart+ Route HTML dashboards.
+HTML simulation dataset class for loading simulation data directly from WSmart Route+ HTML dashboards.
 
-- **class `HtmlSimulationDataset`** — Dataset wrapping simulation data extracted from a WSmart+ Route HTML dashboard file or URL.
+- **class `HtmlSimulationDataset`** — Dataset wrapping simulation data extracted from a WSmart Route+ HTML dashboard file or URL.
 
 ### `logic.src.data.distributions.__init__`
 
@@ -324,7 +324,7 @@ Coordinate transformation and normalization logic for simulation data.
 
 Data Mapper for transformation between raw data and simulation representations.
 
-- **class `SimulationDataMapper`** — Data Mapper for the WSmart+ Route simulator.
+- **class `SimulationDataMapper`** — Data Mapper for the WSmart Route+ simulator.
 
 ### `logic.src.data.processor.processing`
 

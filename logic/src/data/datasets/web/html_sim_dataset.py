@@ -1,5 +1,5 @@
 """
-HTML simulation dataset class for loading simulation data directly from WSmart+ Route HTML dashboards.
+HTML simulation dataset class for loading simulation data directly from WSmart Route+ HTML dashboards.
 
 This module provides the ``HtmlSimulationDataset``, which parses an HTML file or URL,
 projects bin waste fill levels based on current fill and daily accumulation rates,
@@ -17,7 +17,7 @@ from logic.src.data.datasets.web.dashboard_crawler import extract_dataframe
 
 class HtmlSimulationDataset(SimulationDataset):
     """
-    Dataset wrapping simulation data extracted from a WSmart+ Route HTML dashboard file or URL.
+    Dataset wrapping simulation data extracted from a WSmart Route+ HTML dashboard file or URL.
 
     Attributes:
         _sample: Dictionary containing the dataset.

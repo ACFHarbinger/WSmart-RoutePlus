@@ -24,7 +24,7 @@ export default function Home() {
               <span style={{ color: 'var(--brand-route)' }}>civic infrastructure.</span>
             </h1>
             <p className="hero-subtitle">
-              WSmart+ Route bridges deep reinforcement learning and classical
+              WSmart Route+ bridges deep reinforcement learning and classical
               operations research for waste collection vehicle routing — 
               train policies, prove baselines, and stress multi-day scenarios.
             </p>
@@ -74,7 +74,7 @@ export default function Home() {
             </h2>
           </div>
           <p>
-            Routing is not one algorithmic personality. WSmart+ Route lets you
+            Routing is not one algorithmic personality. WSmart Route+ lets you
             learn, prove, and test decisions against the conditions that make
             operations difficult.
           </p>

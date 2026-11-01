@@ -12,9 +12,9 @@
 
 > **Version**: 3.0
 > **Last Updated**: January 2026
-> **Purpose**: Comprehensive guide for AI coding assistants working on WSmart+ Route
+> **Purpose**: Comprehensive guide for AI coding assistants working on WSmart Route+
 
-This document serves as the authoritative reference for AI assistants (Claude, GPT, Copilot, etc.) working on the WSmart+ Route codebase. It provides context about the project mission, architecture, coding standards, and operational guidelines.
+This document serves as the authoritative reference for AI assistants (Claude, GPT, Copilot, etc.) working on the WSmart Route+ codebase. It provides context about the project mission, architecture, coding standards, and operational guidelines.
 
 ---
 
@@ -62,7 +62,7 @@ These module docs completely document the logic and GUI architectures. Please re
 
 ## 1. Project Overview & Mission
 
-**WSmart+ Route** is a high-performance framework for solving complex Combinatorial Optimization (CO) problems, specifically:
+**WSmart Route+** is a high-performance framework for solving complex Combinatorial Optimization (CO) problems, specifically:
 
 - **Vehicle Routing Problem with Profits (VRPP)**: Select profitable subset of nodes to visit
 - **Capacitated Waste Collection VRP (CWC VRP)**: Dynamic waste collection with capacity constraints
@@ -739,7 +739,7 @@ METRICS = ["overflows", "kg", "ncol", "kg_lost", "km", "kg/km", "cost", "profit"
 
 ---
 
-**This guide is the authoritative reference for AI assistants working on WSmart+ Route. Keep it updated as the codebase evolves.**
+**This guide is the authoritative reference for AI assistants working on WSmart Route+. Keep it updated as the codebase evolves.**
 
 ## Paper branches (all manuscripts)
 

@@ -1,11 +1,11 @@
-# WSmart+ Route — Moon Roadmap
+# WSmart Route+ — Moon Roadmap
 
 > **Version**: 1.1  
 > **Last Updated**: July 2026  
 > **Status**: Living Document — updated each sprint  
 > **Scope**: Logic layer (`logic/src/`), GUI layer (migrating from `gui/src/` PySide6 → Tauri), CI/CD, documentation
 
-This document captures medium-to-long-horizon improvements for the WSmart+ Route framework across eight dimensions: Analytics & Interpretability, Architecture, Documentation, GUI/UX, New Features, Performance, the WSmart-Route Studio Tauri application, and the Analysis & Presentation Studio migration. Each item follows a **Pain → Options → Recommendation** structure with effort/impact tags.
+This document captures medium-to-long-horizon improvements for the WSmart Route+ framework across eight dimensions: Analytics & Interpretability, Architecture, Documentation, GUI/UX, New Features, Performance, the WSmart-Route Studio Tauri application, and the Analysis & Presentation Studio migration. Each item follows a **Pain → Options → Recommendation** structure with effort/impact tags.
 
 Tags: `[Quick Win]` ≤ 1 day · `[Research]` involves novel work · `[Blocked]` depends on another item
 

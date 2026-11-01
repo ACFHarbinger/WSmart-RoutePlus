@@ -188,7 +188,7 @@ Policy YAML variant extraction for the test engine.
 
 Run WSR Simulator Tests.
 
-- `run_simulator_test()` — Main entry point for the WSmart+ Route simulator test engine.
+- `run_simulator_test()` — Main entry point for the WSmart Route+ simulator test engine.
 
 ### `logic.src.pipeline.features.test.orchestrator.__init__`
 

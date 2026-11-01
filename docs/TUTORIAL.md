@@ -1,4 +1,4 @@
-# WSmart+ Route: The Definitive Developer Encyclopedia & Technical Tutorial
+# WSmart Route+: The Definitive Developer Encyclopedia & Technical Tutorial
 
 [![Python](https://img.shields.io/badge/Python-3.9+-3776ab?logo=python&logoColor=white)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.2.2-ee4c2c?logo=pytorch&logoColor=white)](https://pytorch.org/get-started/locally/)
@@ -13,15 +13,15 @@
 > **Version**: 3.0 (The "Comprehensive" Edition)
 > **Target Audience**: Core Engineers, Researchers, ML Scientists
 
-Welcome to the internal documentation of **WSmart+ Route**. This encyclopedia is designed to be the ultimate reference for any developer, researcher, or engineer working on this high-performance combinatorial optimization platform for waste collection routing.
+Welcome to the internal documentation of **WSmart Route+**. This encyclopedia is designed to be the ultimate reference for any developer, researcher, or engineer working on this high-performance combinatorial optimization platform for waste collection routing.
 
-WSmart+ Route is a masterclass in bridging Deep Reinforcement Learning with Operations Research, providing a unified framework where neural models compete with classical solvers on real-world routing problems.
+WSmart Route+ is a masterclass in bridging Deep Reinforcement Learning with Operations Research, providing a unified framework where neural models compete with classical solvers on real-world routing problems.
 
 ---
 
 ## Table of Contents
 
-1.  [The WSmart+ Route Philosophy](#1-the-wsmart-route-philosophy)
+1.  [The WSmart Route+ Philosophy](#1-the-wsmart-route-philosophy)
 2.  [High-Level Architecture & Communication](#2-high-level-architecture--communication)
 3.  [Logic Layer: The Intelligence Core (`logic/src/`)](#3-logic-layer-the-intelligence-core-logicsrc)
     - [3.1 Neural Models](#31-neural-models-logicsrcmodels)
@@ -48,7 +48,7 @@ WSmart+ Route is a masterclass in bridging Deep Reinforcement Learning with Oper
     - [6.4 Using the Studio](#64-using-the-studio)
     - [6.5 Hyperparameter Optimization](#65-hyperparameter-optimization)
     - [6.6 Meta-Reinforcement Learning](#66-meta-reinforcement-learning)
-7.  [Extending WSmart+ Route](#7-extending-wsmart-route)
+7.  [Extending WSmart Route+](#7-extending-wsmart-route)
     - [7.1 Adding a New Neural Architecture](#71-adding-a-new-neural-architecture)
     - [7.2 Adding a New Classical Policy](#72-adding-a-new-classical-policy)
     - [7.3 Adding a New Problem Variant](#73-adding-a-new-problem-variant)
@@ -71,9 +71,9 @@ WSmart+ Route is a masterclass in bridging Deep Reinforcement Learning with Oper
 
 ---
 
-## 1. The WSmart+ Route Philosophy
+## 1. The WSmart Route+ Philosophy
 
-Waste collection routing is a complex combinatorial optimization problem with real-world constraints and significant economic impact. Traditional approaches rely on either heuristics (fast but suboptimal) or exact solvers (optimal but slow). WSmart+ Route was built on three core pillars to bridge this gap:
+Waste collection routing is a complex combinatorial optimization problem with real-world constraints and significant economic impact. Traditional approaches rely on either heuristics (fast but suboptimal) or exact solvers (optimal but slow). WSmart Route+ was built on three core pillars to bridge this gap:
 
 ### 1.1 Neural Models as Constructive Heuristics
 
@@ -83,7 +83,7 @@ Deep Learning models, particularly attention-based architectures, can learn to c
 
 ### 1.2 Benchmarking Ecosystem
 
-To validate neural approaches, we need rigorous comparisons. WSmart+ Route provides:
+To validate neural approaches, we need rigorous comparisons. WSmart Route+ provides:
 
 1.  **Exact Solvers**: Gurobi and Hexaly for optimal baselines.
 2.  **Classical Heuristics**: ALNS, HGS, and look-ahead policies.
@@ -104,7 +104,7 @@ The `test_sim` pipeline simulates multi-day waste collection scenarios with stoc
 
 ## 2. High-Level Architecture & Communication
 
-WSmart+ Route uses a **Layered Modular Architecture**. Each layer has distinct responsibilities:
+WSmart Route+ uses a **Layered Modular Architecture**. Each layer has distinct responsibilities:
 
 ### 2.1 Component Breakdown
 
@@ -846,7 +846,7 @@ $$ \nabla*\theta J(\theta) = \mathbb{E}*{\tau \sim \pi*\theta} \left[ R(\tau) \c
 **Solution**: Subtract a baseline $ b $:
 $$ \nabla*\theta J(\theta) = \mathbb{E}*{\tau \sim \pi*\theta} \left[ (R(\tau) - b) \cdot \nabla*\theta \log \pi\_\theta(\tau) \right] $$
 
-**Baseline Options in WSmart+ Route:**
+**Baseline Options in WSmart Route+:**
 
 1.  **Exponential Baseline**: $ b = 0.9 \cdot b\_{prev} + 0.1 \cdot R(\tau) $
 2.  **Critic Network**: $ b = V\_\phi(s) $ learned via MSE loss
@@ -1121,7 +1121,7 @@ python main.py mrl_train \
 
 ---
 
-## 7. Extending WSmart+ Route
+## 7. Extending WSmart Route+
 
 ### 7.1 Adding a New Neural Architecture
 
@@ -1738,4 +1738,4 @@ just studio
 
 ---
 
-**This guide is the living foundation of WSmart+ Route. Happy Routing!**
+**This guide is the living foundation of WSmart Route+. Happy Routing!**

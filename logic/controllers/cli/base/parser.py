@@ -1,5 +1,5 @@
 """
-Base parser utilities for the WSmart+ Route modular CLI.
+Base parser utilities for the WSmart Route+ modular CLI.
 
 This module provides the core ConfigsParser class and shared argument actions
 used across all command-specific parsers.

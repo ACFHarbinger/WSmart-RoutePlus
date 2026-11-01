@@ -2,7 +2,7 @@
 
 This module provides construction heuristics for finding good feasible VRPP solutions
 to provide upper bounds for the branch-and-cut algorithm. It leverages existing
-operators from the WSmart+ Route codebase.
+operators from the WSmart Route+ codebase.
 
 Based on Section 4 of Fischetti et al. (1997) and classical VRP heuristics.
 

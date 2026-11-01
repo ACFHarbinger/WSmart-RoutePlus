@@ -39,7 +39,7 @@
 
 ## 1. Overview
 
-The constants module provides a centralized registry of configuration values, naming conventions, and mappings used throughout the WSmart+ Route codebase. It ensures consistency across:
+The constants module provides a centralized registry of configuration values, naming conventions, and mappings used throughout the WSmart Route+ codebase. It ensures consistency across:
 
 - **Configuration systems** (Hydra YAML files, CLI arguments)
 - **Policy factories** (solver selection, hyperparameter parsing)
@@ -2894,6 +2894,6 @@ n_nodes = len(dist_matrix) - 1  # Excludes depot
 ---
 
 **Document Version**: 1.0
-**Maintainer**: WSmart+ Route Development Team
+**Maintainer**: WSmart Route+ Development Team
 **Last Review**: February 2026
 **Next Review**: May 2026

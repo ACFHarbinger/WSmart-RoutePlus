@@ -1,4 +1,4 @@
-# WSmart+ Route Framework - Justfile
+# WSmart Route+ Framework - Justfile
 
 set unstable := true
 

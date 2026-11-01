@@ -2,7 +2,7 @@
 Cluster-First Route-Second (CF-RS) Policy Adapter.
 
 Adapts the classic geometric decomposition algorithm (Fisher & Jaikumar, 1981)
-to the WSmart+ Route simulator interface. This adapter facilitates the
+to the WSmart Route+ simulator interface. This adapter facilitates the
 integration of the solver into the simulation pipeline, handling parameter
 mapping, data extraction, and result formatting.
 

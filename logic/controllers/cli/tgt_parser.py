@@ -1,6 +1,6 @@
 """CLI parser for updating policy YAML config overrides.
 
-Integrates with the WSmart+ Route CLI registry as the ``update_ms`` and
+Integrates with the WSmart Route+ CLI registry as the ``update_ms`` and
 ``update_ri`` sub-commands, and can also be run standalone::
 
     # Update packing algorithm via main CLI
@@ -295,7 +295,7 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m logic.controllers.cli.tgt_parser",
         description=(
-            "Batch-update policy YAML config overrides for WSmart+ Route.\n\n"
+            "Batch-update policy YAML config overrides for WSmart Route+.\n\n"
             "  ms  — update packing algorithm overrides\n"
             "  ri  — update route-improver overrides"
         ),

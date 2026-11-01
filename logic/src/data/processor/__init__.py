@@ -2,7 +2,7 @@
 Data Processing and Transformation Pipeline.
 
 This package provides coordinate formatting, DataFrame manipulation,
-and model-input preparation for the WSmart+ Route simulator.
+and model-input preparation for the WSmart Route+ simulator.
 
 Submodules
 ----------

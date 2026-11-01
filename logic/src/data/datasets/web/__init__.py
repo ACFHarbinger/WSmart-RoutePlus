@@ -1,8 +1,8 @@
 """
-Web-based dataset loaders and crawlers for WSmart+ Route.
+Web-based dataset loaders and crawlers for WSmart Route+.
 
 This module provides tools for extracting simulation and routing data from
-WSmart+ Route web/HTML dashboards, including the ``HtmlSimulationDataset``
+WSmart Route+ web/HTML dashboards, including the ``HtmlSimulationDataset``
 for on-the-fly dashboard-to-simulation conversion.
 
 Attributes:

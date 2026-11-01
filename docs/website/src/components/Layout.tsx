@@ -29,7 +29,7 @@ export default function Layout() {
       <header className="site-nav">
         <div className="nav-container">
           <NavLink to="/" className="brand" end style={{ display: 'flex', alignItems: 'center', gap: '12px', fontWeight: 600 }}>
-            <span>WSmart+ Route</span>
+            <span>WSmart Route+</span>
           </NavLink>
 
           <nav className="nav-links" aria-label="Primary">
@@ -65,7 +65,7 @@ export default function Layout() {
       </main>
 
       <footer style={{ borderTop: '1px solid var(--border-subtle)', padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.875rem', fontFamily: 'var(--font-mono)' }}>
-        <span>WSmart+ Route · combinatorial optimization for waste collection</span>
+        <span>WSmart Route+ · combinatorial optimization for waste collection</span>
         <br />
         <span>Research platform · Studio desktop · open methods</span>
       </footer>

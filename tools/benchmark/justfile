@@ -1,4 +1,4 @@
-# WSmart+ Route — Benchmark: performance and mutation testing
+# WSmart Route+ — Benchmark: performance and mutation testing
 
 set unstable := true
 set working-directory := '../..'

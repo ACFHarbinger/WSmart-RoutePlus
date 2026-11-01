@@ -1,7 +1,7 @@
 # WSmart-Route Studio — Documentation
 
 WSmart-Route Studio is the Tauri 2.0 desktop application that serves as the sole
-graphical interface of the WSmart+ Route framework (it superseded the former
+graphical interface of the WSmart Route+ framework (it superseded the former
 Streamlit dashboard and PySide6 GUI in July 2026).
 
 | Document | Contents |

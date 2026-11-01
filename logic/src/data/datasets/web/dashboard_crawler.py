@@ -1,5 +1,5 @@
 """
-Crawler for WSmart+ Route HTML dashboards.
+Crawler for WSmart Route+ HTML dashboards.
 
 Extracts the "Todos os Locais" table from a dashboard HTML file or URL and
 exposes two usage modes:
@@ -146,7 +146,7 @@ def extract_dataframe(source: str) -> pd.DataFrame:
     if table is None:
         raise ValueError(
             "Could not find the 'Todos os Locais' table in the dashboard. "
-            "Make sure the source is a valid WSmart+ Route dashboard HTML."
+            "Make sure the source is a valid WSmart Route+ dashboard HTML."
         )
     return _parse_table(table)
 
@@ -246,7 +246,7 @@ def to_simulation_data(
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="dashboard_crawler",
-        description="Extract 'Todos os Locais' data from a WSmart+ Route dashboard.",
+        description="Extract 'Todos os Locais' data from a WSmart Route+ dashboard.",
     )
     p.add_argument("source", help="Path to HTML file or dashboard URL")
     sub = p.add_subparsers(dest="command", required=True)

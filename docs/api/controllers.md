@@ -9,7 +9,7 @@ Controller module.
 
 ### `logic.controllers.cli.__init__`
 
-Unified entry point for the WSmart+ Route modular CLI.
+Unified entry point for the WSmart Route+ modular CLI.
 
 - `parse_params()` — Parses arguments, determines the command, and performs necessary validation.
 
@@ -25,7 +25,7 @@ Lowercase action module.
 
 ### `logic.controllers.cli.base.parser`
 
-Base parser utilities for the WSmart+ Route modular CLI.
+Base parser utilities for the WSmart Route+ modular CLI.
 
 - **class `ConfigsParser`** — Custom ArgumentParser to handle string-based nargs correctly.
 
@@ -88,7 +88,7 @@ CLI parser for output artefact operations.
 
 ### `logic.controllers.cli.base.registry`
 
-Centralized registry for the WSmart+ Route CLI parser.
+Centralized registry for the WSmart Route+ CLI parser.
 
 - `get_parser()` — Creates and returns the main ConfigsParser with all subcommands registered.
 

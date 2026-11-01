@@ -1,4 +1,4 @@
-# WSmart+ Route — App: WSmart-Route Studio (Tauri 2.0 + React 19 desktop app)
+# WSmart Route+ — App: WSmart-Route Studio (Tauri 2.0 + React 19 desktop app)
 #
 # All commands are run from the repo root (working-directory := '../..').
 # The Tauri app source lives in app/ and the Rust backend in app/src-tauri/.

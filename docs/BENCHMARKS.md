@@ -6,9 +6,9 @@
 
 > **Version**: 1.0
 > **Last Updated**: February 2026
-> **Purpose**: Comprehensive performance benchmarks for WSmart+ Route models, solvers, and operators
+> **Purpose**: Comprehensive performance benchmarks for WSmart Route+ models, solvers, and operators
 
-This document provides detailed performance benchmarks for WSmart+ Route across various dimensions: solution quality, inference speed, training time, memory usage, and scalability.
+This document provides detailed performance benchmarks for WSmart Route+ across various dimensions: solution quality, inference speed, training time, memory usage, and scalability.
 
 ---
 

@@ -1722,7 +1722,7 @@ print(f"Best fitness: {best_fitness:.6e}")
 
 ### 5.11 Rigorous Meta-Heuristic Implementations
 
-This section describes the mathematically rigorous implementations that replace metaphor-based algorithms in the WSmart+ Route codebase.
+This section describes the mathematically rigorous implementations that replace metaphor-based algorithms in the WSmart Route+ codebase.
 
 #### Overview
 
@@ -3928,5 +3928,5 @@ neural:
 ---
 
 **Last Updated**: January 2026
-**Maintainer**: WSmart+ Route Development Team
+**Maintainer**: WSmart Route+ Development Team
 **Status**: ✅ Active - Comprehensive routing policies library

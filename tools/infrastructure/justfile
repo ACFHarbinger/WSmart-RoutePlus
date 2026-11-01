@@ -1,4 +1,4 @@
-# WSmart+ Route — Infrastructure: environment setup and packaging
+# WSmart Route+ — Infrastructure: environment setup and packaging
 
 set unstable := true
 set working-directory := '../..'

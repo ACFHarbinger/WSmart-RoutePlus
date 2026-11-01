@@ -29,7 +29,7 @@
 
 ## 1. Overview
 
-The `logic/controllers/cli` module provides a comprehensive command-line interface framework for WSmart+ Route. It uses a modular architecture built on top of Python's `argparse`, with custom parser extensions and specialized action classes.
+The `logic/controllers/cli` module provides a comprehensive command-line interface framework for WSmart Route+. It uses a modular architecture built on top of Python's `argparse`, with custom parser extensions and specialized action classes.
 
 ### Key Features
 
@@ -778,7 +778,7 @@ Centralized parser registration that creates and configures the main parser with
 ```python
 def get_parser() -> ConfigsParser:
     """Creates and returns the main ConfigsParser with all subcommands registered."""
-    parser = ConfigsParser(description="WSmart+ Route Unified CLI Framework")
+    parser = ConfigsParser(description="WSmart Route+ Unified CLI Framework")
     subparsers = parser.add_subparsers(
         dest="command",
         help="The command to execute",
@@ -1039,7 +1039,7 @@ def validate_new_command_args(args):
 from logic.controllers.cli.new_command_parser import add_new_command_args
 
 def get_parser() -> ConfigsParser:
-    parser = ConfigsParser(description="WSmart+ Route Unified CLI Framework")
+    parser = ConfigsParser(description="WSmart Route+ Unified CLI Framework")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     # ... existing commands ...
@@ -1337,5 +1337,5 @@ from logic.controllers.cli.base.registry import get_parser
 ---
 
 **Last Updated**: January 2026
-**Maintainer**: WSmart+ Route Development Team
+**Maintainer**: WSmart Route+ Development Team
 **Status**: ✅ Active - Comprehensive CLI framework documentation

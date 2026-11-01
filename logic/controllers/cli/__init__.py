@@ -1,5 +1,5 @@
 """
-Unified entry point for the WSmart+ Route modular CLI.
+Unified entry point for the WSmart Route+ modular CLI.
 
 Attributes:
     parse_params: Parses arguments, determines the command, and performs necessary validation.

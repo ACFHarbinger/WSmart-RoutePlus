@@ -5,7 +5,7 @@
 
 ### `logic.src.utils.__init__`
 
-Utilities package for WSmart+ Route logic.
+Utilities package for WSmart Route+ logic.
 
 ### `logic.src.utils.actions.__init__`
 

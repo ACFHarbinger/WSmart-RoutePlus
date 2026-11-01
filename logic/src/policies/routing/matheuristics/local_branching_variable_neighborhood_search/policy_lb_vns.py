@@ -2,7 +2,7 @@
 Simulator adapter for the Local Branching with Variable Neighborhood Search (LB-VNS).
 
 This policy adapts the LB-VNS matheuristic (Hansen et al., 2006) for use within
-the WSmart+ Route simulation framework, extracting problem state and
+the WSmart Route+ simulation framework, extracting problem state and
 orchestrating the Gurobi optimization process.
 
 Attributes:
@@ -41,7 +41,7 @@ class LocalBranchingVNSPolicy(BaseRoutingPolicy):
     Simulator adapter for the Local Branching with Variable Neighborhood Search (LB-VNS).
 
     This policy implements the high-level integration required to run the LB-VNS
-    matheuristic within the WSmart+ Route simulator. It handles:
+    matheuristic within the WSmart Route+ simulator. It handles:
     1. Configuration parsing and dataclass conversion.
     2. State extraction (distance matrices, node profits, capacities).
     3. Orchestration of the Local Branching intensification and VNS shaking phases.

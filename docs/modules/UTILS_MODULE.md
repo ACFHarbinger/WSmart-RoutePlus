@@ -39,7 +39,7 @@
 
 ## 1. Overview
 
-The `logic/src/utils` module provides the foundational toolkit for the WSmart+ Route framework. It encompasses 16 specialized sub-modules covering everything from configuration management and data processing to neural network training utilities and security features.
+The `logic/src/utils` module provides the foundational toolkit for the WSmart Route+ framework. It encompasses 16 specialized sub-modules covering everything from configuration management and data processing to neural network training utilities and security features.
 
 ### Design Philosophy
 
@@ -2359,7 +2359,7 @@ from logic.src.utils.security import encrypt_file_data, generate_key
 ---
 
 **Document Version**: 1.0
-**Maintainer**: WSmart+ Route Development Team
+**Maintainer**: WSmart Route+ Development Team
 **Last Review**: February 2026
 **Next Review**: May 2026
 

@@ -1,6 +1,6 @@
 """CLI parser for output artefact operations.
 
-Integrates with the WSmart+ Route CLI registry as the ``clean_results`` and
+Integrates with the WSmart Route+ CLI registry as the ``clean_results`` and
 ``excel_summary`` sub-commands, and can also be run standalone::
 
     # Remove targeted simulation runs via main CLI
@@ -219,7 +219,7 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m logic.controllers.cli.out_parser",
         description=(
-            "WSmart+ Route output artefact utilities.\n\n"
+            "WSmart Route+ output artefact utilities.\n\n"
             "  clean  — remove targeted simulation runs\n"
             "  excel  — aggregate results into an Excel summary"
         ),

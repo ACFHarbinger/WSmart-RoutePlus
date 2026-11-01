@@ -1,5 +1,5 @@
 """
-Utilities package for WSmart+ Route logic.
+Utilities package for WSmart Route+ logic.
 
 Contains helper modules for:
 - Argument parsing and configuration loading.

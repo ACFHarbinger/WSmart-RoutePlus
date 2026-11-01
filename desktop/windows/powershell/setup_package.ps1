@@ -1,4 +1,4 @@
-# WSmart+ Route package setup for Windows (PowerShell).
+# WSmart Route+ package setup for Windows (PowerShell).
 #
 #   powershell -ExecutionPolicy Bypass -File scripts\windows\setup.ps1
 #

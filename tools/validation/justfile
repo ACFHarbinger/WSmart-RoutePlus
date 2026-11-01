@@ -1,4 +1,4 @@
-# WSmart+ Route — Validation: static analysis and codebase health checks
+# WSmart Route+ — Validation: static analysis and codebase health checks
 
 set unstable := true
 set working-directory := '../..'
