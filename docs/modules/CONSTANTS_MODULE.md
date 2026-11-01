@@ -2183,7 +2183,7 @@ parts: tuple[str, ...] = path.parts
 try:
     root_dir = Path(*parts[: parts.index("WSmart-Route") + 1])
 except ValueError:
-    root_dir = Path(*parts[: parts.index("WSmart-Simulator") + 1])
+    root_dir = Path(*parts[: parts.index("WSmart-RoutePlus") + 1])
 
 ROOT_DIR: Path = root_dir
 ```
@@ -2191,7 +2191,7 @@ ROOT_DIR: Path = root_dir
 **Resolution Order**:
 
 1. Get current working directory
-2. Search upward for `"WSmart-Route"` or `"WSmart-Simulator"` in path parts
+2. Search upward for `"WSmart-Route"` or `"WSmart-RoutePlus"` in path parts
 3. Set `ROOT_DIR` to that location
 4. Derive asset paths relative to `ROOT_DIR`
 
