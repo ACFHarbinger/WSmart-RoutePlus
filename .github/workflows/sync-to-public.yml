@@ -41,6 +41,7 @@ jobs:
           pipx install git-filter-repo==2.47.0
           git filter-repo --force --invert-paths \
             --path bibliography --path assets --path .agent \
+            --path docs/moon/design --path docs/moon/research --path docs/moon/reports \
             --file-info-callback '
           if filename != b".gitmodules":
               return (filename, mode, blob_id)
@@ -61,5 +62,6 @@ jobs:
           git remote remove public || true
           git remote add public https://x-access-token:${PAT_TOKEN}@github.com/ACFHarbinger/WSmart-RoutePlus.git
 
-          # 5. Force push the rewritten history (no bibliography, assets or .agent in any commit)
+          # 5. Force push the rewritten history (no bibliography, assets, .agent,
+          # or docs/moon/{design,research,reports} in any commit)
           git push public main --force

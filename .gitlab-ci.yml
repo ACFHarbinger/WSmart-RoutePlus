@@ -178,6 +178,9 @@ sync-to-public:
       REMOVED=0
       if [ -d "bibliography" ]; then git rm -rf --ignore-unmatch bibliography; REMOVED=1; fi
       if [ -d "assets" ]; then git rm -rf --ignore-unmatch assets; REMOVED=1; fi
+      if [ -d "docs/moon/design" ]; then git rm -rf --ignore-unmatch docs/moon/design; REMOVED=1; fi
+      if [ -d "docs/moon/research" ]; then git rm -rf --ignore-unmatch docs/moon/research; REMOVED=1; fi
+      if [ -d "docs/moon/reports" ]; then git rm -rf --ignore-unmatch docs/moon/reports; REMOVED=1; fi
       if [ "$REMOVED" = "1" ] && ! git diff --cached --quiet; then
         git commit -m "chore: exclude private directories from public sync"
       fi
