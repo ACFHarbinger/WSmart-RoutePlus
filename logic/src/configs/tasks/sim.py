@@ -67,6 +67,10 @@ class SimConfig:
         symkey_name: Name of the cryptographic key used to access the API keys.
         gapik_file: Name of the file that contains the key to use for the Google API.
         stats_filepath: Path to the file to read the statistics from.
+        initial_fill_days: Opening-stock window W. 0 starts every bin empty; W > 0 draws, for each
+            bin, the days since its last collection uniformly from {0, ..., W} and opens the bin with
+            the deposits of those days (capped at capacity), drawn from a stream separate from the
+            horizon deposits, so the horizon deposits are unchanged.
         graph: Graph configuration for simulation trials.
         data_dir: Directory containing the simulation data.
         config_path: Policy configuration paths populated by expand_policy_configs.
@@ -106,6 +110,7 @@ class SimConfig:
     symkey_name: Optional[str] = None
     gapik_file: Optional[str] = None
     stats_filepath: Optional[str] = None
+    initial_fill_days: int = 0
     data_dir: Optional[str] = None
     run_name: Optional[str] = None
     policy_configs: Dict[str, Any] = field(default_factory=dict)

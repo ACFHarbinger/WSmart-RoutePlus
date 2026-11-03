@@ -33,6 +33,7 @@ class BinsFillingMixin:
 
     # State and helpers supplied by the concrete :class:`Bins` class in ``base.py``.
     n: int
+    data_dir: str
     noise_mean: float
     noise_variance: float
     rng: np.random.Generator
@@ -124,6 +125,51 @@ class BinsFillingMixin:
                         "source_line": 241,
                     },
                 )
+
+    def set_initial_fill(self, window_days: int, seed: Optional[int]) -> np.ndarray:
+        """Open every bin with the stock accumulated since a random last collection.
+
+        Bin ``i`` was last emptied ``tau_i`` days before day 1, with ``tau_i`` uniform on
+        ``{0, ..., window_days}``, and holds its own deposits of those days, capped at capacity.
+        The deposits come from a generator seeded independently of the horizon deposits, so a run
+        with an opening stock replays the same horizon deposits as a run from empty bins. Waste
+        lost before day 1 is not recorded.
+
+        Args:
+            window_days: Largest number of days since the last collection (0 keeps the bins empty).
+            seed: Seed of the opening-stock draws (``None`` draws fresh randomness).
+
+        Returns:
+            np.ndarray: The opening levels, percent of capacity.
+        """
+        if window_days <= 0:
+            return self.real_c.copy()
+        from logic.src.data.datasets.simulation.gen_dataset import GenerativeDataset
+
+        distribution = getattr(self.waste_dataset, "distribution", None) or getattr(self, "distribution", None)
+        if distribution is None:
+            raise ValueError("the opening stock needs the deposit distribution of the waste dataset")
+        pre = GenerativeDataset(
+            data_dir=self.data_dir,
+            n_samples=1,
+            n_days=int(window_days),
+            n_bins=self.n,
+            distribution=distribution,
+            grid=getattr(self, "grid", None),
+            seed=seed,
+        )
+        deposits = np.asarray(pre[0]["waste"], dtype=np.float64)  # (window_days, n_bins)
+        rng = np.random.default_rng(None if seed is None else seed + 1)
+        tau = rng.integers(0, int(window_days) + 1, size=self.n)
+        recent = np.arange(int(window_days))[::-1][:, None] < tau[None, :]  # the last tau_i rows
+        opening = np.minimum((deposits * recent).sum(axis=0), MAX_CAPACITY_PERCENT)
+        self.real_c = opening.copy()
+        self.c = opening.copy()
+        if self.level_history:
+            self.level_history[-1] = self.c.copy()
+        else:
+            self.level_history.append(self.c.copy())
+        return opening
 
     def collect(self, idsfull: List[int], cost: float = 0) -> Tuple[np.ndarray, float, int, float]:
         """Processes waste collection from bins in the tour.

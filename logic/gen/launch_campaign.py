@@ -8,11 +8,15 @@ Finished cells leave a ``.done`` marker and are skipped on a rerun.
 
 With ``--delayed-start`` only the calendar rules are run (threshold-regular TR-k with every routing
 algorithm and improver, and the fixed schedule Regular-k), with the first collection on day k instead
-of day 1; the outputs go to ``outputs/campaign_delayed`` unless ``--out`` is given.
+of day 1; the outputs go to ``outputs/campaign_delayed`` unless ``--out`` is given. With
+``--initial-fill-days W`` every bin opens with the stock of a random 0..W days since its last
+collection (``sim.initial_fill_days``) instead of empty, on the same horizon deposits; the outputs go
+to ``outputs/campaign_fill<W>`` (``outputs/campaign_fill<W>_delayed`` with ``--delayed-start``).
 
 Usage:
     uv run python logic/gen/launch_campaign.py --network rm100 --dist emp --workers 4 --cores 8
     uv run python logic/gen/launch_campaign.py --network rm100 --dist emp --delayed-start
+    uv run python logic/gen/launch_campaign.py --network rm100 --dist emp --initial-fill-days 7
     uv run python logic/gen/launch_campaign.py --network ff350 --dry-run
 """
 
@@ -101,6 +105,8 @@ def _cell(args, net_overrides, scenario: CampaignScenario, policy, improver, ove
         *net_overrides,
         *scenario.overrides(),
     ]
+    if getattr(args, "initial_fill_days", 0):
+        overrides.append(f"sim.initial_fill_days={args.initial_fill_days}")
     env = {"WSR_POLICY_CONFIG_DIR": str(overlay)} if overlay else {}
     return Cell(
         f"{scenario.depot_mode}_{scenario.seed}_{policy}_{improver}",
@@ -154,11 +160,21 @@ def main() -> int:
         action="store_true",
         help="rerun only TR-k and Regular-k, with the first collection on day k",
     )
+    parser.add_argument(
+        "--initial-fill-days",
+        type=int,
+        default=0,
+        help="open each bin with the stock of a random 0..W days since its last collection (0: empty)",
+    )
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
     if args.out is None:
-        args.out = "outputs/campaign_delayed" if args.delayed_start else "outputs/campaign"
+        args.out = "outputs/campaign"
+        if args.initial_fill_days > 0:
+            args.out += f"_fill{args.initial_fill_days}"
+        if args.delayed_start:
+            args.out += "_delayed"
     out = Path(args.out)
     if not out.is_absolute():
         out = ROOT / out
