@@ -281,6 +281,7 @@ class PackingAction(SimulationAction):
                 cvar_alpha=_pf("cvar_alpha", 0.95),
                 savings_min_fill_ratio=_pf("savings_min_fill_ratio", 0.5),
                 min_fill=_pf("min_fill", 0.0),
+                first_day=_pi("first_day", 1),
                 service_radius=_pf("service_radius", 5.0),
                 modular_alpha=_pf("modular_alpha", 1.0),
                 modular_budget=_pi("modular_budget", 0),

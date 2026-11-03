@@ -1,7 +1,7 @@
 """Regular packing: collect every eligible bin on scheduled days.
 
 The period is ``context.threshold`` days. Scheduled days are
-``1, 1+period, 1+2*period, …`` (``spec.regular``). A bin is eligible when its fill is at or
+``first_day, first_day+period, …`` (``spec.regular``), with ``context.first_day`` 1 by default. A bin is eligible when its fill is at or
 above ``context.min_fill`` percent (0 selects every bin: plain Regular; 15 is threshold Regular).
 
 Attributes:
@@ -43,11 +43,12 @@ class RegularSelection(IPackingAlgorithm):
         current_day = getattr(context, "current_day", 1)
         frequency = getattr(context, "threshold", 1)
         min_fill = getattr(context, "min_fill", getattr(self, "min_fill", 0.0))
+        first_day = getattr(context, "first_day", getattr(self, "first_day", 1))
         fills = context.current_fill
         if fills is None or len(fills) == 0:
             selected = []
         else:
-            mask = regular_rule(fills, int(current_day), float(frequency), float(min_fill))
+            mask = regular_rule(fills, int(current_day), float(frequency), float(min_fill), int(first_day))
             selected = selected_ids(mask)
         trace = kwargs.get("trace") or getattr(context, "trace", None)
         if trace is not None:
@@ -63,6 +64,7 @@ class RegularSelection(IPackingAlgorithm):
                 changed_solution=bool(after_routes != before_routes),
                 arguments={
                     "frequency": float(frequency),
+                    "first_day": int(first_day),
                     "current_day": int(current_day),
                     "selected_bins": list(selected),
                 },

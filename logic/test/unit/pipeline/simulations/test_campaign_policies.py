@@ -71,3 +71,18 @@ def test_strict_overlay_uses_the_default_feasibility_tolerance():
 
 def test_none_improver_empties_the_stage():
     assert patch_policy(_TREE, "none")["swc_tcf"]["gurobi"]["route_improvement"] == []
+
+
+def test_delayed_variants_start_on_day_k():
+    from pathlib import Path
+
+    from logic.src.pipeline.simulations.campaign_policies import DELAYED_PACKING, DELAYED_STATIC_PACKING
+
+    root = Path(__file__).resolve().parents[5] / "logic/configs/policies"
+    variants = yaml.safe_load((root / "other/packing/pk_regular.yaml").read_text())
+    for packing, min_fill in ((DELAYED_PACKING, 15), (DELAYED_STATIC_PACKING, None)):
+        (names,) = [v for d in packing for v in d.values()]
+        for name in names:
+            cfg = variants[name]
+            assert cfg["first_day"] == cfg["threshold"]
+            assert cfg.get("min_fill") == min_fill
