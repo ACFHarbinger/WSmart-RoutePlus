@@ -37,7 +37,7 @@
     ],
     "shortDescription": "Desktop control tower for WSmart-Route simulations and training",
     "longDescription": "WSmart-Route Studio is a Tauri desktop application for launching simulations, monitoring training runs, browsing output artefacts, and analysing benchmark results.",
-    "category": "Science",
+    "category": "Utility",
     "linux": {
       "appimage": {
         "bundleMediaFramework": false

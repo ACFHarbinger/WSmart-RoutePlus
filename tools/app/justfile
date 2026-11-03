@@ -29,7 +29,16 @@ tauri-dev:
 # Build a release binary (creates an installer in app/src-tauri/target/release/bundle/)
 # Installs the JS/TS dependencies first, which provides the tauri CLI (app/node_modules/.bin/tauri).
 build: install
-    cd app && npm run tauri -- build
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd app
+    # Updater artifacts are signed, which needs TAURI_SIGNING_PRIVATE_KEY; without it, build the installers only.
+    if [ -z "${TAURI_SIGNING_PRIVATE_KEY:-}" ] && [ -z "${TAURI_SIGNING_PRIVATE_KEY_PATH:-}" ]; then
+        echo "TAURI_SIGNING_PRIVATE_KEY is not set: skipping updater artifacts"
+        npm run tauri -- build --config '{"bundle":{"createUpdaterArtifacts":false}}'
+    else
+        npm run tauri -- build
+    fi
 
 # ── Code quality ─────────────────────────────────────────────────────────────
 
