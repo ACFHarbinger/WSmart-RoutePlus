@@ -56,6 +56,10 @@ if TYPE_CHECKING:
     from logic.src.pipeline.simulations.states.base.base import SimulationContext
 
 
+# Seed offset of the opening-stock draws (sim.initial_fill_days), disjoint from the deposit seeds.
+INITIAL_FILL_SEED_OFFSET = 1_000_003
+
+
 def routed_bin_ids(coords: Any) -> List[Any]:
     """Bin IDs of the routed graph in node order (row 0 of ``coords`` is the depot)."""
     return coords["ID"].iloc[1:].tolist()
@@ -476,6 +480,10 @@ class InitializingState(SimState):
                 # Generated samples already draw n_days + 1 rows (see _initialize_bins).
                 sample_horizon = graph.n_days if sim.stats_filepath is not None else None
                 ctx.bins.set_sample_waste(ctx.sample_id, horizon=sample_horizon)
+                window = int(getattr(sim, "initial_fill_days", 0) or 0)
+                if window > 0:
+                    # A separate stream, so the horizon deposits equal those of a run from empty bins.
+                    ctx.bins.set_initial_fill(window, seed=INITIAL_FILL_SEED_OFFSET + sim.seed + ctx.sample_id)
 
             ctx.bins.set_indices(ctx.indices)
         ctx.daily_log = {key: [] for key in DAY_METRICS}
