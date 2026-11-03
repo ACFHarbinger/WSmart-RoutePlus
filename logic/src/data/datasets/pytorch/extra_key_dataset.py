@@ -13,10 +13,10 @@ Example:
     ...     break
 """
 
-from typing import Sized, cast
-
 import torch
 from torch.utils.data import Dataset
+
+from logic.src.interfaces.sized_dataset import ISizedDataset
 
 
 class ExtraKeyDataset(Dataset):
@@ -28,7 +28,7 @@ class ExtraKeyDataset(Dataset):
         extra: Dictionary of extra tensors to include (e.g., {'baseline': ...}).
     """
 
-    def __init__(self, dataset: Dataset, extra: dict[str, torch.Tensor]):
+    def __init__(self, dataset: ISizedDataset, extra: dict[str, torch.Tensor]):
         """
         Initialize the ExtraKeyDataset.
 
@@ -41,8 +41,8 @@ class ExtraKeyDataset(Dataset):
         self.extra = extra
         # Validate lengths
         for k, v in extra.items():
-            assert len(cast(Sized, dataset)) == len(v), (
-                f"Length mismatch for key {k}: {len(cast(Sized, dataset))} vs {len(v)}"
+            assert len(dataset) == len(v), (
+                f"Length mismatch for key {k}: {len(dataset)} vs {len(v)}"
             )
 
     def __getitem__(self, index: int) -> dict:
@@ -67,4 +67,4 @@ class ExtraKeyDataset(Dataset):
         Returns:
             int: Number of samples.
         """
-        return len(cast(Sized, self.dataset))
+        return len(self.dataset)

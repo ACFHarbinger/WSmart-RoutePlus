@@ -13,10 +13,10 @@ Example:
     ...     break
 """
 
-from typing import Sized, cast
-
 import torch
 from torch.utils.data import Dataset
+
+from logic.src.interfaces.sized_dataset import ISizedDataset
 
 
 class BaselineDataset(Dataset):
@@ -28,7 +28,7 @@ class BaselineDataset(Dataset):
         baseline: Tensor of precomputed baseline values.
     """
 
-    def __init__(self, dataset: Dataset, baseline: torch.Tensor):
+    def __init__(self, dataset: ISizedDataset, baseline: torch.Tensor):
         """
         Initialize the BaselineDataset.
 
@@ -39,7 +39,7 @@ class BaselineDataset(Dataset):
         super().__init__()
         self.dataset = dataset
         self.baseline = baseline
-        assert len(cast(Sized, self.dataset)) == len(self.baseline)
+        assert len(self.dataset) == len(self.baseline)
 
     def __getitem__(self, index: int) -> dict:
         """
@@ -60,4 +60,4 @@ class BaselineDataset(Dataset):
         Returns:
             int: Number of samples.
         """
-        return len(cast(Sized, self.dataset))
+        return len(self.dataset)

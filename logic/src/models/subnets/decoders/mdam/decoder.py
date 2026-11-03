@@ -123,6 +123,19 @@ class MDAMDecoder(nn.Module):
             ]
         )
 
+    def _path(self, index: int) -> MDAMPath:
+        """Return decoder path ``index`` (``nn.ModuleList`` indexing is typed as ``nn.Module``).
+
+        Args:
+            index: Position of the path in ``self.paths``.
+
+        Returns:
+            MDAMPath: The path at ``index``.
+        """
+        path = self.paths[index]
+        assert isinstance(path, MDAMPath)
+        return path
+
     def forward(
         self,
         td: TensorDict,
@@ -208,7 +221,7 @@ class MDAMDecoder(nn.Module):
         dynamic_embed = self.dynamic_embedding(td)
 
         for path_idx in range(self.num_paths):
-            path = cast(MDAMPath, self.paths[path_idx])
+            path = self._path(path_idx)
             fixed = path.precompute(h)
             logprobs, _ = path.get_logprobs(fixed, td, dynamic_embed, path_idx)
 
@@ -262,7 +275,7 @@ class MDAMDecoder(nn.Module):
         outputs = []
         actions = []
 
-        path = cast(MDAMPath, self.paths[path_idx])
+        path = self._path(path_idx)
         fixed = path.precompute(h)
         step = 0
 

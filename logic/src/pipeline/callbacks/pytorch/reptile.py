@@ -18,7 +18,7 @@ from __future__ import annotations
 import copy
 import math
 import random
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import pytorch_lightning as L
 import torch
@@ -27,6 +27,21 @@ from torch.optim import Adam
 
 if TYPE_CHECKING:
     from logic.src.pipeline.learning.common.base.module import RL4COLitModule
+
+
+def _as_rl_module(pl_module: L.LightningModule) -> "RL4COLitModule":
+    """Narrow a Lightning module to ``RL4COLitModule`` (it owns the env and generator used here).
+
+    Args:
+        pl_module: The module passed to the callback hook.
+
+    Returns:
+        RL4COLitModule: The same object, checked at run time.
+    """
+    from logic.src.pipeline.learning.common.base.module import RL4COLitModule
+
+    assert isinstance(pl_module, RL4COLitModule)
+    return pl_module
 
 
 class ReptileCallback(Callback):
@@ -112,7 +127,7 @@ class ReptileCallback(Callback):
         self._sample_task()
 
         # Cast to RL4COLitModule to access env and generator
-        module = cast("RL4COLitModule", pl_module)
+        module = _as_rl_module(pl_module)
         if not hasattr(module, "env") or module.env.generator is None:
             return
 
@@ -155,7 +170,7 @@ class ReptileCallback(Callback):
         new_optimizer = Adam(pl_module.parameters(), lr=old_lr * lr_decay)
         trainer.optimizers = [new_optimizer]
 
-        module = cast("RL4COLitModule", pl_module)
+        module = _as_rl_module(pl_module)
         if self.print_log and hasattr(module, "env") and module.env.generator is not None:
             if hasattr(module.env.generator, "capacity"):
                 print(f">> Training task: {self.task_params}, capacity: {module.env.generator.capacity}")
@@ -209,7 +224,7 @@ class ReptileCallback(Callback):
             task_idx: The index of the task to load.
         """
         self.task_params = self.selected_tasks[task_idx]
-        module = cast("RL4COLitModule", pl_module)
+        module = _as_rl_module(pl_module)
 
         if not hasattr(module, "env") or module.env.generator is None:
             return
