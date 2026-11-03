@@ -172,9 +172,13 @@ class RL4COLitModule(DataMixin, OptimizationMixin, StepMixin, pl.LightningModule
             else:
                 hparams_dict[k] = str(v)
 
+        # The policy and the training data are excluded from the hparams, so record them explicitly.
+        hparams_dict["policy"] = self._policy_summary()
+        hparams_dict["train_data"] = self._train_data_summary()
+
         try:
             with open(args_path, "w") as f:
-                json.dump(hparams_dict, f, indent=4)
+                json.dump(hparams_dict, f, indent=4, default=str)
             logger.info(f"Saved sidecar args.json to {args_path}")
         except (OSError, TypeError, ValueError) as e:
             logger.warning(f"Could not save sidecar args.json: {e}")
@@ -186,6 +190,50 @@ class RL4COLitModule(DataMixin, OptimizationMixin, StepMixin, pl.LightningModule
                 OmegaConf.save(config=self.cfg, f=config_path)
             except (OSError, ImportError, TypeError, ValueError) as e:
                 logger.warning(f"Could not save config.yaml: {e}")
+
+    def _policy_summary(self) -> Dict[str, Any]:
+        """Architecture values of the policy: class, parameter count and the model config (encoder/decoder)."""
+        info: Dict[str, Any] = {
+            "class": f"{type(self.policy).__module__}.{type(self.policy).__name__}",
+            "n_parameters": sum(p.numel() for p in self.policy.parameters()),
+        }
+        model_cfg = _cfg_get(self.cfg, "model", None) if self.cfg is not None else None
+        if model_cfg is not None:
+            try:
+                info["model_config"] = OmegaConf.to_container(model_cfg, resolve=True)
+            except (ValueError, TypeError):
+                info["model_config"] = str(model_cfg)
+        for name in ("embed_dim", "hidden_dim", "n_encode_layers", "n_layers", "n_heads", "tanh_clipping"):
+            if hasattr(self.policy, name):
+                info[name] = getattr(self.policy, name)
+        return info
+
+    def _train_data_summary(self) -> Dict[str, Any]:
+        """Where the training instances came from: dataset file and the distribution its name carries."""
+        info: Dict[str, Any] = {}
+        if self.cfg is None:
+            return info
+        train_cfg = _cfg_get(self.cfg, "train", None)
+        info["data_distribution_field"] = _cfg_get(train_cfg, "data_distribution", None)
+        info["batch_size"] = _cfg_get(train_cfg, "batch_size", None)
+        info["seed"] = _cfg_get(self.cfg, "seed", None)
+        graphs = _cfg_get(_task_env_cfg(self.cfg), "curriculum_graphs", None) or []
+        entries = []
+        for g in graphs:
+            path = _cfg_get(g, "load_dataset", None)
+            name = os.path.basename(str(path)) if path else ""
+            token = next((t for t in ("gamma1", "gamma2", "gamma3", "gamma4", "emp", "unif") if f"_{t}_" in name), None)
+            entries.append(
+                {
+                    "load_dataset": path,
+                    "dataset_distribution": token,
+                    "num_loc": _cfg_get(g, "num_loc", None),
+                    "n_samples": _cfg_get(g, "n_samples", None),
+                    "n_days": _cfg_get(g, "n_days", None),
+                }
+            )
+        info["curriculum_graphs"] = entries
+        return info
 
     def _init_baseline(self):
         """Initialize baseline for advantage estimation."""

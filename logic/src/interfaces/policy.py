@@ -17,7 +17,7 @@ Example:
     {}
 """
 
-from typing import Any, Dict, Optional, Protocol, Union
+from typing import Any, Dict, Iterator, Optional, Protocol, Union
 
 import torch
 from tensordict import TensorDict
@@ -65,5 +65,13 @@ class IPolicy(Protocol):
         Args:
             args: Description of args.
             kwargs: Description of kwargs.
+        """
+        ...
+
+    def parameters(self, recurse: bool = True) -> Iterator[torch.nn.Parameter]:
+        """Iterate over the trainable parameters (the ``torch.nn.Module`` method).
+
+        Args:
+            recurse: If True, include the parameters of submodules.
         """
         ...

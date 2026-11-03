@@ -509,3 +509,6 @@ assets/telemetry.db
 /test_out
 /test_output
 /test_tracking
+
+# Zip archives
+*.zip
