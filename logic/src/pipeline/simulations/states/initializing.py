@@ -506,7 +506,7 @@ class InitializingState(SimState):
             ctx.bins = Bins(
                 graph.num_loc,
                 ctx.data_dir,
-                data_dist[:-1],
+                data_dist,  # the full name: the fills are drawn from the preset it names (gamma3 is preset 3)
                 area=graph.area,
                 waste_type=graph.waste_type,
                 waste_file=getattr(graph, "load_dataset", None),
