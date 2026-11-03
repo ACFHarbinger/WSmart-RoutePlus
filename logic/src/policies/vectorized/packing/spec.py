@@ -44,17 +44,20 @@ def regular(
     current_day: Optional[Union[torch.Tensor, int]],
     frequency: float,
     min_fill: float = 0.0,
+    first_day: int = 1,
 ) -> torch.Tensor:
     """Collect eligible customers on scheduled days.
 
-    Scheduled days are ``1, 1+period, …``. A missing day or a period below
-    one day (non-positive included) collects every day. Eligibility is ``fill >= min_fill`` (fraction).
+    Scheduled days are ``first_day, first_day+period, …`` and no day before ``first_day`` is
+    scheduled. A missing day collects every day; a period below one day (non-positive included)
+    collects every day from ``first_day``. Eligibility is ``fill >= min_fill`` (fraction).
 
     Args:
         fill_levels: Current fills ``[B, N]`` as fractions.
         current_day: Day index, scalar or ``[B]``.
         frequency: Collection period in days.
         min_fill: Minimum fill fraction on a collection day.
+        first_day: First scheduled day (1 starts the calendar on the first simulated day).
 
     Returns:
         torch.Tensor: Boolean mask ``[B, N]``; depot is False.
@@ -64,13 +67,17 @@ def regular(
     eligible = fill_levels >= float(min_fill)
     period = float(frequency)
 
-    if period < 1 or current_day is None:  # int(period) would be 0 for a sub-daily period
+    if current_day is None:
         return _clear_depot(eligible)
 
     day = current_day if isinstance(current_day, torch.Tensor) else torch.tensor(current_day, device=device)
     if day.dim() == 0:
         day = day.expand(batch_size)
-    is_collection_day = ((day - 1) % int(period)) == 0
+    offset = day - int(first_day)
+    started = offset >= 0
+    if period < 1:  # int(period) would be 0 for a sub-daily period
+        return _clear_depot(eligible & started.unsqueeze(-1))
+    is_collection_day = started & ((offset % int(period)) == 0)
     return _clear_depot(eligible & is_collection_day.unsqueeze(-1))
 
 

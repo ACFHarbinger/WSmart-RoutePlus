@@ -10,6 +10,8 @@ Attributes:
     STATIC_POLICY: The fixed-schedule baseline, run with the plain Regular rule.
     IMPROVERS: Route improver stage files by short name.
     CAMPAIGN_PACKING: Packing variants of the dynamic policies.
+    DELAYED_PACKING: Threshold-regular variants whose calendar starts on day k.
+    DELAYED_STATIC_PACKING: Fixed-schedule variants whose calendar starts on day k.
     ROUTING_LIMIT_S: Routing time limit of one daily solve, in seconds.
     patch_policy: Policy tree with the campaign packing, improver and limits.
     write_overlay: Patched policy file for one algorithm and improver.
@@ -47,6 +49,20 @@ CAMPAIGN_PACKING: List[Dict[str, List[str]]] = [
     {"other/packing/pk_service_level.yaml": ["service_level1"]},
     {"other/packing/pk_lookahead.yaml": ["lookahead"]},
     {"other/packing/pk_regular.yaml": ["regular_tr_lvl3", "regular_tr_lvl4", "regular_tr_lvl5"]},
+]
+
+# Delayed-start rerun: only the calendar rules depend on the start day, so the fill-level rules are not rerun.
+DELAYED_PACKING: List[Dict[str, List[str]]] = [
+    {
+        "other/packing/pk_regular.yaml": [
+            "regular_tr_lvl3_delayed",
+            "regular_tr_lvl4_delayed",
+            "regular_tr_lvl5_delayed",
+        ]
+    },
+]
+DELAYED_STATIC_PACKING: List[Dict[str, List[str]]] = [
+    {"other/packing/pk_regular.yaml": ["regular_lvl3_delayed", "regular_lvl4_delayed", "regular_lvl5_delayed"]},
 ]
 
 

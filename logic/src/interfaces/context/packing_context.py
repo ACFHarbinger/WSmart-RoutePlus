@@ -99,6 +99,7 @@ class PackingContext:
 
     # --- Regular with a fill filter (threshold Regular) ---
     min_fill: float = 0.0  # percent of capacity; scheduled days select only bins at or above it
+    first_day: int = 1  # first scheduled day of the Regular calendar; earlier days select nothing
 
     # --- Set-cover ---
     service_radius: float = 5.0

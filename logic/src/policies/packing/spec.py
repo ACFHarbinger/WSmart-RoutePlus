@@ -12,7 +12,7 @@ deviations are percent of capacity (0–100). Overflow is
 
 Attributes:
     last_minute: Fill-threshold rule (1.0.0 last-minute; no EOQ).
-    regular: Periodic collection on days 1, 1+period, 1+2*period, …
+    regular: Periodic collection on days first_day, first_day+period, …
     service_level: Linear confidence-bound overflow projection.
     lookahead: Seed today's overflows and bundle bins that overflow first.
     selected_ids: Convert a customer-level mask to 1-based bin IDs.
@@ -59,17 +59,20 @@ def regular(
     current_day: int,
     frequency: float,
     min_fill: float = 0.0,
+    first_day: int = 1,
 ) -> NDArray[np.bool_]:
     """Collect every eligible bin on scheduled days.
 
-    Scheduled days are ``1, 1+period, 1+2*period, …``. A ``frequency`` below
-    one day (non-positive included) means every day. Eligibility is ``fill >= min_fill``.
+    Scheduled days are ``first_day, first_day+period, first_day+2*period, …`` and no day
+    before ``first_day`` is scheduled. A ``frequency`` below one day (non-positive included)
+    means every day from ``first_day``. Eligibility is ``fill >= min_fill``.
 
     Args:
         fills: Current fill levels, percent of capacity.
         current_day: Simulation day (1-based in the paper runs).
         frequency: Collection period in days (``context.threshold``).
         min_fill: Minimum fill to include on a collection day.
+        first_day: First scheduled day (1 starts the calendar on the first simulated day).
 
     Returns:
         NDArray[np.bool_]: Customer-level mask.
@@ -77,9 +80,12 @@ def regular(
     values = np.asarray(fills, dtype=np.float64)
     eligible = values >= float(min_fill)
     period = float(frequency)
+    offset = int(current_day) - int(first_day)
+    if offset < 0:
+        return np.zeros(values.shape, dtype=bool)
     if period < 1:  # int(period) would be 0 for a sub-daily period
         return eligible
-    if (int(current_day) - 1) % int(period) != 0:
+    if offset % int(period) != 0:
         return np.zeros(values.shape, dtype=bool)
     return eligible
 

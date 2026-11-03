@@ -19,3 +19,32 @@ regular_tr_lvl5:
   strategy: regular
   threshold: 5
   min_fill: 15
+# Delayed calendars: the first collection is on day k (days k, 2k, ...), so every scheduled
+# collection, including the first, gathers k days of deposits when the run starts from empty bins.
+regular_lvl3_delayed:
+  strategy: regular
+  threshold: 3
+  first_day: 3
+regular_lvl4_delayed:
+  strategy: regular
+  threshold: 4
+  first_day: 4
+regular_lvl5_delayed:
+  strategy: regular
+  threshold: 5
+  first_day: 5
+regular_tr_lvl3_delayed:
+  strategy: regular
+  threshold: 3
+  min_fill: 15
+  first_day: 3
+regular_tr_lvl4_delayed:
+  strategy: regular
+  threshold: 4
+  min_fill: 15
+  first_day: 4
+regular_tr_lvl5_delayed:
+  strategy: regular
+  threshold: 5
+  min_fill: 15
+  first_day: 5

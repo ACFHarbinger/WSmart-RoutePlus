@@ -6,8 +6,13 @@ simulator invocation per cell. Each invocation runs the campaign's packing varia
 overlay policy files (60 s routing limit, no retries, profit-aware operators from the configs).
 Finished cells leave a ``.done`` marker and are skipped on a rerun.
 
+With ``--delayed-start`` only the calendar rules are run (threshold-regular TR-k with every routing
+algorithm and improver, and the fixed schedule Regular-k), with the first collection on day k instead
+of day 1; the outputs go to ``outputs/campaign_delayed`` unless ``--out`` is given.
+
 Usage:
     uv run python logic/gen/launch_campaign.py --network rm100 --dist emp --workers 4 --cores 8
+    uv run python logic/gen/launch_campaign.py --network rm100 --dist emp --delayed-start
     uv run python logic/gen/launch_campaign.py --network ff350 --dry-run
 """
 
@@ -28,6 +33,8 @@ sys.path.insert(0, str(ROOT))
 
 from logic.src.pipeline.simulations.campaign import NETWORKS, CampaignScenario, benchmark_campaign  # noqa: E402
 from logic.src.pipeline.simulations.campaign_policies import (  # noqa: E402
+    DELAYED_PACKING,
+    DELAYED_STATIC_PACKING,
     IMPROVERS,
     ROUTING_POLICIES,
     STATIC_POLICY,
@@ -64,14 +71,20 @@ def build_cells(args: argparse.Namespace, overlay_root: Path) -> List[Cell]:
     """
     network = NETWORKS[args.network]
     scenarios = [s for s in benchmark_campaign(args.per_depot) if args.depots in ("both", s.depot_mode)]
+    delayed = getattr(args, "delayed_start", False)
+    packing = DELAYED_PACKING if delayed else None
+    static_overlay = None
+    if delayed:  # the fixed schedule reads its delayed calendar from its own overlay
+        static_overlay = overlay_root / "static"
+        write_overlay(STATIC_POLICY, "none", static_overlay, packing=DELAYED_STATIC_PACKING)
     cells: List[Cell] = []
     for scenario in scenarios:
         out_dir = Path(args.out) / f"{args.network}_{args.dist}" / f"{scenario.depot_mode}_seed{scenario.seed}"
-        cells.append(_cell(args, network.overrides(), scenario, STATIC_POLICY, "static", None, out_dir))
+        cells.append(_cell(args, network.overrides(), scenario, STATIC_POLICY, "static", static_overlay, out_dir))
         for improver in IMPROVERS:
             overlay = overlay_root / improver
             for policy in ROUTING_POLICIES:
-                write_overlay(policy, improver, overlay)
+                write_overlay(policy, improver, overlay, packing=packing)
                 cells.append(_cell(args, network.overrides(), scenario, policy, improver, overlay, out_dir))
     return cells
 
@@ -135,10 +148,17 @@ def main() -> int:
     parser.add_argument("--days", type=int, default=30)
     parser.add_argument("--workers", type=int, default=4, help="cells run at once")
     parser.add_argument("--cores", type=int, default=8, help="processes per cell (sim.cpu_cores)")
-    parser.add_argument("--out", default="outputs/campaign")
+    parser.add_argument("--out", default=None, help="output root (default outputs/campaign[_delayed])")
+    parser.add_argument(
+        "--delayed-start",
+        action="store_true",
+        help="rerun only TR-k and Regular-k, with the first collection on day k",
+    )
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
+    if args.out is None:
+        args.out = "outputs/campaign_delayed" if args.delayed_start else "outputs/campaign"
     out = Path(args.out)
     if not out.is_absolute():
         out = ROOT / out
