@@ -88,6 +88,8 @@ def patch_policy(
                     node[key] = min(float(node[key]), float(limit))
                     if strict:
                         node["allow_fallback"] = False
+                        if "greedy_warm_start" in node:  # BPC: an integer restricted master when the root is cut off
+                            node["salvage_incomplete_node"] = True
                 elif key == "formulation" and strict:
                     node["feasibility_tol"] = -1.0
                 elif key == "no_solution_time_factor":

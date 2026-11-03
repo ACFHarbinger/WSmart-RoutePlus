@@ -363,7 +363,7 @@ def run_bpc(  # noqa: C901
             env=env,
             recorder=recorder,
             k_nodes=k_nodes,
-            options=BPCSearchOptions(),
+            options=BPCSearchOptions(incomplete_node_ip=cfg.salvage_incomplete_node),
         )
     finally:
         detach_master(master)

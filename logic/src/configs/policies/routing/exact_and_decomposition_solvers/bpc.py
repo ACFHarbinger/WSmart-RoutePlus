@@ -57,6 +57,9 @@ class BPCConfig:
         exact_mode: Whether to enable strict exact management.
         allow_fallback: When False, a day that ends with no integer node reports no plan (status
             ``bpc:no_incumbent``) instead of the greedy or restricted-master plan.
+        salvage_incomplete_node: When True, a node whose column generation is cut off by the time limit
+            solves an integer restricted master over the columns found so far and keeps it as an incumbent
+            (the multi-stage BPC always does). False just ends the search.
         strong_branching_size: Number of candidates for strong branching.
         cg_at_root_only: Run column generation only at the root B&B node; at all
             descendant nodes, no new columns are generated (use the pool built at
@@ -107,6 +110,7 @@ class BPCConfig:
     rc_tolerance: float = 1e-6
     exact_mode: bool = False
     allow_fallback: bool = True
+    salvage_incomplete_node: bool = False
     strong_branching_size: int = 5
     cg_at_root_only: bool = False
     lr_pre_pruning: bool = True
