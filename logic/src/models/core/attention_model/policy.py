@@ -143,6 +143,7 @@ class AttentionModelPolicy(AutoregressivePolicy):
         strategy: str,
         active: torch.Tensor,
         device: torch.device,
+        decode_kwargs: Optional[Dict[str, Any]] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor, Optional[torch.Tensor]]:
         """Resolve next action, log probability, and step entropy contribution."""
         if actions is not None:
@@ -153,7 +154,7 @@ class AttentionModelPolicy(AutoregressivePolicy):
             action = start_nodes.to(device)
             log_p = self._forced_action_log_prob(logits, valid_mask, action)
             return action, log_p, None
-        action, log_p, entropy_step = self._select_action(logits, valid_mask, strategy)
+        action, log_p, entropy_step = self._select_action(logits, valid_mask, strategy, **(decode_kwargs or {}))
         entropy_term = (entropy_step * active.float()) if isinstance(entropy_step, torch.Tensor) else None
         return action, log_p, entropy_term
 
@@ -198,6 +199,8 @@ class AttentionModelPolicy(AutoregressivePolicy):
         init_embeds_raw = self._get_initial_embeddings(td)
         init_embeds = init_embeds_raw[0] if isinstance(init_embeds_raw, tuple) else init_embeds_raw
 
+        temperature = kwargs.pop("temperature", None)
+        decode_kwargs = {"temperature": float(temperature)} if temperature is not None and strategy == "sampling" else {}
         tracer = make_tracer(self, td, init_embeds, strategy, kwargs)
 
         # 2. Encoder
@@ -251,7 +254,7 @@ class AttentionModelPolicy(AutoregressivePolicy):
             active = ~done.squeeze(-1) if done.dim() > 1 else ~done
 
             action, log_p, entropy_step = self._step_action(
-                step_idx, actions, start_nodes, logits, valid_mask, strategy, active, td.device
+                step_idx, actions, start_nodes, logits, valid_mask, strategy, active, td.device, decode_kwargs
             )
             if entropy_step is not None:
                 entropy = entropy + entropy_step

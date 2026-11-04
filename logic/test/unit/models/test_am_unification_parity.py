@@ -451,3 +451,22 @@ def test_legacy_factory_preserves_activation_defaults_and_explicit_overrides():
     assert any(isinstance(module, torch.nn.ReLU) for module in canonical.encoder.modules())
 
 
+
+
+def test_sampling_temperature_set_on_the_model_reaches_the_sampler():
+    """set_strategy(temp=...) was stored and never used: sampling always ran at temperature 1."""
+    _, model = _build_test_models(seed=7)
+    env = PTPEnv(num_loc=8)
+    td = env.reset(batch_size=[4])
+
+    def run(temp):
+        model.set_strategy("sampling", temp=temp)
+        torch.manual_seed(0)
+        with torch.no_grad():
+            return model(td.clone(), env, strategy="sampling")["actions"]
+
+    with torch.no_grad():
+        greedy = model(td.clone(), env, strategy="greedy")["actions"]
+    assert torch.equal(run(1e-4), greedy)  # a vanishing temperature is greedy
+    assert not torch.equal(run(1e3), greedy)  # a huge one is close to uniform
+    assert not torch.equal(run(1e3), run(1e-4))

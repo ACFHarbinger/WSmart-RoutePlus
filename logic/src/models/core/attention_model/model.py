@@ -299,6 +299,8 @@ class AttentionModel(AttentionModelPolicy, DecodingMixin):
                 td_tensor = TensorDict(cast(Any, td), batch_size=[batch_size])
             else:
                 td_tensor = td
+            if strat == "sampling" and self.temp is not None:
+                kwargs.setdefault("temperature", self.temp)  # set_strategy(temp=...) was stored but never used
             out = super().forward(
                 td=td_tensor,
                 env=env,
