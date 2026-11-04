@@ -77,3 +77,12 @@ def test_empty_bin_mask_is_off_by_default() -> None:
 
     env.mask_empty_bins = True
     assert env.reset(td.clone())["action_mask"][0].tolist() == [True, True, False, True]
+
+
+def test_training_env_is_built_once_for_agents_sharing_the_profit_variables() -> None:
+    """The simulator builds an agent per planned day; the environment must not be rebuilt each time."""
+    model = _RecordingModel()
+    envs = [NeuralAgent(model)._training_env(PROFIT_VARS) for _ in range(3)]
+    assert envs[0] is envs[1] is envs[2]
+    other = NeuralAgent(model)._training_env({**PROFIT_VARS, "revenue_kg": 0.1})
+    assert other is not envs[0]

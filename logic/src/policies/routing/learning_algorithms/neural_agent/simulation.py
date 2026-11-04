@@ -29,6 +29,11 @@ from logic.src.utils.routing.tours import (
 )
 
 
+# Training environments by (problem, device, profit variables). A NeuralAgent is built for every planned day, so a
+# per-agent cache rebuilt the environment (and its generator setup) each day; the environment holds no per-day state.
+_TRAINING_ENVS: Dict[Tuple[Any, ...], Any] = {}
+
+
 class SimulationMixin:
     """
     Mixin for single-day simulation logic in NeuralAgent.
@@ -290,8 +295,9 @@ class SimulationMixin:
             str(device),
             tuple(sorted((k, float(v)) for k, v in pv.items() if isinstance(v, (int, float)))),
         )
-        if getattr(self, "_env_cache_key", None) != cache_key:
-            self._env = get_env(
+        env = _TRAINING_ENVS.get(cache_key)
+        if env is None:
+            env = get_env(
                 env_name,
                 generator_params={"num_loc": 1},
                 check_env_specs=False,
@@ -299,10 +305,10 @@ class SimulationMixin:
                 cost_weight=float(pv.get("cost_km", 1.0)),
                 device=device,
             )
-            if hasattr(self._env, "mask_empty_bins"):
-                self._env.mask_empty_bins = True
-            self._env_cache_key = cache_key
-        return self._env
+            if hasattr(env, "mask_empty_bins"):
+                env.mask_empty_bins = True
+            _TRAINING_ENVS[cache_key] = env
+        return env
 
     @staticmethod
     def _training_td(
