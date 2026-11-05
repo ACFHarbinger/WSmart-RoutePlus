@@ -120,8 +120,26 @@ def patch_policy(
     return walk(copy.deepcopy(tree))
 
 
+def _set_model_path(node: Any, model_path: str) -> None:
+    """Point every ``model_path`` key of a policy tree at ``model_path``."""
+    if isinstance(node, dict):
+        for key in node:
+            if key == "model_path":
+                node[key] = model_path
+            else:
+                _set_model_path(node[key], model_path)
+    elif isinstance(node, list):
+        for item in node:
+            _set_model_path(item, model_path)
+
+
 def write_overlay(
-    policy: str, improver: str, out_dir: Path, packing: Any = None, canonical_dir: Path | None = None
+    policy: str,
+    improver: str,
+    out_dir: Path,
+    packing: Any = None,
+    canonical_dir: Path | None = None,
+    model_path: str | None = None,
 ) -> Path:
     """Write the patched policy file of one algorithm and improver.
 
@@ -131,6 +149,7 @@ def write_overlay(
         out_dir: Overlay directory (created if missing).
         packing: Packing variants (default ``CAMPAIGN_PACKING``).
         canonical_dir: Policy configuration root (default ``logic/configs/policies``).
+        model_path: Trained model directory that replaces every ``model_path`` of a learned policy.
 
     Returns:
         Path: The written file, named like the canonical one.
@@ -151,6 +170,8 @@ def write_overlay(
     patched = patch_policy(
         yaml.safe_load(Path(source).read_text()), improver, packing, strict=policy in STRICT_POLICIES
     )
+    if model_path is not None:
+        _set_model_path(patched, model_path)
     out_dir.mkdir(parents=True, exist_ok=True)
     target = out_dir / Path(source).name
     target.write_text(yaml.dump(patched, default_flow_style=False, sort_keys=False))

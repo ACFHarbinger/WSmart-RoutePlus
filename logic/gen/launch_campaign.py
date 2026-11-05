@@ -82,13 +82,16 @@ def build_cells(args: argparse.Namespace, overlay_root: Path) -> List[Cell]:
         static_overlay = overlay_root / "static"
         write_overlay(STATIC_POLICY, "none", static_overlay, packing=DELAYED_STATIC_PACKING)
     cells: List[Cell] = []
+    only = [p for p in (getattr(args, "policies", None) or "").split(",") if p]
+    model_path = getattr(args, "model_path", None)
     for scenario in scenarios:
         out_dir = Path(args.out) / f"{args.network}_{args.dist}" / f"{scenario.depot_mode}_seed{scenario.seed}"
-        cells.append(_cell(args, network.overrides(), scenario, STATIC_POLICY, "static", static_overlay, out_dir))
+        if not only:  # a policy subset leaves the fixed schedule to the full campaign
+            cells.append(_cell(args, network.overrides(), scenario, STATIC_POLICY, "static", static_overlay, out_dir))
         for improver in IMPROVERS:
             overlay = overlay_root / improver
-            for policy in ROUTING_POLICIES:
-                write_overlay(policy, improver, overlay, packing=packing)
+            for policy in only or ROUTING_POLICIES:
+                write_overlay(policy, improver, overlay, packing=packing, model_path=model_path)
                 cells.append(_cell(args, network.overrides(), scenario, policy, improver, overlay, out_dir))
     return cells
 
@@ -166,6 +169,8 @@ def main() -> int:
         default=0,
         help="open each bin with the stock of a random 0..W days since its last collection (0: empty)",
     )
+    parser.add_argument("--policies", default="", help="comma-separated policy names to run alone (e.g. na)")
+    parser.add_argument("--model-path", default=None, help="trained model directory for the na policy")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
