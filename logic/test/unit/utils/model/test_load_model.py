@@ -77,3 +77,16 @@ class TestLoadModel:
         mock_torch_load.return_value = {"model": {}}
         with patch("os.listdir", return_value=["epoch-10.pt"]), pytest.raises(ValueError, match="no model parameters"):
             load_model(str(model_dir))
+
+
+def test_train_config_with_a_null_top_level_model_is_still_lifted(tmp_path):
+    """A saved root config carries a null ``model`` key; the train block must still give the problem."""
+    from logic.src.utils.model.loader import _load_hyperparameters
+
+    (tmp_path / "config.yaml").write_text(
+        "train:\n  env:\n    name: cmptp\n  policy:\n    model:\n      encoder:\n        type: gat\n"
+        "        embed_dim: 16\n        hidden_dim: 32\n        n_layers: 2\n        n_heads: 4\n"
+        "      decoder:\n        type: glimpse\n        embed_dim: 16\n        hidden_dim: 32\n        n_heads: 4\n"
+        "rl:\n  entropy_weight: 0.01\nmodel: null\nproblem: null\n"
+    )
+    assert _load_hyperparameters(str(tmp_path))["problem"] == "cmptp"

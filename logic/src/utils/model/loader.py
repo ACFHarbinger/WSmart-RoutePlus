@@ -374,7 +374,8 @@ def _load_hyperparameters(path: str) -> Dict[str, Any]:
         yaml_path = config_yaml_path if os.path.exists(config_yaml_path) else hparapk_yaml_path
         cfg: Any = OmegaConf.load(yaml_path)
 
-        if "train" in cfg and "model" not in cfg:
+        # The saved root config can also carry a null top-level ``model`` (the schema keeps legacy keys).
+        if "train" in cfg and not cfg.get("model"):
             # Root Hydra config written next to trained weights: lift the training
             # task's model/env blocks into the layout _parse_hydra_config expects.
             train_cfg = cfg.train
