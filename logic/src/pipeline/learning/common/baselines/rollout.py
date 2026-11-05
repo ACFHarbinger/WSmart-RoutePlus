@@ -27,7 +27,6 @@ from torch.utils.data import DataLoader, Dataset
 from logic.src.constants.routing import DEFAULT_ROLLOUT_BATCH_SIZE
 from logic.src.data.datasets import BaselineDataset, TensorDictDataset, tensordict_collate_fn
 from logic.src.tracking.logging.pylogger import get_pylogger
-from logic.src.utils.data.rl_utils import safe_td_copy
 from logic.src.utils.functions.rl import ensure_tensordict
 
 from .base import Baseline
@@ -252,10 +251,11 @@ class RolloutBaseline(Baseline):
                 real_size = td_data.batch_size[0]
                 if real_size != batch_size:
                     pad_size = batch_size - real_size
-                    # Repeat the first element to pad safely
-                    padding = td_data[0].expand(pad_size)
-                    padding_safe = safe_td_copy(padding)
-                    td_data = cast(TensorDict, torch.cat(cast(Any, [td_data, padding_safe]), 0))
+                    # Repeat the first element to pad. Indexing copies the rows; torch.cat of two
+                    # TensorDicts fails in tensordict 0.13 ('stack_dim'), which an instance count
+                    # that is not a multiple of the batch size reaches on the last batch.
+                    pad_idx = torch.cat([torch.arange(real_size), torch.zeros(pad_size, dtype=torch.long)])
+                    td_data = cast(TensorDict, td_data[pad_idx.to(td_data.device)])
 
                 out = self._invoke_greedy(policy, td_data, env)
 

@@ -131,3 +131,21 @@ def test_stochastic_custom_dataset_keeps_precomputation_rng_consumption():
         results.append((prepared.baseline, torch.get_rng_state().clone()))
     assert torch.equal(results[0][0], results[1][0])
     assert torch.equal(results[0][1], results[1][1])
+
+
+def test_rollout_dataset_pads_a_short_last_batch():
+    """An instance count that is not a multiple of the batch size must not break the padding."""
+    from logic.src.pipeline.learning.common.baselines import RolloutBaseline
+
+    torch.manual_seed(42)
+    env = get_env("cmptp", generator_params={"num_loc": 5}, check_env_specs=False)
+    env.batch_size = torch.Size([4])
+    policy = AttentionModelPolicy(
+        env_name="cmptp", embed_dim=16, hidden_dim=32, n_encode_layers=1, n_heads=4, normalization="layer"
+    )
+    baseline = RolloutBaseline(policy)
+    raw = env.generator(batch_size=6)  # six instances, batch size four: the last batch has two
+    raw["current_day"] = torch.zeros(6, dtype=torch.long)
+    rewards = baseline._rollout_dataset(policy, TensorDictDataset(raw), env)
+    assert rewards.shape == (6,)
+    assert torch.isfinite(rewards).all()
