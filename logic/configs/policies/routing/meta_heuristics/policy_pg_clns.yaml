@@ -26,7 +26,8 @@ pg_clns:
       # learning rate of the operator weights (the paper's runs used 0.2)
       reaction_factor: 0.2
       xi: 0.2
-      time_limit: 600.0
+      # per coaching session; the reported runs used 30 s (the campaign's 60 s cap never reached this section)
+      time_limit: 30.0
       acceptance_criterion:
         method: bmc
         params:

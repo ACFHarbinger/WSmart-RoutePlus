@@ -14,6 +14,8 @@ Attributes:
     DELAYED_STATIC_PACKING: Fixed-schedule variants whose calendar starts on day k.
     ROUTING_LIMIT_S: Routing time limit of one daily solve, in seconds.
     patch_policy: Policy tree with the campaign packing, improver and limits.
+    set_profit_aware: Policy tree with every profit_aware_operators switch set.
+    campaign_packing_subset: The campaign packing variants restricted to some names.
     write_overlay: Patched policy file for one algorithm and improver.
 
 Example:
@@ -120,6 +122,55 @@ def patch_policy(
     return walk(copy.deepcopy(tree))
 
 
+def set_profit_aware(tree: Any, value: bool) -> int:
+    """Set every ``profit_aware_operators`` key of a policy tree (in place).
+
+    Args:
+        tree: Parsed policy YAML.
+        value: The switch value.
+
+    Returns:
+        int: Number of keys set.
+    """
+    count = 0
+    if isinstance(tree, dict):
+        for key in tree:
+            if key == "profit_aware_operators":
+                tree[key] = bool(value)
+                count += 1
+            else:
+                count += set_profit_aware(tree[key], value)
+    elif isinstance(tree, list):
+        for item in tree:
+            count += set_profit_aware(item, value)
+    return count
+
+
+def campaign_packing_subset(names: List[str]) -> List[Dict[str, List[str]]]:
+    """The campaign packing variants whose names are in ``names``, file by file.
+
+    Args:
+        names: Variant names such as ``last_minute_cf90`` or ``regular_tr_lvl4``.
+
+    Returns:
+        List of ``{packing file: [variants]}`` entries.
+
+    Raises:
+        ValueError: If a name is not a campaign packing variant.
+    """
+    known = {v for entry in CAMPAIGN_PACKING for variants in entry.values() for v in variants}
+    unknown = sorted(set(names) - known)
+    if unknown:
+        raise ValueError(f"not campaign packing variants: {unknown}; choose from {sorted(known)}")
+    out = []
+    for entry in CAMPAIGN_PACKING:
+        for file, variants in entry.items():
+            keep = [v for v in variants if v in names]
+            if keep:
+                out.append({file: keep})
+    return out
+
+
 def _set_model_path(node: Any, model_path: str) -> None:
     """Point every ``model_path`` key of a policy tree at ``model_path``."""
     if isinstance(node, dict):
@@ -140,6 +191,7 @@ def write_overlay(
     packing: Any = None,
     canonical_dir: Path | None = None,
     model_path: str | None = None,
+    profit_aware: bool | None = None,
 ) -> Path:
     """Write the patched policy file of one algorithm and improver.
 
@@ -150,6 +202,7 @@ def write_overlay(
         packing: Packing variants (default ``CAMPAIGN_PACKING``).
         canonical_dir: Policy configuration root (default ``logic/configs/policies``).
         model_path: Trained model directory that replaces every ``model_path`` of a learned policy.
+        profit_aware: When given, the value of every ``profit_aware_operators`` switch (the ablation arms).
 
     Returns:
         Path: The written file, named like the canonical one.
@@ -172,6 +225,8 @@ def write_overlay(
     )
     if model_path is not None:
         _set_model_path(patched, model_path)
+    if profit_aware is not None and set_profit_aware(patched, profit_aware) == 0:
+        raise ValueError(f"{policy!r} has no profit_aware_operators switch")
     out_dir.mkdir(parents=True, exist_ok=True)
     target = out_dir / Path(source).name
     target.write_text(yaml.dump(patched, default_flow_style=False, sort_keys=False))

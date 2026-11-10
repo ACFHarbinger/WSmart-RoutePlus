@@ -6,6 +6,9 @@ simulator invocation per cell. Each invocation runs the campaign's packing varia
 overlay policy files (60 s routing limit, no retries, profit-aware operators from the configs).
 Finished cells leave a ``.done`` marker and are skipped on a rerun.
 
+With ``--profit-aware on|off`` every routing algorithm runs with its ``profit_aware_operators`` switch forced
+(the profit-operator ablation); ``--packing`` and ``--improvers`` restrict the packing variants and improvers.
+
 With ``--delayed-start`` only the calendar rules are run (threshold-regular TR-k with every routing
 algorithm and improver, and the fixed schedule Regular-k), with the first collection on day k instead
 of day 1; the outputs go to ``outputs/campaign_delayed`` unless ``--out`` is given. With
@@ -18,6 +21,8 @@ Usage:
     uv run python logic/gen/launch_campaign.py --network rm100 --dist emp --delayed-start
     uv run python logic/gen/launch_campaign.py --network rm100 --dist emp --initial-fill-days 7
     uv run python logic/gen/launch_campaign.py --network ff350 --dry-run
+    uv run python logic/gen/launch_campaign.py --network rm100 --dist emp --policies alns,aco_hh,hgs,pg_clns \
+        --profit-aware off --packing last_minute_cf90,regular_tr_lvl4 --improvers cls --out outputs/campaign_ablation_off
 """
 
 from __future__ import annotations
@@ -42,6 +47,7 @@ from logic.src.pipeline.simulations.campaign_policies import (  # noqa: E402
     IMPROVERS,
     ROUTING_POLICIES,
     STATIC_POLICY,
+    campaign_packing_subset,
     write_overlay,
 )
 
@@ -77,6 +83,15 @@ def build_cells(args: argparse.Namespace, overlay_root: Path) -> List[Cell]:
     scenarios = [s for s in benchmark_campaign(args.per_depot) if args.depots in ("both", s.depot_mode)]
     delayed = getattr(args, "delayed_start", False)
     packing = DELAYED_PACKING if delayed else None
+    names = [p for p in (getattr(args, "packing", None) or "").split(",") if p]
+    if names:
+        packing = campaign_packing_subset(names)
+    improvers = [i for i in (getattr(args, "improvers", None) or "").split(",") if i] or list(IMPROVERS)
+    unknown = sorted(set(improvers) - set(IMPROVERS))
+    if unknown:
+        raise ValueError(f"unknown improvers {unknown}; choose from {sorted(IMPROVERS)}")
+    arm = getattr(args, "profit_aware", "configs")
+    profit_aware = None if arm == "configs" else arm == "on"
     static_overlay = None
     if delayed:  # the fixed schedule reads its delayed calendar from its own overlay
         static_overlay = overlay_root / "static"
@@ -88,10 +103,10 @@ def build_cells(args: argparse.Namespace, overlay_root: Path) -> List[Cell]:
         out_dir = Path(args.out) / f"{args.network}_{args.dist}" / f"{scenario.depot_mode}_seed{scenario.seed}"
         if not only:  # a policy subset leaves the fixed schedule to the full campaign
             cells.append(_cell(args, network.overrides(), scenario, STATIC_POLICY, "static", static_overlay, out_dir))
-        for improver in IMPROVERS:
+        for improver in improvers:
             overlay = overlay_root / improver
             for policy in only or ROUTING_POLICIES:
-                write_overlay(policy, improver, overlay, packing=packing, model_path=model_path)
+                write_overlay(policy, improver, overlay, packing=packing, model_path=model_path, profit_aware=profit_aware)
                 cells.append(_cell(args, network.overrides(), scenario, policy, improver, overlay, out_dir))
     return cells
 
@@ -171,6 +186,14 @@ def main() -> int:
     )
     parser.add_argument("--policies", default="", help="comma-separated policy names to run alone (e.g. na)")
     parser.add_argument("--model-path", default=None, help="trained model directory for the na policy")
+    parser.add_argument(
+        "--profit-aware",
+        choices=("configs", "on", "off"),
+        default="configs",
+        help="force every profit_aware_operators switch (profit-operator ablation); configs keeps the policy files",
+    )
+    parser.add_argument("--packing", default="", help="comma-separated campaign packing variants to run (default all)")
+    parser.add_argument("--improvers", default="", help="comma-separated improvers to run (default all)")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
