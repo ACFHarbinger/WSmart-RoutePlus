@@ -334,6 +334,10 @@ def _run_training_via_zenml(cfg: Config) -> float:
     mlflow_uri = str(getattr(tracking, "mlflow_tracking_uri", "mlruns"))
     stack_name = str(getattr(tracking, "zenml_stack_name", "wsmart-route-stack"))
 
+    # The extra processes of a multi-device run (relaunched by Lightning with LOCAL_RANK set)
+    # train directly: the run is tracked once, by rank 0, and they open no ZenML client.
+    if int(os.environ.get("LOCAL_RANK", "0")) > 0:
+        return run_training(cfg, sinks=[])
     if configure_zenml_stack is None or not configure_zenml_stack(mlflow_uri, stack_name=stack_name):
         logger.warning("ZenML stack configuration failed — falling back to direct training.")
         return run_training(cfg, sinks=[])

@@ -34,6 +34,19 @@ _SIM_TASKS = frozenset({"test_sim", "hpo_sim", "sim_hpo"})
 _TASK_ALIASES = {"evaluation": "eval", "sim_hpo": "hpo_sim"}
 
 
+def _shutdown_distributed() -> None:
+    """Close the process group of a multi-device run once training is done.
+
+    Left to the interpreter's exit, the NCCL teardown can wait on the other
+    processes, so each one shuts the group down while all are still alive.
+    """
+    import torch.distributed as dist
+
+    if dist.is_available() and dist.is_initialized():
+        dist.barrier()  # every process has finished (rank 0 has saved the weights)
+        dist.destroy_process_group()
+
+
 def _run_task(cfg: Config) -> float:
     """Dispatch ``cfg.task`` to the responsible controller function.
 
@@ -51,7 +64,9 @@ def _run_task(cfg: Config) -> float:
     if task in _TRAINING_TASKS:
         from logic.controllers.jobs.pipeline_runner import run_training
 
-        return run_training(cfg)
+        result = run_training(cfg)
+        _shutdown_distributed()
+        return result
 
     if task == "eval":
         from logic.controllers.jobs.pipeline_runner import run_evaluation
