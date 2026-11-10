@@ -184,7 +184,7 @@ def evaluate(ind: Individual, split_manager: LinearSplit, penalty_capacity: floa
         for n in ind.giant_tour:
             rev = split_manager.wastes.get(n, 0) * split_manager.R
             cost = (split_manager.dist_matrix[0, n] + split_manager.dist_matrix[n, 0]) * split_manager.C
-            if rev >= cost or n in split_manager.mandatory_nodes or not split_manager.profit_aware:
+            if rev >= cost or n in split_manager.mandatory_nodes:
                 active_sequence.append(n)
 
     # 2. Feed ONLY the active sequence to the hostage-prone Split DP

@@ -89,11 +89,25 @@ def test_split_skips_unprofitable_bins_only_when_profit_aware(profit_aware: bool
 
 
 @pytest.mark.parametrize("profit_aware", [True, False])
-def test_hgs_and_psoma_pass_profit_awareness_to_their_split(profit_aware: bool) -> None:
-    problem = _problem(revenue=1e-4)
-    hgs = HGSSolver(problem, HGSConfig(seed=1, profit_aware_operators=profit_aware))
-    psoma = PSOMASolver(problem, PSOMAConfig(profit_aware_operators=profit_aware))
-    assert hgs.split_manager.profit_aware is profit_aware and psoma.split_solver.profit_aware is profit_aware
+def test_psoma_passes_profit_awareness_to_its_split(profit_aware: bool) -> None:
+    psoma = PSOMASolver(_problem(revenue=1e-4), PSOMAConfig(profit_aware_operators=profit_aware))
+    assert psoma.split_solver.profit_aware is profit_aware
+
+
+@pytest.mark.parametrize(("profit_aware", "expected"), [(True, "route_profit_gpx_crossover"), (False, "ordered_crossover")])
+def test_hgs_switch_selects_the_crossover(monkeypatch: pytest.MonkeyPatch, profit_aware: bool, expected: str) -> None:
+    from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search import hgs_population
+
+    used: List[str] = []
+    for name in ("route_profit_gpx_crossover", "ordered_crossover"):
+        real = getattr(hgs_population, name)
+        monkeypatch.setattr(hgs_population, name, lambda *a, real=real, name=name, **k: used.append(name) or real(*a, **k))
+    solver = HGSSolver(_problem(), HGSConfig(seed=1, profit_aware_operators=profit_aware, crossover_rate=1.0, mu=6,
+                                             n_offspring=6))
+    feasible, infeasible = solver._initialize_population(1.0)
+    for _ in range(5):
+        solver._generate_offspring(feasible, infeasible, 1.0)
+    assert used and set(used) == {expected}
 
 
 def test_dssr_budget_and_switch_reach_column_generation() -> None:

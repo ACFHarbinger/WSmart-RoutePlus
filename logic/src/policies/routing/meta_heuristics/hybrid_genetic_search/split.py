@@ -104,7 +104,7 @@ class LinearSplit:
         self.C = C
         self.max_vehicles = max_vehicles
         self.mandatory_nodes = set(mandatory_nodes) if mandatory_nodes else set()
-        # Skip optional bins that do not pay (profit_aware_operators of HGS and PSOMA); False splits every bin.
+        # Skip optional bins that do not pay (PSOMA's profit_aware_operators); False splits every bin.
         self.profit_aware = True
 
     def split(self, giant_tour: List[int]) -> Tuple[List[List[int]], float]:

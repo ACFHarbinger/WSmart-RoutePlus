@@ -18,6 +18,7 @@ from logic.src.configs.policies.routing.meta_heuristics.hgs import HGSConfig
 from logic.src.envs.common.expand_pool import current_expand_pool
 from logic.src.policies.helpers.local_search.local_search_hgs import HGSLocalSearch
 from logic.src.policies.helpers.operators.crossover_recombination import route_profit_gpx_crossover
+from logic.src.policies.helpers.operators.crossover_recombination.ordered import ordered_crossover
 
 from .evolution import _extract_edges, evaluate, update_biased_fitness
 from .individual import Individual
@@ -309,7 +310,11 @@ class HGSPopulationMixin:
         """
         p1, p2 = self._select_parents(pop_feasible, pop_infeasible)
 
-        if self.random.random() < self.params.crossover_rate:
+        do_crossover = self.random.random() < self.params.crossover_rate  # one draw in either arm
+        if do_crossover and not self.params.profit_aware_operators:
+            # profit_aware_operators: false recombines with the classical ordered crossover (OX1)
+            child = ordered_crossover(p1, p2, rng=self.random, mandatory_nodes=self.mandatory_nodes)
+        elif do_crossover:
             child = route_profit_gpx_crossover(
                 p1,
                 p2,

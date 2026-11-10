@@ -45,8 +45,8 @@ class HGSConfig:
         penalty_decrease: Multiplier for decreasing penalty.
         local_search_iterations: Number of local search iterations.
         engine: Solver engine to use ('custom', 'pyvrp').
-        profit_aware_operators: Decoding skips optional bins whose revenue does not pay their round trip; False
-            splits every bin of the giant tour.
+        profit_aware_operators: Recombine with the route-based profit crossover; False uses the classical
+            ordered crossover (OX1).
         packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
         acceptance_criterion: Acceptance criterion config for local search.
