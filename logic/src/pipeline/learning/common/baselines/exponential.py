@@ -18,7 +18,7 @@ from typing import Any, Optional
 import torch
 from tensordict import TensorDict
 
-from .base import Baseline
+from .base import Baseline, global_batch_mean
 
 
 class ExponentialBaseline(Baseline):
@@ -55,8 +55,9 @@ class ExponentialBaseline(Baseline):
         Returns:
             torch.Tensor: Baseline value expanded to match reward shape.
         """
+        batch_mean = global_batch_mean(reward.detach())  # the full batch, across devices
         if self.running_mean is None:
-            self.running_mean = reward.mean().detach()
+            self.running_mean = batch_mean
         else:
-            self.running_mean = self.beta * self.running_mean + (1 - self.beta) * reward.mean().detach()
+            self.running_mean = self.beta * self.running_mean + (1 - self.beta) * batch_mean
         return self.running_mean.expand_as(reward)

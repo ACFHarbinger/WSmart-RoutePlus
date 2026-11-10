@@ -14,6 +14,7 @@ import os
 from typing import TYPE_CHECKING, Any, List, Optional, Union, cast
 
 import torch
+from tensordict import TensorDict
 from torch.utils.data import DataLoader
 
 from logic.src.data.datasets import TensorDictDataset
@@ -138,6 +139,20 @@ def _create_eval_env_and_gen(cfg: Any, eval_graph: Any) -> tuple:
         gen = gen.to("cpu")
 
     return eval_env, gen
+
+
+def _add_row_index(dataset: Any) -> None:
+    """Store each instance's row as ``_row`` in a time-training dataset (also through a baseline wrapper).
+
+    The epoch-end update empties the bins of every instance from the tours played on it. The rows tell it
+    which instance each tour belongs to, so it does not depend on the batch order, and with several devices
+    (where a distributed sampler interleaves the instances between them) the gathered tours still match.
+    """
+    while dataset is not None and not hasattr(dataset, "data") and hasattr(dataset, "dataset"):
+        dataset = dataset.dataset
+    data = getattr(dataset, "data", None)
+    if isinstance(data, TensorDict) and "_row" not in data.keys():
+        data.set("_row", torch.arange(data.batch_size[0], device=data.device))
 
 
 class DataMixin:
@@ -308,6 +323,8 @@ class DataMixin:
         Returns:
             DataLoader: DataLoader for training data.
         """
+        if getattr(self, "train_time", False):
+            _add_row_index(self.train_dataset)
         return DataLoader(
             cast(Any, self.train_dataset),
             batch_size=self.batch_size,

@@ -138,6 +138,8 @@ class WSTrainer(pl.Trainer):
 
         # RL4CO Optimization 3: Auto DDP configuration
         strategy = kwargs.pop("strategy", None)
+        if strategy == "auto":  # the config default; choose below like an unset strategy
+            strategy = None
         if strategy is None and auto_ddp:
             n_devices = devices if isinstance(devices, int) else torch.cuda.device_count()
             if n_devices > 1:
@@ -261,8 +263,7 @@ class WSTrainer(pl.Trainer):
             AttentionHeatmapCallback not in callback_types
             and tracking_cfg is not None
             and (
-                getattr(tracking_cfg, "log_attention", False)
-                or getattr(tracking_cfg, "log_attention_heatmaps", False)
+                getattr(tracking_cfg, "log_attention", False) or getattr(tracking_cfg, "log_attention_heatmaps", False)
             )
         ):
             callbacks.append(AttentionHeatmapCallback(tracking_cfg=tracking_cfg))

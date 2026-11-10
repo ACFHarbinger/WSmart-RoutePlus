@@ -78,9 +78,10 @@ class TrainingHealthCallback(Callback):
 
     def on_train_start(self, trainer: pl.Trainer, pl_module: pl.LightningModule) -> None:
         """Resolve JSONL path under the Lightning log directory."""
+        # trainer.log_dir broadcasts from rank 0 under DDP, so every rank must read it.
+        log_dir = getattr(trainer, "log_dir", None)
         if not trainer.is_global_zero:
             return
-        log_dir = getattr(trainer, "log_dir", None)
         if log_dir:
             self._log_path = f"{log_dir}/training_health.jsonl"
 
@@ -175,10 +176,7 @@ class TrainingHealthCallback(Callback):
 
         self._last_alert_epoch[code] = epoch
         step = trainer.global_step
-        msg = (
-            f"[{severity.upper()}] {code} at epoch {epoch + 1}, step {step}: "
-            f"{details}"
-        )
+        msg = f"[{severity.upper()}] {code} at epoch {epoch + 1}, step {step}: {details}"
         logger.warning(msg)
 
         emit_training_health_alert(

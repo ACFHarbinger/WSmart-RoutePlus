@@ -20,7 +20,13 @@ import torch
 from omegaconf import OmegaConf
 
 from logic.src.pipeline.learning.common.baselines import WarmupBaseline, get_baseline
-from logic.src.pipeline.learning.common.epoch import apply_time_step, prepare_epoch, regenerate_dataset
+from logic.src.pipeline.learning.common.epoch import (
+    apply_time_step,
+    broadcast_time_state,
+    gather_epoch_actions,
+    prepare_epoch,
+    regenerate_dataset,
+)
 from logic.src.pipeline.learning.common.pbrs_wrapper import PBRSShaper
 from logic.src.tracking.logging.pylogger import get_pylogger
 
@@ -124,6 +130,7 @@ class RL4COLitModule(DataMixin, OptimizationMixin, StepMixin, pl.LightningModule
         # Time-based training parameters
         self.train_time = kwargs.get("train_time", False)
         self._epoch_actions: List[torch.Tensor] = []
+        self._epoch_rows: List[torch.Tensor] = []
 
         # Optimizer params
         self.optimizer_name = optimizer
@@ -350,6 +357,16 @@ class RL4COLitModule(DataMixin, OptimizationMixin, StepMixin, pl.LightningModule
             precompute_baseline=False,
         )
 
+    def on_fit_start(self) -> None:
+        """Move the environment to this process's device once the model is there.
+
+        The environment is built (on ``cfg.device``, i.e. the first GPU) before the trainer assigns devices;
+        with several GPUs each process must reset and step its instances on its own GPU.
+        """
+        env_device = getattr(self.env, "device", None)
+        if hasattr(self.env, "to") and env_device is not None and torch.device(env_device) != self.device:
+            self.env = self.env.to(self.device)
+
     def on_train_epoch_end(self):
         """Update baseline and regenerate dataset."""
         if hasattr(self.baseline, "epoch_callback"):
@@ -369,15 +386,21 @@ class RL4COLitModule(DataMixin, OptimizationMixin, StepMixin, pl.LightningModule
                 ds_ref = self.baseline.unwrap_dataset(ds_ref)
 
             _stage_graph = getattr(_task_env_cfg(self.cfg), "graph", None)
+            # With several devices each one only played its share of the instances: gather every
+            # device's tours (with their rows) so all devices apply the same update to the full pool.
+            actions, rows = gather_epoch_actions(self._epoch_actions, self._epoch_rows)
             apply_time_step(
                 dataset=ds_ref,
-                epoch_actions=self._epoch_actions,
+                epoch_actions=actions,
+                epoch_rows=rows,
                 day=self._time_training_day(),
                 env=self.env,
                 refresh_fraction=float(_cfg_get(_stage_graph, "state_refresh_fraction", 0.0) or 0.0),
                 refresh_max_days=int(_cfg_get(_stage_graph, "init_accumulation_days", 1) or 1),
             )
+            broadcast_time_state(ds_ref)
             self._epoch_actions.clear()
+            self._epoch_rows.clear()
 
             # Log current day properties
             td = ds_ref.data if hasattr(ds_ref, "data") else ds_ref
@@ -385,7 +408,7 @@ class RL4COLitModule(DataMixin, OptimizationMixin, StepMixin, pl.LightningModule
                 key = "waste" if "waste" in td.keys() else "fill_level"
                 mean_fill = td[key].mean() if key in td.keys() else 0.0
                 self.log("train/current_day", float(self._time_training_day() + 1), sync_dist=True)
-                self.log("train/mean_fill", mean_fill, sync_dist=True)
+                self.log("train/mean_fill", float(mean_fill), sync_dist=True)  # a number: the dataset is on the CPU
 
         # Regenerate training dataset for next epoch if configured
         if (

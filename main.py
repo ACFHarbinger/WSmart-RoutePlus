@@ -89,7 +89,10 @@ def main() -> None:
     hydra_tasks = {"train", "eval", "test_sim", "gen_data", "hpo", "meta_train", "hpo_sim"}
     if len(sys.argv) > 1:
         first_arg = sys.argv[1]
-        if first_arg in hydra_tasks or first_arg in task_aliases or first_arg.startswith("tasks="):
+        # A 'tasks=' override anywhere also selects Hydra: multi-GPU training relaunches this script for
+        # each extra device with the already-converted arguments, where 'tasks=train' comes last.
+        has_task_override = any(arg.startswith("tasks=") for arg in sys.argv[1:])
+        if first_arg in hydra_tasks or first_arg in task_aliases or has_task_override:
             if first_arg in hydra_tasks or first_arg in task_aliases:
                 task = task_aliases.get(sys.argv.pop(1), first_arg)
                 sys.argv.append(f"tasks={task}")

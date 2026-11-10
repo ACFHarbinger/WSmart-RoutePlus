@@ -217,8 +217,72 @@ def accumulate_initial_fill(td: TensorDict, max_days: int, key: str = "waste") -
     return td
 
 
+def gather_epoch_actions(
+    epoch_actions: List[torch.Tensor], epoch_rows: List[torch.Tensor]
+) -> tuple[List[torch.Tensor], Optional[List[torch.Tensor]]]:
+    """Collect the epoch's tours, with their dataset rows, from every device.
+
+    With one process this returns the local lists (rows only when every batch recorded them). With several
+    processes (DDP), a distributed sampler gives each one an interleaved share of the instances, so each holds
+    the tours of its share only; the lists of all processes are gathered, in rank order, so that every process
+    then applies the same epoch-end update to the full pool. Rows are required in that case.
+
+    Args:
+        epoch_actions: This process's action tensors, one per training batch.
+        epoch_rows: This process's dataset-row tensors, one per training batch (may be empty).
+
+    Returns:
+        The actions and the rows (``None`` when the rows are not known) of all processes.
+
+    Raises:
+        RuntimeError: With several processes, if a batch did not record its rows.
+    """
+    rows: Optional[List[torch.Tensor]] = list(epoch_rows) if len(epoch_rows) == len(epoch_actions) else None
+    if not (torch.distributed.is_available() and torch.distributed.is_initialized()):
+        return list(epoch_actions), rows
+    world = torch.distributed.get_world_size()
+    if world == 1:
+        return list(epoch_actions), rows
+    if rows is None:
+        raise RuntimeError("Time training on several devices needs the dataset rows of every batch ('_row').")
+    local = (list(epoch_actions), rows)
+    gathered: List[Any] = [None] * world
+    torch.distributed.all_gather_object(gathered, local)
+    all_actions = [a for acts, _ in gathered for a in acts]
+    all_rows = [r for _, rws in gathered for r in rws]
+    return all_actions, all_rows
+
+
+def broadcast_time_state(dataset: Dataset) -> None:
+    """Copy rank 0's time-training state (current fills and day) to every process.
+
+    Every process applies the same epoch-end update from the same gathered tours, and the next day's deposits
+    come from the dataset's own series, so the states already agree; this makes it hold whatever the source of
+    the deposits (generated on the fly they would be drawn separately on each process). No-op on one process.
+
+    Args:
+        dataset: The time-training dataset (``.data`` is a TensorDict), updated in place.
+    """
+    if not (torch.distributed.is_available() and torch.distributed.is_initialized()):
+        return
+    if torch.distributed.get_world_size() == 1:
+        return
+    td = getattr(dataset, "data", None)
+    if not isinstance(td, TensorDict):
+        return
+    keys = [k for k in ("waste", "fill_level", "current_day") if k in td.keys()]
+    payload: List[Any] = [{k: td[k].cpu() for k in keys} if torch.distributed.get_rank() == 0 else None]
+    torch.distributed.broadcast_object_list(payload, src=0)
+    for k, v in payload[0].items():
+        td.set(k, v.to(td[k].device))
+
+
 def _build_visited_mask(
-    epoch_actions: List[torch.Tensor], batch_size: int, num_nodes: int, device: torch.device
+    epoch_actions: List[torch.Tensor],
+    batch_size: int,
+    num_nodes: int,
+    device: torch.device,
+    epoch_rows: Optional[List[torch.Tensor]] = None,
 ) -> torch.Tensor:
     """Build a boolean mask of visited nodes from accumulated epoch actions.
 
@@ -227,12 +291,38 @@ def _build_visited_mask(
         batch_size: The batch size.
         num_nodes: The number of nodes.
         device: The device to build the mask on.
+        epoch_rows: Dataset row of each action row, one tensor per action tensor. Without it the actions
+            are taken to follow the dataset order. A row that appears more than once (a distributed sampler
+            pads the last shard by repeating instances) keeps its first tour.
 
     Returns:
         A boolean mask indicating which nodes were visited.
     """
     visited_mask = torch.zeros((batch_size, num_nodes + 1), dtype=torch.bool, device=device)
     if not epoch_actions:
+        return visited_mask
+    if epoch_rows is not None:
+        try:
+            for actions, rows in zip(epoch_actions, epoch_rows, strict=True):
+                if actions.shape[0] != rows.shape[0]:
+                    raise ValueError(f"{actions.shape[0]} tours for {rows.shape[0]} rows")
+            max_len = max(a.shape[-1] for a in epoch_actions)
+            all_actions = torch.cat(
+                [torch.nn.functional.pad(a.long(), (0, max_len - a.shape[-1])) for a in epoch_actions], dim=0
+            )
+            all_rows = torch.cat([r.long() for r in epoch_rows], dim=0)
+            # Keep the first tour of each row: the smallest position at which the row occurs.
+            order = torch.arange(all_rows.shape[0])
+            first = torch.full((batch_size,), all_rows.shape[0], dtype=torch.long)
+            first.scatter_reduce_(0, all_rows, order, reduce="amin")
+            keep = first[all_rows] == order
+            sel_rows, sel_actions = all_rows[keep].to(device), all_actions[keep].to(device)
+            row_mask = torch.zeros((sel_rows.shape[0], num_nodes + 1), dtype=torch.bool, device=device)
+            row_mask.scatter_(1, sel_actions, True)
+            visited_mask[sel_rows] = row_mask
+        except (RuntimeError, ValueError) as e:
+            logger.warning(f"Could not build visited mask: {e}")
+        visited_mask[:, 0] = False
         return visited_mask
 
     try:
@@ -369,6 +459,7 @@ def apply_time_step(
     env: Any,
     refresh_fraction: float = 0.0,
     refresh_max_days: int = 1,
+    epoch_rows: Optional[List[torch.Tensor]] = None,
 ) -> Dataset:
     """
     Applies the time-step progression to the training dataset for an epoch.
@@ -382,6 +473,8 @@ def apply_time_step(
         env: The environment, used for generation rate or fresh generation.
         refresh_fraction: Share of instances whose state is redrawn (see ``refresh_fill``).
         refresh_max_days: Largest number of days of waste in a redrawn state.
+        epoch_rows: Dataset row of each action row (see ``_build_visited_mask``); ``None`` means the
+            actions follow the dataset order.
 
     Returns:
         The mutated dataset.
@@ -421,7 +514,7 @@ def apply_time_step(
         current_fill = current_fill[:, day, :]
 
     # 1. Reset visited bins to 0
-    visited_mask = _build_visited_mask(epoch_actions, batch_size, num_nodes, device)
+    visited_mask = _build_visited_mask(epoch_actions, batch_size, num_nodes, device, epoch_rows)
 
     if current_fill.shape == visited_mask.shape:
         current_fill[visited_mask] = 0.0

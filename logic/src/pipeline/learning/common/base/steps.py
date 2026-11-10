@@ -229,6 +229,9 @@ class StepMixin:
 
         # env.reset expects data on the environment's device.
         td = ensure_tensordict(batch, self.device)
+        # Dataset rows of this batch (set by train_dataloader for time training), so the epoch-end
+        # update can empty the right instances whatever order or device the batches came from.
+        rows = td.get("_row", None) if phase == "train" else None
 
         # Apply mandatory selector if configured
         if self.mandatory_selector is not None:
@@ -295,7 +298,7 @@ class StepMixin:
             # rollout to report. Its actions still drive time training below.
             self.last_out = out
             if phase == "train" and getattr(self, "train_time", False):
-                self._epoch_actions.append(out["actions"].detach().cpu())  # type: ignore[attr-defined]
+                self._record_epoch_actions(out["actions"], rows)
             return out
         reward_mean = reward_for_log.mean()
         self.log(  # type: ignore
@@ -348,10 +351,15 @@ class StepMixin:
 
         # Time-based training: accumulate actions for epoch-end update
         if phase == "train" and getattr(self, "train_time", False) and "actions" in out:
-            # Type ignore is safe as we checked getattr in __init__
-            self._epoch_actions.append(out["actions"].detach().cpu())  # type: ignore[attr-defined]
+            self._record_epoch_actions(out["actions"], rows)
 
         return out
+
+    def _record_epoch_actions(self, actions: torch.Tensor, rows: Optional[torch.Tensor]) -> None:
+        """Keep a training batch's actions, with its dataset rows when known, for the epoch-end update."""
+        self._epoch_actions.append(actions.detach().cpu())  # type: ignore[attr-defined]
+        if rows is not None:
+            self._epoch_rows.append(rows.detach().reshape(-1).long().cpu())  # type: ignore[attr-defined]
 
     def _rollout(self, td: TensorDict, env: Any, phase: str) -> dict:
         """Decode the policy: sampled in training, greedy in validation and test.

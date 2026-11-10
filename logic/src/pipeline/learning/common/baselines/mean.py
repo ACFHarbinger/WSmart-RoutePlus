@@ -15,7 +15,7 @@ from typing import Any, Optional
 import torch
 from tensordict import TensorDict
 
-from .base import Baseline
+from .base import Baseline, global_batch_mean
 
 
 class MeanBaseline(Baseline):
@@ -50,6 +50,9 @@ class MeanBaseline(Baseline):
         Returns:
             torch.Tensor: Mean reward expanded to match reward shape.
         """
+        # The full batch, across devices when training on several.
         return (
-            reward.mean(dim=0, keepdim=True).expand_as(reward) if reward.dim() > 1 else reward.mean().expand_as(reward)
+            global_batch_mean(reward, dim=0).expand_as(reward)
+            if reward.dim() > 1
+            else global_batch_mean(reward).expand_as(reward)
         )

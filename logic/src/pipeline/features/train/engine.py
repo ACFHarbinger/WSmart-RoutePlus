@@ -63,10 +63,6 @@ if TYPE_CHECKING:
 logger = get_pylogger(__name__)
 
 
-
-
-
-
 def _prepare_stage_model(cfg: Any, prev_state_dict: Optional[Dict[str, Any]]) -> Any:
     """Build the stage model and warm-start it from the previous curriculum weights."""
     if torch.cuda.is_available() and cfg.train.precision in ("16-mixed", "bf16-mixed"):
@@ -123,7 +119,9 @@ def _publish_stage_weights(cfg: Any, trainer: Any, model: Any, run: Any, save_fi
         except Exception as exc:
             logger.warning("Could not reload best checkpoint (%s); using last-epoch weights.", exc)
 
-    if save_final and cfg.train.final_model_path:
+    if save_final and cfg.train.final_model_path and not getattr(trainer, "is_global_zero", True):
+        logger.info("Rank %s: rank 0 saves the final model weights.", getattr(trainer, "global_rank", "?"))
+    elif save_final and cfg.train.final_model_path:
         logger.info("Saving final model weights to: %s", cfg.train.final_model_path)
         model.save_weights(cfg.train.final_model_path)
         logger.info("Final model weights saved successfully.")
@@ -159,7 +157,9 @@ def _run_single_stage(
     callbacks = _build_callbacks(cfg)
     trainer = WSTrainer(
         # n_days is the last day; a stage starting at start_day trains n_days - start_day days.
-        max_epochs=max(int(_get_primary_graph(cfg, "n_days", 1)) - int(_get_primary_graph(cfg, "start_day", 0) or 0), 1),
+        max_epochs=max(
+            int(_get_primary_graph(cfg, "n_days", 1)) - int(_get_primary_graph(cfg, "start_day", 0) or 0), 1
+        ),
         project_name="wsmart-route",
         experiment_name=cfg.experiment_name,
         accelerator=cfg.device if cfg.device != "cuda" else "auto",
@@ -310,7 +310,6 @@ def run_training(cfg: Config, sinks: Optional[List[Any]] = None) -> float:
     stage_cfg = _build_stage_config(cfg, curriculum_graphs[0], stage_idx=0) if curriculum_graphs else cfg
     val_reward, _ = _run_single_stage(stage_cfg, sinks, save_final=True)
     return val_reward
-
 
 
 # ---------------------------------------------------------------------------

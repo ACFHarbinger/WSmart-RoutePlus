@@ -34,6 +34,17 @@ from .base import Baseline
 logger = get_pylogger(__name__)
 
 
+def _rank0_decision(flag: bool) -> bool:
+    """Return rank 0's ``flag`` on every process (the local flag when not distributed)."""
+    if not (torch.distributed.is_available() and torch.distributed.is_initialized()):
+        return flag
+    if torch.distributed.get_world_size() == 1:
+        return flag
+    payload = [flag]
+    torch.distributed.broadcast_object_list(payload, src=0)
+    return bool(payload[0])
+
+
 class RolloutBaseline(Baseline):
     """
     Greedy rollout baseline with significance-based updates.
@@ -425,6 +436,8 @@ class RolloutBaseline(Baseline):
             policy.train(was_training)
             for key, value in strategies.items():
                 setattr(policy, key, value)
+        promote, p_val = False, float("nan")
+        candidate_mean = baseline_mean = float("nan")
         if (
             candidate_vals.shape != baseline_vals.shape
             or candidate_vals.numel() != self.comparison_size
@@ -432,12 +445,15 @@ class RolloutBaseline(Baseline):
             or not torch.isfinite(baseline_vals).all()
         ):
             logger.warning("Skipping rollout promotion: invalid paired rewards")
-            return
-        candidate_mean, baseline_mean = candidate_vals.mean().item(), baseline_vals.mean().item()
-        if candidate_mean <= baseline_mean:
-            return
-        _, p_val = stats.ttest_rel(candidate_vals.cpu().numpy(), baseline_vals.cpu().numpy())
-        if np.isfinite(p_val) and p_val / 2 < self.bl_alpha:
+        else:
+            candidate_mean, baseline_mean = candidate_vals.mean().item(), baseline_vals.mean().item()
+            if candidate_mean > baseline_mean:
+                _, p_val = stats.ttest_rel(candidate_vals.cpu().numpy(), baseline_vals.cpu().numpy())
+                promote = bool(np.isfinite(p_val) and p_val / 2 < self.bl_alpha)
+        # With several processes the policies are identical, but greedy rollouts on different devices may
+        # differ in the last digits; rank 0's decision is used everywhere so the baselines stay identical.
+        promote = _rank0_decision(promote)
+        if promote:
             # Prepare first: failed generation must not partially promote policy.
             next_generation = self.comparison_generation + 1
             dataset = self._generate_comparison(next_generation)

@@ -24,6 +24,30 @@ from logic.src.tracking.logging.pylogger import get_pylogger
 logger = get_pylogger(__name__)
 
 
+def global_batch_mean(reward: torch.Tensor, dim: Optional[int] = None) -> torch.Tensor:
+    """Mean reward over the whole batch, across processes when training on several devices.
+
+    Each process holds an equal share of the batch (a distributed sampler pads the shards to equal size), so
+    the mean of the per-process means is the mean over the full batch; with one process it is ``reward.mean``.
+
+    Args:
+        reward: This process's rewards (detached by the caller when needed).
+        dim: Dimension to average over (``None``: all elements), as in ``Tensor.mean``.
+
+    Returns:
+        The mean, with ``keepdim=True`` when ``dim`` is given.
+    """
+    local = reward.mean() if dim is None else reward.mean(dim=dim, keepdim=True)
+    if not (torch.distributed.is_available() and torch.distributed.is_initialized()):
+        return local
+    world = torch.distributed.get_world_size()
+    if world == 1:
+        return local
+    total = local.detach().clone()
+    torch.distributed.all_reduce(total, op=torch.distributed.ReduceOp.SUM)
+    return total / world
+
+
 class Baseline(nn.Module, ABC):
     """Base class for baselines.
 

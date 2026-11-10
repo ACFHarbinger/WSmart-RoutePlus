@@ -46,7 +46,7 @@ train:
   final_model_path: "model_weights/${train.env.name}${train.env.curriculum_graphs[0].num_loc}_${train.env.curriculum_graphs[0].area}_${train.env.curriculum_graphs[0].waste_type}/${train.data_distribution}/${train.policy.model.name}${train.policy.model.encoder.type}${train.policy.model.temporal_horizon}/epoch-${train.env.curriculum_graphs[0].n_days}.pt"
   # Hardware / Performance
   precision: "16-mixed" # Training precision (32, 16-mixed, bf16-mixed)
-  devices: "auto" # Number of GPUs to use (1, 2, 'auto')
+  devices: "auto" # Number of GPUs to use (1, 2, 'auto'). With N > 1, batch_size is per device (N x batch_size per update)
   strategy: "auto" # Distributed strategy ('auto', 'ddp', 'deepspeed')
 
   # DataLoader optimization
