@@ -22,6 +22,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 import numpy as np
 
+from logic.src.constants import MAX_CAPACITY_PERCENT
 from logic.src.policies.acceptance_criteria.sans_geometric import SansGeometricAcceptance
 from logic.src.policies.routing.meta_heuristics.simulated_annealing_neighborhood_search.common.routes import (
     uncross_arcs_in_sans_routes,
@@ -91,9 +92,6 @@ def improved_simulated_annealing(  # noqa: C901
     removed_bins=None,
     verbose=False,
     perc_bins_can_overflow=0.0,
-    volume=2.5,
-    density_val=20,
-    max_vehicles=None,
     recorder: Optional[PolicyStateRecorder] = None,
     rng: Optional[random.Random] = None,
     max_iterations: int = 0,
@@ -118,10 +116,9 @@ def improved_simulated_annealing(  # noqa: C901
         mandatory_bins: Bins that must be collected.
         removed_bins: Bins initially not in any route.
         verbose: Whether to print debug information.
-        perc_bins_can_overflow: Allowed overflow percentage.
-        volume: Bin volume (redundant with V).
-        density_val: Waste density (redundant with density).
-        max_vehicles: Maximum number of vehicles allowed.
+        perc_bins_can_overflow: Share of all bins that may be left to overflow. A bin overflows by tomorrow when
+            ``Stock + Accum_Rate >= 100``; the solution must visit at least (overflowing bins - share x all bins) of
+            them, so 1.0 (or any share at least the overflowing fraction) imposes nothing and 0.0 requires every one.
         recorder: Telemetry recorder.
         rng: Random number generator.
         max_iterations: Total neighbour moves before stopping (0 = no cap).
@@ -142,6 +139,34 @@ def improved_simulated_annealing(  # noqa: C901
     removed_bins.update(missing_bins)
 
     stocks = dict(zip(data["#bin"], data["Stock"], strict=False))
+
+    # Overflow rule (the original engine's check_bins_overflowing_feasibility, in percent units): with a positive
+    # requirement, a move may not leave fewer overflowing bins visited than required (or than now, from a start
+    # that falls short of it).
+    rates = data["Accum_Rate"] if "Accum_Rate" in data.columns else 0.0
+    overflowing = set(data.loc[(data["Stock"] + rates >= MAX_CAPACITY_PERCENT) & (data["#bin"] != 0), "#bin"])
+    n_bins = int((data["#bin"] != 0).sum())
+    required = len(overflowing) - n_bins * float(perc_bins_can_overflow)
+
+    def _overflowing_visited(solution: List[List[int]]) -> int:
+        return len(overflowing & {node for route in solution for node in route})
+
+    if required > 0 and _overflowing_visited(current_solution) < required:
+        # Start short of the rule: insert the most urgent missing overflowing bins at their cheapest positions.
+        urgency = dict(zip(data["#bin"], data["Stock"] + rates, strict=False))
+        visited = {node for route in current_solution for node in route}
+        missing = sorted(overflowing - visited, key=lambda b: (-urgency[b], b))
+        for b in missing[: int(np.ceil(required - _overflowing_visited(current_solution)))]:
+            if not current_solution:
+                current_solution.append([0, b, 0])
+            else:
+                route = current_solution[0]
+                ib = id_to_index[b]
+                pos = min(range(1, len(route)), key=lambda k: distance_matrix[id_to_index[route[k - 1]]][ib]
+                          + distance_matrix[ib][id_to_index[route[k]]]
+                          - distance_matrix[id_to_index[route[k - 1]]][id_to_index[route[k]]])
+                route.insert(pos, b)
+            removed_bins.discard(b)
 
     # Initial Evaluation
     current_profit, current_cost, current_revenue, real_kg = compute_profit(
@@ -242,6 +267,10 @@ def improved_simulated_annealing(  # noqa: C901
                 mandatory_bins,
                 stocks,
             )
+
+            if required > 0 and _overflowing_visited(new_solution) < min(required, _overflowing_visited(current_solution)):
+                no_improvement_count += 1
+                continue  # breaks the overflow rule: not a candidate
 
             accept, _ = acceptance.accept(current_obj=current_profit, candidate_obj=new_profit)
 

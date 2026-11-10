@@ -15,13 +15,16 @@ pg_clns:
       tau_0: 1.0
       tau_min: 0.001
       tau_max: 10.0
-      max_iterations: 1
+      # colony rounds per iteration (n_ants ants each, local search if enabled); 0 as in the paper's runs:
+      # the colony only builds and replaces population members
+      max_iterations: 0
       time_limit: 600.0
       local_search: false
       elitist_weight: 1.0
     lns:
       max_iterations: 100
-      reaction_factor: 0.5
+      # learning rate of the operator weights (the paper's runs used 0.2)
+      reaction_factor: 0.2
       xi: 0.2
       time_limit: 600.0
       acceptance_criterion:

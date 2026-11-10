@@ -22,7 +22,8 @@ import copy
 import time
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from logic.src.configs.policies.routing.meta_heuristics.pg_clns import PGCLNSConfig
+from logic.src.configs.policies.routing.meta_heuristics.aco_ks import KSparseACOConfig
+from logic.src.configs.policies.routing.meta_heuristics.pg_clns import PGCLNSConfig, PGCLNSLNSConfig
 from logic.src.policies.routing.base.sub_problem import SubProblem, coerce_config
 from logic.src.tracking.viz_mixin import PolicyVizMixin
 
@@ -79,6 +80,10 @@ class PGCLNSSolver(PolicyVizMixin):
         self.C = problem.cost_unit
 
         config = coerce_config(cfg, PGCLNSConfig)
+        # The nested sections may arrive as dicts or Hydra DictConfig: give them their typed configs, so every
+        # option of the yaml is read (and attribute access works).
+        config.aco = coerce_config(config.aco, KSparseACOConfig)
+        config.lns = coerce_config(config.lns, PGCLNSLNSConfig)
 
         self.cfg: PGCLNSConfig = config
         self.params = config
@@ -107,11 +112,13 @@ class PGCLNSSolver(PolicyVizMixin):
         self.constructor = self.aco_internal.constructor
 
         # Initialize LNS solver for the "Coaching" phase
-        self.coaching_solver = LNSSolver(problem, config.lns, seed=actual_seed)
+        self.coaching_solver = LNSSolver(
+            problem, config.lns, seed=actual_seed, profit_aware=config.profit_aware_operators
+        )
 
     def solve(self) -> Tuple[List[List[int]], float, float]:
         """
-        Run the HVPL algorithm
+        Run PG-CLNS (inspired by the HVPL routing algorithm).
 
         Returns:
             Tuple of (routes, profit, cost).
@@ -156,6 +163,21 @@ class PGCLNSSolver(PolicyVizMixin):
             # 5. Pheromone Update: Global guidance
             # Deposit pheromones on the best population member's edges
             self._update_pheromones(best_routes, best_cost)
+
+            # 5b. Colony rounds (aco.max_iterations > 0): aco.n_ants ants per round, with local search when
+            # aco.local_search, within aco.time_limit; the colony's best solution replaces the weakest member when it
+            # is better. With the paper's aco.max_iterations = 0 the colony only builds and replaces members.
+            if self.params.aco.max_iterations > 0:
+                a_routes, _a_profit, _a_cost = self.aco_internal.solve()
+                a_routes = self._canonicalize_routes(a_routes)
+                if a_routes:
+                    a_cost = self._calculate_cost(a_routes)
+                    a_profit = sum(self.wastes.get(n, 0) * self.R for r in a_routes for n in r) - a_cost * self.C
+                    worst = min(range(len(population)), key=lambda i: (population[i][1], -population[i][2]))
+                    if a_profit > population[worst][1]:
+                        population[worst] = (a_routes, a_profit, a_cost)
+                    if a_profit > best_profit:
+                        best_routes, best_profit, best_cost = copy.deepcopy(a_routes), a_profit, a_cost
 
             self._viz_record(
                 iteration=_iteration,

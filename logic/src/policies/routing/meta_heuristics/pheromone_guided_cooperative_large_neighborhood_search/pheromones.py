@@ -13,7 +13,7 @@ Example:
 """
 
 from collections import defaultdict
-from typing import Dict
+from typing import Dict, Optional
 
 
 class PheromoneTau:
@@ -29,10 +29,14 @@ class PheromoneTau:
         tau_0: Default pheromone value for unrepresented edges.
         tau_min: Minimum pheromone bound.
         tau_max: Maximum pheromone bound.
+        scale: Pruning precision: after evaporation, a stored value within 10^-scale of tau_0 is dropped (it reads
+            as tau_0 again and frees its slot); None keeps every stored value.
         _pheromone: Sparse storage of pheromone values.
     """
 
-    def __init__(self, n_nodes: int, k: int, tau_0: float, tau_min: float, tau_max: float):
+    def __init__(
+        self, n_nodes: int, k: int, tau_0: float, tau_min: float, tau_max: float, scale: Optional[float] = None
+    ):
         """
         Initialize sparse pheromone structure.
 
@@ -42,12 +46,14 @@ class PheromoneTau:
             tau_0: Default pheromone value for unrepresented edges.
             tau_min: Minimum pheromone bound.
             tau_max: Maximum pheromone bound.
+            scale: Pruning precision (see the class attributes).
         """
         self.n_nodes = n_nodes
         self.k = k
         self.tau_0 = tau_0
         self.tau_min = tau_min
         self.tau_max = tau_max
+        self.scale = scale
 
         # Sparse storage: node -> {neighbor: pheromone}
         self._pheromone: Dict[int, Dict[int, float]] = defaultdict(dict)
@@ -116,7 +122,10 @@ class PheromoneTau:
             rho: Evaporation rate.
 
         """
+        precision = None if self.scale is None else 10.0 ** (-self.scale)
         for i in self._pheromone:
             for j in list(self._pheromone[i].keys()):
                 self._pheromone[i][j] *= 1 - rho
                 self._pheromone[i][j] = max(self._pheromone[i][j], self.tau_min)
+                if precision is not None and abs(self._pheromone[i][j] - self.tau_0) <= precision:
+                    del self._pheromone[i][j]

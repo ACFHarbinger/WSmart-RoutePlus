@@ -4,7 +4,9 @@ sans:
     # time_limit is only a guard; the iteration budget ends the run, so results do not depend on machine speed.
     time_limit: 600
     max_iterations: 1800000
-    perc_bins_can_overflow: 0
+    # share of bins that may be left to overflow by tomorrow; 1.0 imposes no visits, as in the paper's runs
+    # (0 would require visiting every bin with stock + daily rate >= 100 %)
+    perc_bins_can_overflow: 1.0
     T_min: 0.01
     T_init: 75
     iterations_per_T: 5000

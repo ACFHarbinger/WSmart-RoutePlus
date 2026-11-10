@@ -35,15 +35,20 @@ class KSparseACOConfig:
         tau_min: Minimum pheromone bound.
         tau_max: Maximum pheromone bound.
         max_iterations: Maximum number of ACO iterations.
-        scale: Scaling factor for heuristic information.
+        scale: Pruning precision of the sparse pheromone matrix: a stored value within 10^-scale of the default
+            pheromone is dropped (and reads as the default).
         time_limit: Maximum time in seconds for the solver.
+        seed: Seed of the colony's random stream (when unset, the solver's seed).
         k_sparse: Number of nearest neighbors to consider.
+        q0: Probability of the greedy (exploitation) choice of the next node.
         local_search: Whether to apply local search after construction.
         local_search_iterations: Number of local search iterations.
         elitist_weight: Weight for elitist pheromone update.
         packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
         acceptance_criterion: Acceptance criterion config for local search.
+        profit_aware_operators: Judge by profit (revenue minus travel cost) instead of travel cost alone: the
+            standalone colony's construction checks profit, and PG-CLNS's colony rounds keep the most profitable ant.
     """
 
     n_ants: int = 20

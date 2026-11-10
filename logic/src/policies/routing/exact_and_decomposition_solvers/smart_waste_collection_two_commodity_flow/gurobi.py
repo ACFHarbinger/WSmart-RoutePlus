@@ -347,7 +347,8 @@ def _run_gurobi_optimizer(  # noqa: C901
         ):
             # Hit the limit before any incumbent: the day would otherwise collect nothing. The retry uses the
             # default tolerance and no further retry, so one day costs at most (1 + factor) x the limit.
-            longer = int(time_limit * options["no_solution_time_factor"])
+            # kept fractional: int() would turn a limit under 1 / factor seconds into 0, which means no limit
+            longer = time_limit * options["no_solution_time_factor"]
             print(
                 f"[WARN][VRPP-Gurobi] No incumbent in {time_limit}s; re-solving at the default tolerance with {longer}s."
             )

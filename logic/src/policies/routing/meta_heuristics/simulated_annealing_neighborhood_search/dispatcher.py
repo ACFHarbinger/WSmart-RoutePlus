@@ -12,6 +12,7 @@ Reference:
 Attributes:
     execute_new: Execute the improved simulated annealing engine.
     execute_og: Execute the original LAC (look-ahead collection) engine.
+    split_into_trips: Split an over-capacity tour into trips that each fit the vehicle.
 
 Example:
     >>> from logic.src.data.bins import Bins
@@ -45,6 +46,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 
+from logic.src.configs.policies.routing.meta_heuristics.sans import SANSConfig
 from logic.src.constants import MAX_CAPACITY_PERCENT
 from logic.src.data.processor import convert_to_dict
 from logic.src.interfaces.context.search_context import SearchContext
@@ -65,7 +67,52 @@ from logic.src.utils.routing.tours import get_route_cost
 if TYPE_CHECKING:
     from logic.src.interfaces.context.multi_day_context import MultiDayContext
 
-from logic.src.configs.policies.routing.meta_heuristics.sans import SANSConfig
+
+def split_into_trips(tour: List[int], stocks: Dict[int, float], capacity: float, distance_matrix: Any) -> List[int]:
+    """Split a tour whose load exceeds the vehicle into trips that each fit it.
+
+    The bins keep the tour's order; the cut points minimise the total distance (an optimal split of the giant tour,
+    O(n^2)). A tour within capacity is returned unchanged; a single bin larger than the vehicle gets a trip of its own.
+
+    Args:
+        tour: Depot-delimited tour ``[0, ..., 0]`` (trips separated by 0).
+        stocks: Load of each bin, in the units of ``capacity``.
+        capacity: Vehicle capacity.
+        distance_matrix: Distances, depot at index 0.
+
+    Returns:
+        Depot-delimited tour whose every trip fits the vehicle.
+    """
+    bins = [b for b in tour if b != 0]
+    trips: List[List[int]] = [[]]
+    for node in tour[1:]:
+        if node == 0:
+            trips.append([])
+        else:
+            trips[-1].append(node)
+    if all(sum(stocks.get(b, 0.0) for b in trip) <= capacity + 1e-9 for trip in trips):
+        return tour
+    d = distance_matrix
+    n = len(bins)
+    best = [0.0] + [float("inf")] * n  # best[j]: least distance serving bins[:j]
+    cut = [0] * (n + 1)
+    for i in range(n):
+        load, length = 0.0, 0.0
+        for j in range(i, n):
+            load += stocks.get(bins[j], 0.0)
+            if j > i and load > capacity + 1e-9:
+                break
+            length = d[0][bins[i]] if j == i else length - d[bins[j - 1]][0] + d[bins[j - 1]][bins[j]]
+            length += d[bins[j]][0]
+            if best[i] + length < best[j + 1]:
+                best[j + 1], cut[j + 1] = best[i] + length, i
+    out: List[int] = []
+    j = n
+    while j > 0:
+        i = cut[j]
+        out = [*bins[i:j], 0, *out]
+        j = i
+    return [0, *out]
 
 
 def execute_new(
@@ -160,14 +207,19 @@ def execute_new(
         C,
         mandatory_1,
         perc_bins_can_overflow=params.perc_bins_can_overflow,
-        volume=V,
-        density_val=B,
-        max_vehicles=1,
         rng=rng,
         max_iterations=params.max_iterations,
     )
 
     tour = optimized_routes[0] if optimized_routes else [0, 0]
+    # SANS plans one trip. Mandatory bins it must keep can exceed the vehicle on a heavy day: serve them in as many
+    # trips as needed instead of one over-capacity trip (the trip's own cost and profit are then recomputed).
+    stocks = dict(zip(data["#bin"], data["Stock"], strict=False))
+    split = split_into_trips(tour, stocks, Q, distance_matrix)
+    if split != tour:
+        tour = split
+        last_distance = float(get_route_cost(distance_matrix, tour))
+        best_profit = R * sum(stocks[b] for b in set(tour) - {0}) - C * last_distance
     return tour, last_distance, best_profit, kwargs.get("search_context"), kwargs.get("multi_day_context")
 
 

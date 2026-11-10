@@ -35,7 +35,8 @@ from logic.src.policies.acceptance_criteria.legacy_sa import LegacySAAcceptance
 from logic.src.policies.helpers.operators.destroy_ruin.cluster import cluster_removal
 from logic.src.policies.helpers.operators.destroy_ruin.random import random_removal
 from logic.src.policies.helpers.operators.destroy_ruin.worst import worst_removal
-from logic.src.policies.helpers.operators.recreate_repair.greedy import greedy_profit_insertion
+from logic.src.policies.helpers.operators.recreate_repair.greedy import greedy_insertion, greedy_profit_insertion
+from logic.src.policies.helpers.operators.recreate_repair.regret import regret_2_insertion
 from logic.src.policies.helpers.operators.recreate_repair.regret_profit import regret_2_profit_insertion
 from logic.src.policies.routing.base.sub_problem import SubProblem, coerce_config
 from logic.src.policies.routing.meta_heuristics.large_neighborhood_search.engine import LNSBase
@@ -81,6 +82,7 @@ class LNSSolver(LNSBase, PolicyVizMixin):
         problem: SubProblem,
         cfg: Optional[Union[PGCLNSLNSConfig, Dict[str, Any]]] = None,
         seed: Optional[int] = None,
+        profit_aware: bool = True,
     ):
         """
         Initialize the LNS solver.
@@ -92,6 +94,9 @@ class LNSSolver(LNSBase, PolicyVizMixin):
                 ``lns`` section of PGCLNSConfig).
             seed: Random seed for reproducibility. Effective seed sequence:
                 explicit kwarg > ``cfg.seed`` > 42.
+            profit_aware: Repair with the profit-aware insertions (a bin is inserted only when it pays for its
+                detour); False uses the cost-only insertions, which put back every removed bin
+                (PG-CLNS's ``profit_aware_operators``).
         """
         self.problem = problem
         self.dist_matrix = problem.dist_matrix
@@ -126,40 +131,55 @@ class LNSSolver(LNSBase, PolicyVizMixin):
             lambda r, n: worst_removal(r, n, self.dist_matrix, p=3.0, rng=self.np_random),
             lambda r, n: cluster_removal(r, n, self.dist_matrix, self.nodes, rng=self.random),
         ]
-        self.repair_ops: List[Callable] = [
-            lambda r, n, _noise=0.0: greedy_profit_insertion(
-                r,
-                n,
-                self.dist_matrix,
-                self.wastes,
-                self.capacity,
-                R=self.R,
-                C=self.C,
-                mandatory_nodes=self.mandatory_nodes,
-            ),
-            lambda r, n, _noise=0.0: regret_2_profit_insertion(
-                r,
-                n,
-                self.dist_matrix,
-                self.wastes,
-                self.capacity,
-                R=self.R,
-                C=self.C,
-                mandatory_nodes=self.mandatory_nodes,
-            ),
-        ]
+        if profit_aware:
+            self.repair_ops: List[Callable] = [
+                lambda r, n, _noise=0.0: greedy_profit_insertion(
+                    r,
+                    n,
+                    self.dist_matrix,
+                    self.wastes,
+                    self.capacity,
+                    R=self.R,
+                    C=self.C,
+                    mandatory_nodes=self.mandatory_nodes,
+                ),
+                lambda r, n, _noise=0.0: regret_2_profit_insertion(
+                    r,
+                    n,
+                    self.dist_matrix,
+                    self.wastes,
+                    self.capacity,
+                    R=self.R,
+                    C=self.C,
+                    mandatory_nodes=self.mandatory_nodes,
+                ),
+            ]
+        else:
+            self.repair_ops = [
+                lambda r, n, _noise=0.0: greedy_insertion(
+                    r, n, self.dist_matrix, self.wastes, self.capacity, mandatory_nodes=self.mandatory_nodes,
+                    expand_pool=False,
+                ),
+                lambda r, n, _noise=0.0: regret_2_insertion(
+                    r, n, self.dist_matrix, self.wastes, self.capacity, mandatory_nodes=self.mandatory_nodes,
+                    expand_pool=False,
+                ),
+            ]
         self.repair_noisy = [False] * len(self.repair_ops)
 
         self.destroy_weights = [1.0] * len(self.destroy_ops)
         self.repair_weights = [1.0] * len(self.repair_ops)
-        self._weights = EmaWeightUpdate(self.destroy_weights, self.repair_weights)
+        # reaction_factor is the weights' learning rate: w <- (1 - rf) * w + rf * score
+        self._weights = EmaWeightUpdate(
+            self.destroy_weights, self.repair_weights, decay=1.0 - float(self.params.reaction_factor)
+        )
 
     # ------------------------------------------------------------------
     # LNSBase semantic hooks (PG-CLNS flavour)
     # ------------------------------------------------------------------
 
     def _removal_bounds(self, current_n_nodes: int) -> Tuple[int, int]:
-        """PG-CLNS removal bounds: ``max_removal_pct`` (falling back to ``xi``).
+        """PG-CLNS removal bounds: at least two nodes, at most a share ``xi`` of them.
 
         Args:
             current_n_nodes: Number of nodes in the current solution.
@@ -168,8 +188,7 @@ class LNSSolver(LNSBase, PolicyVizMixin):
             Tuple of (lower_bound, upper_bound) for the removal count.
         """
         lower_bound = min(current_n_nodes, 2)
-        max_pct = getattr(self.params, "max_removal_pct", getattr(self.params, "xi", 0.4))
-        max_pct_remove = int(current_n_nodes * max_pct)
+        max_pct_remove = int(current_n_nodes * self.params.xi)
         upper_bound = max(lower_bound + 1, max_pct_remove)
         upper_bound = min(upper_bound, current_n_nodes)
         return lower_bound, upper_bound

@@ -20,6 +20,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 
 from logic.src.configs.policies.routing.meta_heuristics.aco_ks import KSparseACOConfig
+from logic.src.policies.routing.base.sub_problem import coerce_config
 from logic.src.tracking.viz_mixin import PolicyVizMixin
 
 from .construction import SolutionConstructor
@@ -81,15 +82,10 @@ class ACOSolver(PolicyVizMixin):
         self.R = R
         self.C = C
 
-        if isinstance(params, dict):
-            import dataclasses
-
-            valid_keys = {f.name for f in dataclasses.fields(KSparseACOConfig)}
-            cfg = KSparseACOConfig(**{k: v for k, v in params.items() if k in valid_keys})
-        elif params is None:
-            cfg = KSparseACOConfig()
-        else:
-            cfg = params
+        # dicts, Hydra DictConfig sections and None become a KSparseACOConfig
+        cfg = coerce_config(params, KSparseACOConfig)
+        # the colony's own seed, when set, takes precedence over the solver's
+        seed = cfg.seed if cfg.seed is not None else seed
 
         self.cfg: KSparseACOConfig = cfg
         self.params = cfg
@@ -118,6 +114,7 @@ class ACOSolver(PolicyVizMixin):
             self.tau_0,
             cfg.tau_min,
             cfg.tau_max,
+            scale=cfg.scale,
         )
 
         # Initialize Local Search
@@ -201,6 +198,7 @@ class ACOSolver(PolicyVizMixin):
         """
         best_routes: List[List[int]] = []
         best_cost = float("inf")
+        best_score = float("inf")  # lower is better: cost, or minus the profit for profit-aware ranking
         start_time = time.perf_counter()
         for _iteration in range(self.params.max_iterations):
             if self.params.time_limit > 0 and time.perf_counter() - start_time > self.params.time_limit:
@@ -208,6 +206,7 @@ class ACOSolver(PolicyVizMixin):
 
             iteration_best_routes: List[List[int]] = []
             iteration_best_cost = float("inf")
+            iteration_best_score = float("inf")
 
             # Each ant constructs a solution
             for _ in range(self.params.n_ants):
@@ -219,13 +218,16 @@ class ACOSolver(PolicyVizMixin):
                     routes = self.ls.optimize(routes)
 
                 cost = self._calculate_cost(routes)
+                score = self._score(routes, cost)
 
-                if cost < iteration_best_cost:
+                if score < iteration_best_score:
+                    iteration_best_score = score
                     iteration_best_cost = cost
                     iteration_best_routes = routes
 
             # Update global best
-            if iteration_best_cost < best_cost:
+            if iteration_best_score < best_score:
+                best_score = iteration_best_score
                 best_cost = iteration_best_cost
                 best_routes = iteration_best_routes
 
@@ -246,6 +248,21 @@ class ACOSolver(PolicyVizMixin):
         profit = collected_revenue - best_cost * self.C
 
         return best_routes, profit, best_cost
+
+    def _score(self, routes: List[List[int]], cost: float) -> float:
+        """Rank of a solution (lower is better): its cost, or minus its profit with ``profit_aware_operators``.
+
+        Args:
+            routes: The solution.
+            cost: Its travel distance.
+
+        Returns:
+            The ranking score.
+        """
+        if not self.params.profit_aware_operators:
+            return cost
+        revenue = sum(self.wastes.get(node, 0) * self.R for route in routes for node in route)
+        return -(revenue - cost * self.C)
 
     def _global_pheromone_update(self, best_routes: List[List[int]], best_cost: float) -> None:
         """

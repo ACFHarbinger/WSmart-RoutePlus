@@ -14,9 +14,11 @@ tests all speak one vocabulary.
 """
 
 import dataclasses
+from collections.abc import Mapping
 from typing import Any, Dict, List, NamedTuple, Optional, Protocol, Type, runtime_checkable
 
 import numpy as np
+from omegaconf import DictConfig, OmegaConf
 
 __all__ = ["SubProblem", "SolveResult", "Solver", "build_subproblem", "coerce_config"]
 
@@ -163,8 +165,9 @@ def coerce_config(cfg: Any, config_cls: Type) -> Any:
     """Lenient engine-level config coercion.
 
     Mirrors the legacy routing constructor contracts: dataclass instances pass
-    through, dicts and arbitrary objects are filtered onto the dataclass fields,
-    and None yields the dataclass defaults. Engines tolerate; adapters load strictly.
+    through, mappings (dicts and Hydra ``DictConfig`` sections) and arbitrary objects
+    are filtered onto the dataclass fields, and None yields the dataclass defaults.
+    Engines tolerate; adapters load strictly.
 
     Args:
         cfg: Target configuration dataclass instance, dict, arbitrary object, or None.
@@ -178,7 +181,10 @@ def coerce_config(cfg: Any, config_cls: Type) -> Any:
     if isinstance(cfg, config_cls):
         return cfg
     valid_keys = {f.name for f in dataclasses.fields(config_cls)}
-    if isinstance(cfg, dict):
+    if isinstance(cfg, DictConfig):
+        # A nested Hydra section: read its values (vars() would only see OmegaConf's internals).
+        cfg = OmegaConf.to_container(cfg, resolve=True)
+    if isinstance(cfg, Mapping):
         return config_cls(**{k: v for k, v in cfg.items() if k in valid_keys})
     if hasattr(cfg, "__dict__"):
         return config_cls(**{k: v for k, v in vars(cfg).items() if k in valid_keys})
