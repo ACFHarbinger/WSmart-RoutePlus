@@ -38,13 +38,15 @@ class HGSConfig:
             run is reproducible: the stop no longer depends on machine speed; time_limit stays a guard.
         repair_probability: Probability of repairing infeasible offspring.
         crossover_rate: Probability of applying crossover.
+        mutation_rate: Probability that an offspring is educated by local search (1.0: every one, as in Vidal 2022).
         max_vehicles: Maximum number of vehicles (0 for unlimited).
         initial_penalty_capacity: Initial penalty for capacity violations.
         penalty_increase: Multiplier for increasing penalty.
         penalty_decrease: Multiplier for decreasing penalty.
         local_search_iterations: Number of local search iterations.
         engine: Solver engine to use ('custom', 'pyvrp').
-        profit_aware_operators: Whether to use profit-aware operators.
+        profit_aware_operators: Decoding skips optional bins whose revenue does not pay their round trip; False
+            splits every bin of the giant tour.
         packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
         acceptance_criterion: Acceptance criterion config for local search.
@@ -77,7 +79,7 @@ class HGSConfig:
     # Local search
     local_search_iterations: int = 500
     nb_granular: int = 20  # Used by the HGS-ALNS composite.
-    mutation_rate: float = 1.0  # Used by the HGS-ALNS composite.
+    mutation_rate: float = 1.0
 
     # Engine configuration
     engine: str = "custom"

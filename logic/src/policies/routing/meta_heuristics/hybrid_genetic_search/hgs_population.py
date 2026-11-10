@@ -326,8 +326,10 @@ class HGSPopulationMixin:
             child = Individual(p1.giant_tour[:], expand_pool=p1.expand_pool)
 
         evaluate(child, self.split_manager, penalty_capacity)
-        child = self.ls.optimize(child)
-        evaluate(child, self.split_manager, penalty_capacity)
+        # Education (local search) with probability mutation_rate; at 1.0 no random number is drawn.
+        if self.params.mutation_rate >= 1.0 or self.random.random() < self.params.mutation_rate:
+            child = self.ls.optimize(child)
+            evaluate(child, self.split_manager, penalty_capacity)
         return child
 
     def _record_offspring_signals(self, ind: Individual) -> None:

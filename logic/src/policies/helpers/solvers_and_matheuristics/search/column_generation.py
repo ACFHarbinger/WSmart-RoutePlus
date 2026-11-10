@@ -78,6 +78,8 @@ def column_generation_loop(  # noqa: C901
     rcspp_timeout: float = 30.0,
     *,
     strict_certification: bool = False,
+    enable_dssr: bool = True,
+    dssr_max_iters: int = 0,
 ) -> Tuple[float, Dict[int, float], Optional[Any], bool]:
     """Run the Column Generation and Cutting Plane loop at a B&B node.
 
@@ -118,6 +120,9 @@ def column_generation_loop(  # noqa: C901
         start_time: Start timestamp of the overall solve.
         max_routes_per_pricing: Maximum number of columns to return.
         vehicle_limit: Fleet size limit.
+        enable_dssr: Dynamic ng-expansion (decremental state-space relaxation): when converged routes contain
+            cycles, add their nodes to the ng-neighbourhoods, disable the cyclic columns and re-price.
+        dssr_max_iters: Most such expansions in this call (0: no limit).
         optimality_gap: Target optimality gap.
         early_termination_gap: Heuristic stopping threshold.
         parent_basis: Gurobi basis from parent node.
@@ -144,6 +149,7 @@ def column_generation_loop(  # noqa: C901
     _iteration = 0
     consecutive_pricing_timeouts = 0
     max_consecutive_pricing_timeouts = 3
+    dssr_rounds = 0  # dynamic ng-expansions so far (bounded by dssr_max_iters when positive)
     # Task 3: Fix Lagrangian default.
     # If no fleet limit is active, the worst-case number of vehicles is n_nodes.
     fleet_size: int = vehicle_limit if vehicle_limit is not None else master.n_nodes
@@ -377,7 +383,8 @@ def column_generation_loop(  # noqa: C901
                         if route_cycles:
                             cycles.extend(route_cycles)
 
-                if cycles:
+                if cycles and enable_dssr and (dssr_max_iters <= 0 or dssr_rounds < dssr_max_iters):
+                    dssr_rounds += 1
                     added_ng = pricing_solver.expand_ng_neighborhoods(cycles)
 
                     # Task 1: Physically disable the cyclic columns in the Master Problem.

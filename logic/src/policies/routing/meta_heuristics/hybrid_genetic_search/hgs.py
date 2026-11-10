@@ -123,6 +123,7 @@ class HGSSolver(HGSPopulationMixin):
         self.nodes = list(range(1, self.n_nodes + 1))
 
         self.split_manager = LinearSplit(dist_matrix, wastes, capacity, R, C, cfg.max_vehicles, mandatory_nodes)
+        self.split_manager.profit_aware = bool(cfg.profit_aware_operators)
         self.ls = HGSLocalSearch(dist_matrix, wastes, capacity, R, C, mandatory_nodes, cfg)
         if x_coords is not None and y_coords is not None:
             self.ls.x_coords = x_coords

@@ -8,6 +8,9 @@ aco_hh:
     stagnation_limit: 10
     max_iterations: 50
     elitism_ratio: 0.5
+    # as in the reported runs: no local-search polish, the best ant deposits like the others
+    local_search: false
+    elitist_weight: 1.0
     # time_limit is only a guard; the iteration budget ends the run, so results do not depend on machine speed.
     time_limit: 600.0
     sequence_length: null

@@ -154,7 +154,6 @@ class CVRPPolicy(BaseRoutingPolicy):
         area = kwargs.get("area", "Rio Maior")
         waste_type = kwargs.get("waste_type", "plastic")
         n_vehicles = kwargs.get("n_vehicles", 1)
-        cached = kwargs.get("cached")
         coords = kwargs.get("coords")
         config = kwargs.get("config", {})
         distancesC = kwargs.get("distancesC")
@@ -183,13 +182,20 @@ class CVRPPolicy(BaseRoutingPolicy):
                 if key in values:
                     setattr(cfg, key, values[key])
 
-        # Use cached route if available and no specific mandatory
-        if cached is not None and len(cached) > 1 and not mandatory:
-            tour = cached
+        # cache: a day with the same inputs as an earlier one (bins, their loads, the distances, engine and seed)
+        # reuses that day's tour instead of solving again.
+        seed = kwargs.get("seed") if kwargs.get("seed") is not None else cfg.seed
+        seed = 42 if seed is None else seed
+        cfg.seed = seed
+        key = None
+        if cfg.cache:
+            loads = tuple(round(float(bins.c[n - 1]), 9) for n in to_collect)
+            key = (tuple(to_collect), loads, int(capacity * 1e6), int(n_vehicles), cfg.engine, seed,
+                   hash(np.asarray(distancesC).tobytes()))
+        cache = self.__dict__.setdefault("_tour_cache", {})
+        if key is not None and key in cache:
+            tour = list(cache[key])
         else:
-            seed = kwargs.get("seed") if kwargs.get("seed") is not None else cfg.seed
-            seed = 42 if seed is None else seed
-            cfg.seed = seed
             if cfg.engine == "ortools":
                 tour = find_routes_ortools(
                     distancesC,
@@ -213,6 +219,8 @@ class CVRPPolicy(BaseRoutingPolicy):
                 )
             else:
                 raise ValueError(f"Unknown CVRP engine: {cfg.engine!r}")
+            if key is not None:
+                cache[key] = list(tour.tolist() if hasattr(tour, "tolist") else tour)
         # Ensure list format
         if hasattr(tour, "tolist"):
             tour = tour.tolist()

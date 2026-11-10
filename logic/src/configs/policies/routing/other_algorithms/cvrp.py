@@ -23,7 +23,8 @@ class CVRPConfig:
     """Configuration for Capacitated Vehicle Routing Problem (CVRP) policy.
 
     Attributes:
-        cache: Whether to cache solutions.
+        cache: Reuse the tour of an earlier day with the same inputs (bins, loads, distances, engine, seed)
+            instead of solving again.
         time_limit: Maximum time in seconds for the solver.
         seed: Random seed for reproducibility.
         engine: Solver engine to use ('ortools', 'gurobi').

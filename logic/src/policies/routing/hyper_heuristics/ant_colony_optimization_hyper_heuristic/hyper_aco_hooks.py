@@ -16,6 +16,7 @@ from typing import Any, Callable, Dict, List, NamedTuple, Tuple
 import numpy as np
 
 from logic.src.configs.policies.routing.hyper_heuristics.aco_hh import HyperHeuristicACOConfig
+from logic.src.policies.helpers.local_search.local_search_general import GeneralLocalSearch
 from logic.src.policies.routing.base.sub_problem import SolveResult
 
 from .hyper_operators import (
@@ -198,6 +199,13 @@ class HyperACOSearchHooksMixin:
             # No feasible plan was ever seen (the starting solution was already infeasible):
             # return the starting solution rather than an over-capacity ant plan.
             best_routes = [r for r in copy.deepcopy(self.initial_solution) if r]
+        elif self.cfg.local_search and best_routes:
+            # Polish the incumbent with local search (at most local_search_iterations passes); the result is kept
+            # only when it stays feasible and is cheaper, the incumbent's own criterion.
+            ls = GeneralLocalSearch(self.dist_matrix, self.wastes, self.capacity, self.R, self.C, self.cfg)
+            polished = [r for r in ls.optimize(copy.deepcopy(best_routes)) if r]
+            if self._is_feasible(polished) and self._calculate_routing_cost(polished) < best_objective - 1e-9:
+                best_routes = polished
 
         best_cost = self._calculate_routing_cost(best_routes)
         collected_rev = sum(self.wastes.get(n, 0) * self.R for r in best_routes for n in r)

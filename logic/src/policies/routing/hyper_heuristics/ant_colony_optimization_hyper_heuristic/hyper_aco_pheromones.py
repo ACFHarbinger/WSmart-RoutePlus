@@ -239,14 +239,20 @@ class HyperACOPheromoneMixin:
     def _deposit_pheromones(self, ant_results: List[Tuple[List[List[int]], float, float, List[str], int, int]]) -> None:
         """Deposit ``Q + I_k / L_k`` along every improving journey's path, first hop included.
 
+        The journey with the largest improvement deposits ``elitist_weight`` times as much (1.0: like the others).
+
         Args:
             ant_results: Per-ant results ``(routes, start_obj, final_obj, sequence, ant_idx, start_idx)``.
 
         """
-        for _routes, start_obj_ant, final_obj_ant, sequence, _ant_idx, journey_start in ant_results:
+        improvements = [start - final for _r, start, final, _s, _a, _j in ant_results]
+        elite = max(range(len(improvements)), key=lambda k: improvements[k]) if improvements else -1
+        for k, (_routes, start_obj_ant, final_obj_ant, sequence, _ant_idx, journey_start) in enumerate(ant_results):
             journey_improvement = start_obj_ant - final_obj_ant
             if journey_improvement > 0:
                 delta_tau = self.cfg.Q + journey_improvement / len(sequence)
+                if k == elite:
+                    delta_tau *= self.cfg.elitist_weight
                 prev_op_idx = journey_start
                 for op_name in sequence:
                     next_op_idx = self.op_to_idx[op_name]

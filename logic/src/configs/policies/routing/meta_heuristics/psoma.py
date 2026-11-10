@@ -44,7 +44,8 @@ class PSOMAConfig:
         T0: Initial temperature for simulated annealing.
         lambda_cooling: Cooling rate for simulated annealing.
         time_limit: Wall-clock time limit in seconds.
-        profit_aware_operators: Whether to use profit-aware operators.
+        profit_aware_operators: Decoding (the split of the ranked tour) skips optional bins that do not pay; False
+            splits every bin.
         seed: Random seed for reproducibility.
         packing: Packing algorithm config list.
         route_improvement: Route improvement operation config list.

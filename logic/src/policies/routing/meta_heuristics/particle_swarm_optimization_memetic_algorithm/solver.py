@@ -111,6 +111,7 @@ class PSOMASolver(PSOMASwarmSearchMixin, PopulationSearch):
             max_vehicles=0,
             mandatory_nodes=self.mandatory_nodes,
         )
+        self.split_solver.profit_aware = bool(getattr(coerced_cfg, "profit_aware_operators", True))
 
         # Fresh per-solve acceptance criterion instance (P-11)
         from logic.src.policies.acceptance_criteria.base.factory import (

@@ -77,7 +77,7 @@ class BPCConfig:
         prefer_shorter_path_dfs: Whether to prefer the child where the shorter path is still allowed.
         enable_node_visitation_branching: Whether to enable hierarchical node-visitation (y_v) branching before arc/RF branching.
         enable_dssr: Whether to enable Decremental State-Space Relaxation in pricing (Righini, Salani 2008).
-        dssr_max_iters: Maximum DSSR refinement iterations per pricing call.
+        dssr_max_iters: Most DSSR expansions per column-generation run at a node (0: no limit).
         enable_reduced_cost_arc_fixing: Whether to enable reduced-cost arc elimination from pricing graph (Irnich et al. 2010).
         route_budget: Maximum route cost/distance budget for conflict-cut and path-elimination separation.
     """
@@ -133,8 +133,8 @@ class BPCConfig:
     """Enable Decremental State-Space Relaxation in pricing (Righini, Salani 2008).
     Iteratively adds cycled vertices to ng-memory until returned paths are elementary."""
 
-    dssr_max_iters: int = 8
-    """Maximum DSSR refinement iterations per pricing call."""
+    dssr_max_iters: int = 0
+    """Most DSSR expansions per column-generation run at a node (0: no limit, as in the reported runs)."""
 
     enable_reduced_cost_arc_fixing: bool = True
     """Enable reduced-cost arc elimination from pricing graph (Irnich et al. 2010).

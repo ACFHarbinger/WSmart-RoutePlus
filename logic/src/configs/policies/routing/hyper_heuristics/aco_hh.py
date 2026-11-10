@@ -40,9 +40,10 @@ class HyperHeuristicACOConfig:
         time_limit: Maximum time in seconds for the solver.
         stagnation_limit: Number of iterations without improvement before pheromone update.
         sequence_length: Length of operator sequence for hyper-heuristic ACO.
-        local_search: Whether to apply local search after construction.
-        local_search_iterations: Number of local search iterations.
-        elitist_weight: Weight for elitist pheromone update.
+        local_search: Polish the best plan with local search before it is returned (kept only when it stays
+            feasible and is cheaper).
+        local_search_iterations: Most improvement passes of that local search.
+        elitist_weight: Weight of the most improving ant's pheromone deposit relative to the others (1.0: the same).
         operators: List of local search operators to use.
         packing: List of packing algorithm config files.
         route_improvement: List of route improvement operations to apply.
@@ -63,7 +64,7 @@ class HyperHeuristicACOConfig:
     seed: Optional[int] = None
     stagnation_limit: int = 10
     sequence_length: Optional[int] = None
-    local_search: bool = True
+    local_search: bool = False  # the reported runs ran without it (the option was not read)
     local_search_iterations: int = 500
     elitist_weight: float = 1.0
     operators: Optional[List[str]] = None

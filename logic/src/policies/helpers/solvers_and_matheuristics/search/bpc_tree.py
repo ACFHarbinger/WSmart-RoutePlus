@@ -298,6 +298,8 @@ def search_bpc_tree(  # noqa: C901
                     branching_strategy=branching_strategy_name,
                     rcspp_timeout=cfg.rcspp_timeout,
                     strict_certification=options.strict_certification,
+                    enable_dssr=bool(getattr(cfg, "enable_dssr", True)),
+                    dssr_max_iters=int(getattr(cfg, "dssr_max_iters", 0) or 0),
                 )
             finally:
                 pricing_solver.restore_ng_snapshot(ng_snapshot)
@@ -396,12 +398,13 @@ def search_bpc_tree(  # noqa: C901
                 logger.info(f"Global optimality gap reached: {global_gap:.6f} <= {cfg.optimality_gap}")
                 break
 
-            _apply_reduced_cost_edge_fixing(
-                master=master,
-                pricing_solver=pricing_solver,
-                z_ub=global_upper_bound,
-                z_lb=bb_tree.best_integer_solution,
-            )
+            if getattr(cfg, "enable_reduced_cost_arc_fixing", True):
+                _apply_reduced_cost_edge_fixing(
+                    master=master,
+                    pricing_solver=pricing_solver,
+                    z_ub=global_upper_bound,
+                    z_lb=bb_tree.best_integer_solution,
+                )
 
         if _is_solution_integer(master.routes, route_values, require_elementary=options.require_elementary):
             current_node.is_integer = True
