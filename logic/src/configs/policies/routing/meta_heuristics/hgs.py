@@ -34,6 +34,8 @@ class HGSConfig:
         nb_close: Number of close individuals for diversity measurement.
         target_feasible: Target proportion of feasible solutions.
         n_iterations_no_improvement: Max iterations without improvement.
+        init_time_share: Share of the time left that building a (re)initialized population may use; past it the
+            population stops growing (at least two individuals) and the genetic search starts. 1.0 builds all 4μ.
         max_iterations: Total offspring generations before stopping (0 = no cap). With a cap the
             run is reproducible: the stop no longer depends on machine speed; time_limit stays a guard.
         repair_probability: Probability of repairing infeasible offspring.
@@ -63,6 +65,7 @@ class HGSConfig:
     target_feasible: float = 0.2
     n_iterations_no_improvement: int = 20000
     max_iterations: int = 0
+    init_time_share: float = 0.5
 
     # Genetic operators
     repair_probability: float = 0.5

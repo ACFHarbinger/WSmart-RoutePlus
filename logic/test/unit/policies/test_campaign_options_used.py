@@ -56,8 +56,11 @@ def test_aco_hh_local_search_polishes_the_result() -> None:
     problem = _problem(15, 2)
     start = [[b for b in range(1, 16)]]  # one long trip in index order: room for local search
     plain = HyperHeuristicACO(problem, HyperHeuristicACOConfig(seed=1, max_iterations=1, n_ants=2), start).solve()
-    polished = HyperHeuristicACO(problem, HyperHeuristicACOConfig(
-        seed=1, max_iterations=1, n_ants=2, local_search=True, local_search_iterations=50), start).solve()
+    polished = HyperHeuristicACO(
+        problem,
+        HyperHeuristicACOConfig(seed=1, max_iterations=1, n_ants=2, local_search=True, local_search_iterations=50),
+        start,
+    ).solve()
     assert polished[2] <= plain[2] + 1e-9  # never a longer plan
     mandatory = set(problem.mandatory_nodes)
     assert mandatory <= {b for r in polished[0] for b in r}
@@ -94,16 +97,21 @@ def test_psoma_passes_profit_awareness_to_its_split(profit_aware: bool) -> None:
     assert psoma.split_solver.profit_aware is profit_aware
 
 
-@pytest.mark.parametrize(("profit_aware", "expected"), [(True, "route_profit_gpx_crossover"), (False, "ordered_crossover")])
+@pytest.mark.parametrize(
+    ("profit_aware", "expected"), [(True, "route_profit_gpx_crossover"), (False, "ordered_crossover")]
+)
 def test_hgs_switch_selects_the_crossover(monkeypatch: pytest.MonkeyPatch, profit_aware: bool, expected: str) -> None:
     from logic.src.policies.routing.meta_heuristics.hybrid_genetic_search import hgs_population
 
     used: List[str] = []
     for name in ("route_profit_gpx_crossover", "ordered_crossover"):
         real = getattr(hgs_population, name)
-        monkeypatch.setattr(hgs_population, name, lambda *a, real=real, name=name, **k: used.append(name) or real(*a, **k))
-    solver = HGSSolver(_problem(), HGSConfig(seed=1, profit_aware_operators=profit_aware, crossover_rate=1.0, mu=6,
-                                             n_offspring=6))
+        monkeypatch.setattr(
+            hgs_population, name, lambda *a, real=real, name=name, **k: used.append(name) or real(*a, **k)
+        )
+    solver = HGSSolver(
+        _problem(), HGSConfig(seed=1, profit_aware_operators=profit_aware, crossover_rate=1.0, mu=6, n_offspring=6)
+    )
     feasible, infeasible = solver._initialize_population(1.0)
     for _ in range(5):
         solver._generate_offspring(feasible, infeasible, 1.0)
@@ -132,9 +140,36 @@ def test_every_option_of_the_campaign_algorithms_is_read() -> None:
     for key in ("aco_hh", "pg_clns", "bpc", "alns", "swc_tcf", "hgs", "psoma", "sans", "cvrp"):
         cls = R.get(key)
         importlib.import_module(cls.__module__)
-        text = "\n".join(Path(m.__file__).read_text() for name, m in list(sys.modules.items())
-                         if name.startswith("logic.src.") and getattr(m, "__file__", "") and "/configs/" not in m.__file__)
+        text = "\n".join(
+            Path(m.__file__).read_text()
+            for name, m in list(sys.modules.items())
+            if name.startswith("logic.src.") and getattr(m, "__file__", "") and "/configs/" not in m.__file__
+        )
         for fld in dataclasses.fields(cls._config_class()):
             if fld.name in ("packing", "route_improvement"):
                 continue
             assert re.search(rf"\.{fld.name}\b|['\"]{fld.name}['\"]", text), f"{key}: {fld.name} is never read"
+
+
+def test_hgs_population_build_leaves_time_for_the_genetic_search(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A local search slower than the limit allows used to fill the whole budget with the 4μ initial individuals, so
+    no offspring was ever produced; the build now stops at init_time_share of the time left."""
+    import time
+
+    solver = HGSSolver(_problem(), HGSConfig(seed=1, time_limit=1.0, init_time_share=0.5, mu=25))
+    real = solver.ls.optimize
+    monkeypatch.setattr(solver.ls, "optimize", lambda ind: time.sleep(0.05) or real(ind))
+    built: List[int] = []
+    init = solver._initialize_population
+    monkeypatch.setattr(
+        solver,
+        "_initialize_population",
+        lambda pc, deadline=None: (lambda r: built.append(len(r[0]) + len(r[1])) or r)(init(pc, deadline)),
+    )
+    offspring: List[int] = []
+    gen = solver._generate_offspring
+    monkeypatch.setattr(solver, "_generate_offspring", lambda *a: offspring.append(1) or gen(*a))
+    routes, _, _ = solver.solve()
+    assert 2 <= built[0] < 4 * 25  # stopped growing at the deadline (100 builds would take 5 s)
+    assert offspring  # and the genetic search ran
+    assert HGSConfig().init_time_share == 0.5

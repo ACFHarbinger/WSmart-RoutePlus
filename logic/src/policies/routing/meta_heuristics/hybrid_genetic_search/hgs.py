@@ -221,6 +221,21 @@ class HGSSolver(HGSPopulationMixin):
     # Main solve loop
     # ------------------------------------------------------------------
 
+    def _init_deadline(self, start_time: float) -> Optional[float]:
+        """Time by which a (re)initialized population stops growing: init_time_share of the time left.
+
+        Args:
+            start_time: ``time.perf_counter()`` at the start of the solve.
+
+        Returns:
+            Optional[float]: The deadline, or None without a time limit.
+        """
+        if self.params.time_limit <= 0:
+            return None
+        now = time.perf_counter()
+        left = max(0.0, self.params.time_limit - (now - start_time))
+        return now + self.params.init_time_share * left
+
     def solve(self) -> Tuple[List[List[int]], float, float]:
         """
         Run the Hybrid Genetic Search algorithm following Vidal et al. (2022)
@@ -244,7 +259,7 @@ class HGSSolver(HGSPopulationMixin):
         if self.acceptance_criterion is not None:
             self.acceptance_criterion.setup(0.0)
 
-        pop_feasible, pop_infeasible = self._initialize_population(penalty_capacity)
+        pop_feasible, pop_infeasible = self._initialize_population(penalty_capacity, self._init_deadline(start_time))
 
         best_feasible_ind: Optional[Individual] = (
             max(pop_feasible, key=lambda x: x.profit_score) if pop_feasible else None
@@ -277,7 +292,9 @@ class HGSSolver(HGSPopulationMixin):
                 # _adjust_penalties reads these too; stale pre-restart entries skewed it.
                 self._offspring_coverage = []
                 self._offspring_margin = []
-                pop_feasible, pop_infeasible = self._initialize_population(penalty_capacity)
+                pop_feasible, pop_infeasible = self._initialize_population(
+                    penalty_capacity, self._init_deadline(start_time)
+                )
                 it_no_improvement = 0
 
             # Inline size check — no list allocation.

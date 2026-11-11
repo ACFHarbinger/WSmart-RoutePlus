@@ -10,6 +10,7 @@ extraction. Moved unchanged from ``hgs.py``, which re-exports the constants.
 """
 
 import random
+import time
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -118,9 +119,14 @@ class HGSPopulationMixin:
     # Population initialization
     # ------------------------------------------------------------------
 
-    def _initialize_population(self, penalty_capacity: float) -> Tuple[List[Individual], List[Individual]]:
+    def _initialize_population(
+        self, penalty_capacity: float, deadline: Optional[float] = None
+    ) -> Tuple[List[Individual], List[Individual]]:
         """
         Initialize dual subpopulations with 4μ random solutions improved by local search.
+
+        With a deadline (a ``time.perf_counter()`` value) the population stops growing once it passes, keeping at
+        least two individuals, so that a slow local search on a large day leaves time for the genetic search.
 
         Following Vidal (2022) Algorithm 1: "Initialize population with random
         solutions improved by local search." Fitness is updated once after all
@@ -129,6 +135,7 @@ class HGSPopulationMixin:
 
         Args:
             penalty_capacity: Initial penalty coefficient for capacity violations.
+            deadline: Time after which no further individual is built (None: all 4μ).
 
         Returns:
             Tuple[List[Individual], List[Individual]]: (feasible pop, infeasible pop).
@@ -137,7 +144,9 @@ class HGSPopulationMixin:
         pop_infeasible: List[Individual] = []
 
         initial_size = 4 * self.params.mu
-        for _ in range(initial_size):
+        for k in range(initial_size):
+            if deadline is not None and k >= 2 and time.perf_counter() >= deadline:
+                break
             gt = self.nodes[:]
             self.random.shuffle(gt)
             ind = Individual(gt)
