@@ -6,6 +6,10 @@ simulator invocation per cell. Each invocation runs the campaign's packing varia
 overlay policy files (60 s routing limit, no retries, profit-aware operators from the configs).
 Finished cells leave a ``.done`` marker and are skipped on a rerun.
 
+With ``--configs`` only the listed (policy, improver, packing variants) triples run, each a ``policy/improver/variant+variant``
+entry (``cvrp/none/regular_lvl4`` is the fixed schedule Regular-4), separated by commas; this reruns a chosen policy
+set, such as the union of the Pareto fronts on a longer horizon (``--days 90``).
+
 With ``--profit-aware on|off`` every routing algorithm runs with its ``profit_aware_operators`` switch forced
 (the profit-operator ablation); ``--packing`` and ``--improvers`` restrict the packing variants and improvers.
 
@@ -21,6 +25,8 @@ Usage:
     uv run python logic/gen/launch_campaign.py --network rm100 --dist emp --delayed-start
     uv run python logic/gen/launch_campaign.py --network rm100 --dist emp --initial-fill-days 7
     uv run python logic/gen/launch_campaign.py --network ff350 --dry-run
+    uv run python logic/gen/launch_campaign.py --network rm100 --dist emp --days 90 --out outputs/campaign_90 \
+        --configs alns/cls/last_minute_cf90+service_level1,cvrp/none/regular_lvl4
     uv run python logic/gen/launch_campaign.py --network rm100 --dist emp --policies alns,aco_hh,hgs,pg_clns \
         --profit-aware off --packing last_minute_cf90,regular_tr_lvl4 --improvers cls --out outputs/campaign_ablation_off
 """
@@ -96,6 +102,9 @@ def build_cells(args: argparse.Namespace, overlay_root: Path) -> List[Cell]:
     if delayed:  # the fixed schedule reads its delayed calendar from its own overlay
         static_overlay = overlay_root / "static"
         write_overlay(STATIC_POLICY, "none", static_overlay, packing=DELAYED_STATIC_PACKING)
+    configs = [c for c in (getattr(args, "configs", None) or "").split(",") if c]
+    if configs:
+        return _config_cells(args, overlay_root, scenarios, configs)
     cells: List[Cell] = []
     only = [p for p in (getattr(args, "policies", None) or "").split(",") if p]
     model_path = getattr(args, "model_path", None)
@@ -106,8 +115,62 @@ def build_cells(args: argparse.Namespace, overlay_root: Path) -> List[Cell]:
         for improver in improvers:
             overlay = overlay_root / improver
             for policy in only or ROUTING_POLICIES:
-                write_overlay(policy, improver, overlay, packing=packing, model_path=model_path, profit_aware=profit_aware)
+                write_overlay(
+                    policy, improver, overlay, packing=packing, model_path=model_path, profit_aware=profit_aware
+                )
                 cells.append(_cell(args, network.overrides(), scenario, policy, improver, overlay, out_dir))
+    return cells
+
+
+def _config_cells(args: argparse.Namespace, overlay_root: Path, scenarios, configs: List[str]) -> List[Cell]:
+    """Cells of explicit ``policy/improver/variant+variant`` triples, on every scenario.
+
+    Args:
+        args: Parsed command line.
+        overlay_root: Directory that receives one overlay folder per policy and improver.
+        scenarios: The campaign scenarios to run.
+        configs: The triples.
+
+    Returns:
+        List[Cell]: One cell per scenario and triple.
+
+    Raises:
+        ValueError: If a triple is malformed or names an unknown policy, improver or variant.
+    """
+    network = NETWORKS[args.network]
+    model_path = getattr(args, "model_path", None)
+    arm = getattr(args, "profit_aware", "configs")
+    profit_aware = None if arm == "configs" else arm == "on"
+    jobs = []
+    for spec in configs:
+        parts = spec.split("/")
+        if len(parts) != 3 or not parts[2]:
+            raise ValueError(f"--configs entry {spec!r} is not policy/improver/variant+variant")
+        policy, improver, variants = parts[0], parts[1], parts[2].split("+")
+        if improver not in IMPROVERS:
+            raise ValueError(f"unknown improver {improver!r} in {spec!r}; choose from {sorted(IMPROVERS)}")
+        overlay = overlay_root / f"{policy}_{improver}"
+        if policy == STATIC_POLICY:
+            if improver != "none":
+                raise ValueError("the fixed schedule runs without route improvement")
+            write_overlay(STATIC_POLICY, "none", overlay, packing=[{"other/packing/pk_regular.yaml": variants}])
+        elif policy in ROUTING_POLICIES:
+            write_overlay(
+                policy,
+                improver,
+                overlay,
+                packing=campaign_packing_subset(variants),
+                model_path=model_path,
+                profit_aware=profit_aware,
+            )
+        else:
+            raise ValueError(f"unknown policy {policy!r} in {spec!r}")
+        jobs.append((policy, improver, overlay))
+    cells: List[Cell] = []
+    for scenario in scenarios:
+        out_dir = Path(args.out) / f"{args.network}_{args.dist}" / f"{scenario.depot_mode}_seed{scenario.seed}"
+        for policy, improver, overlay in jobs:
+            cells.append(_cell(args, network.overrides(), scenario, policy, improver, overlay, out_dir))
     return cells
 
 
@@ -191,6 +254,11 @@ def main() -> int:
         choices=("configs", "on", "off"),
         default="configs",
         help="force every profit_aware_operators switch (profit-operator ablation); configs keeps the policy files",
+    )
+    parser.add_argument(
+        "--configs",
+        default="",
+        help="comma-separated policy/improver/variant+variant triples to run alone (cvrp/none/regular_lvl4: Regular-4)",
     )
     parser.add_argument("--packing", default="", help="comma-separated campaign packing variants to run (default all)")
     parser.add_argument("--improvers", default="", help="comma-separated improvers to run (default all)")
