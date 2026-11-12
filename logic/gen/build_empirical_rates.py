@@ -16,7 +16,9 @@ at the first), so the daily rate over the interval is
 
 assigned to every calendar day of the interval. Intervals shorter than half a day (the same visit recorded twice)
 or longer than 60 days (probably a missed record) are left out, as are readings outside [0, 100]. Days outside any
-kept interval are empty (NaN). The file has the layout of the crude series (a ``Date`` column and one column per
+kept interval are empty (NaN). Every bin of the area's bin information file gets a column, and a bin without any
+kept interval (never collected, or only in intervals that were left out) takes the daily median rate of the bins
+that have one, so the simulator never draws an empty deposit for it. The file has the layout of the crude series (a ``Date`` column and one column per
 bin ID), and ``logic/src/utils/data/loader.py`` reads it for Figueira da Foz.
 
 Readings are capped at 100%, so where bins overflow the rate is a lower bound. The readings look like drivers'
@@ -37,6 +39,7 @@ import numpy as np
 import pandas as pd
 
 RECORDS = "Enchimentos_com_Recolhas[FigFoz].xlsx"
+INFO = "out_info[figdafoz].csv"
 OUTPUT = "out_rate_records[figdafoz].csv"
 
 
@@ -71,6 +74,17 @@ def collection_rates(records: pd.DataFrame, min_gap: float = 0.5, max_gap: float
     return out
 
 
+def fill_empty_bins(rates: pd.DataFrame, bin_ids) -> tuple:
+    """Add every bin of ``bin_ids`` and give a bin without any rate the daily median rate of the others."""
+    out = rates.reindex(columns=sorted(set(rates.columns) | {int(b) for b in bin_ids}))
+    empty = out.columns[out.notna().sum() == 0]
+    if len(empty):
+        median = out.drop(columns=empty).median(axis=1)
+        for b in empty:
+            out[b] = median
+    return out, list(empty)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--data-dir", default=os.path.join("data", "simulator"))
@@ -82,12 +96,15 @@ def main() -> int:
         print(f"missing {src}: copy data/simulator from the project data first", file=sys.stderr)
         return 1
     rates = collection_rates(pd.read_excel(src), args.min_gap, args.max_gap)
+    info = pd.read_csv(os.path.join(args.data_dir, "coordinates", INFO))
+    rates, filled = fill_empty_bins(rates, info["ID"].dropna().astype(int))
     dst = os.path.join(args.data_dir, "bins_waste", OUTPUT)
     rates.round(2).reset_index().assign(Date=lambda f: f.Date.dt.strftime("%Y-%m-%d")).to_csv(dst, index=False)
     per_bin = rates.mean()
     print(
         f"{dst}: {rates.shape[1]} bins, {rates.shape[0]} days, {int(rates.notna().sum().sum())} bin-days with a rate; "
-        f"per-bin mean {per_bin.mean():.2f} %/day (median {per_bin.median():.2f})"
+        f"per-bin mean {per_bin.mean():.2f} %/day (median {per_bin.median():.2f}); "
+        f"{len(filled)} bins without a kept interval take the daily median rate"
     )
     return 0
 

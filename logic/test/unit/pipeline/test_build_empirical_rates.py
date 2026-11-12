@@ -78,3 +78,14 @@ def test_loader_asks_for_mean_preserving_draws(tmp_path):
         loader.load_grid_base(None, "riomaior", str(tmp_path), ids=[1])
     assert grid.call_args.kwargs["mean_preserving"] is True
     assert grid.call_args.kwargs["names"][0] == "old_out_crude_rate[riomaior].csv"
+
+
+def test_bins_without_a_kept_interval_take_the_daily_median():
+    b = _load_builder()
+    days = pd.date_range("2024-01-01", periods=3, name="Date")
+    rates = pd.DataFrame({1: [2.0, 4.0, 6.0], 2: [4.0, 8.0, np.nan], 3: [np.nan] * 3}, index=days)
+    out, filled = b.fill_empty_bins(rates, [1, 2, 3, 4])
+    assert filled == [3, 4]
+    assert list(out[3]) == [3.0, 6.0, 6.0]  # median of bins 1 and 2 each day (bin 2 missing on day 3)
+    assert list(out[4]) == list(out[3])
+    assert list(out[1]) == [2.0, 4.0, 6.0]
