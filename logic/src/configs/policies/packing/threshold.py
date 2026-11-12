@@ -59,10 +59,13 @@ class ServiceLevelSelectionConfig:
     Attributes:
         threshold: Confidence factor for statistical overflow prediction.
         horizon_days: Days projected ahead (1 = SL1, 2 = SL2 in ``pk_service_level.yaml``).
+        estimates: ``full`` estimates the increments from the full deposits (the reported rule); ``sensor`` from
+            the capped level changes a sensor reveals, which miss the waste lost to overflow.
     """
 
     threshold: float = 1.0
     horizon_days: int = 1
+    estimates: str = "full"
 
 
 @dataclass
@@ -86,9 +89,11 @@ class LookaheadSelectionConfig:
 
     Attributes:
         current_collection_day: Current day in the collection cycle.
+        estimates: ``full`` (the reported rule) or ``sensor``, as for the service-level rule.
     """
 
     current_collection_day: int = 0
+    estimates: str = "full"
 
 
 @dataclass

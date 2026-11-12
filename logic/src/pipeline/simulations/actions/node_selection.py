@@ -220,6 +220,14 @@ class PackingAction(SimulationAction):
             _append_context_list(context, "_live_ms", live_ms)
             _record_live_params("packing", live_ms)
 
+            # Predictive rules estimate the increments from the full deposits, or (estimates: sensor) from the
+            # capped level changes a fill sensor reveals.
+            rates, stds = accumulation_rates, std_deviations
+            if hasattr(s_params, "get") and s_params.get("estimates") == "sensor":
+                rates, stds = getattr(bins, "sensor_means", None), getattr(bins, "sensor_std", None)
+                if rates is None or stds is None:
+                    raise ValueError(f"packing {s_name!r} asks for sensor estimates, which the bins do not keep")
+
             # 2. Extract the (already remapped) threshold
             thresh = None
             if hasattr(s_params, "get"):
@@ -249,8 +257,8 @@ class PackingAction(SimulationAction):
             sel_ctx = PackingContext(
                 bin_ids=np.arange(0, n_bins, dtype="int32"),
                 current_fill=np.array(current_fill) if current_fill is not None else np.array([]),
-                accumulation_rates=accumulation_rates,
-                std_deviations=std_deviations,
+                accumulation_rates=rates,
+                std_deviations=stds,
                 current_day=getattr(context, "day", 0),
                 threshold=final_thresh,
                 next_collection_day=getattr(context, "next_collection_day", None),

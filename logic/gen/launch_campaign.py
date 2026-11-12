@@ -188,6 +188,8 @@ def _cell(args, net_overrides, scenario: CampaignScenario, policy, improver, ove
     ]
     if getattr(args, "initial_fill_days", 0):
         overrides.append(f"sim.initial_fill_days={args.initial_fill_days}")
+    if getattr(args, "search_seed", 0):
+        overrides.append(f"sim.search_seed={args.search_seed}")
     env = {"WSR_POLICY_CONFIG_DIR": str(overlay)} if overlay else {}
     return Cell(
         f"{scenario.depot_mode}_{scenario.seed}_{policy}_{improver}",
@@ -246,6 +248,12 @@ def main() -> int:
         type=int,
         default=0,
         help="open each bin with the stock of a random 0..W days since its last collection (0: empty)",
+    )
+    parser.add_argument(
+        "--search-seed",
+        type=int,
+        default=0,
+        help="offset of the routing search seeds (sim.search_seed); the deposits are unchanged (0: the campaign)",
     )
     parser.add_argument("--policies", default="", help="comma-separated policy names to run alone (e.g. na)")
     parser.add_argument("--model-path", default=None, help="trained model directory for the na policy")

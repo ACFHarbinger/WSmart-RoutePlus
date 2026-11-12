@@ -67,6 +67,7 @@ class SimulationDayContext:
         engine: The policy engine type (e.g., 'neural', 'classical').
         threshold: Decision threshold for bin selection.
         seed: Base seed for the simulation.
+        search_seed: Offset added to the routing seed (sim.search_seed); the deposits are unchanged.
         policy_seed: Policy-specific seed for RNG isolation.
         display_name: Descriptive name for logging (e.g., 'Regular + ALNS + None').
 
@@ -118,6 +119,7 @@ class SimulationDayContext:
     engine: Optional[str] = None
     threshold: Optional[float] = None
     seed: int = 42
+    search_seed: int = 0  # sim.search_seed: shifts only the routing search, not the deposits
     policy_seed: Optional[int] = None  # Policy-specific seed for RNG isolation
     display_name: str = ""
     problem: str = "ptp"
@@ -428,7 +430,8 @@ def run_day(context: SimulationDayContext) -> SimulationDayContext:
     env_seed = shared_env_seed(context.seed, sample_id, context.day)
     apply_shared_bin_rng(context.bins, env_seed)
     canonical_name = get_canonical_policy_name(context.policy_name)
-    context.policy_seed = policy_seed(context.seed, canonical_name, context.day)
+    # sim.search_seed shifts only the routing search (repeated searches on the same deposits); 0 keeps the seeds.
+    context.policy_seed = policy_seed(context.seed + context.search_seed, canonical_name, context.day)
     seed_policy_rng(context.policy_seed)
 
     spec = getattr(context, "problem_spec", None)

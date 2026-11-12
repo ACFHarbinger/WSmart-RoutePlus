@@ -1,0 +1,59 @@
+# Sensitivity variants of the reported packing rules, run alone (launch_campaign --packing / --configs) with one routing
+# algorithm and no improvement. Kept out of the rule files so that a policy selecting a whole file (``default``) does
+# not pick them up.
+
+# SL1 and LA estimating the increments from the capped level changes a sensor reveals (the reported rules use the full
+# deposits).
+service_level1_sensor:
+  strategy: service_level
+  horizon_days: 1
+  threshold: 0.84
+  estimates: sensor
+lookahead_sensor:
+  strategy: lookahead
+  current_collection_day: 0
+  estimates: sensor
+
+# Threshold sweep around the reported LM-CF90 (cf70 is in pk_last_minute.yaml).
+last_minute_cf80:
+  strategy: last_minute
+  threshold: 80
+last_minute_cf95:
+  strategy: last_minute
+  threshold: 95
+
+# Threshold sweep around the reported SL1 confidence factor z = 0.84.
+service_level1_z0:
+  strategy: service_level
+  horizon_days: 1
+  threshold: 0.0
+service_level1_z050:
+  strategy: service_level
+  horizon_days: 1
+  threshold: 0.5
+service_level1_z128:
+  strategy: service_level
+  horizon_days: 1
+  threshold: 1.28
+service_level1_z164:
+  strategy: service_level
+  horizon_days: 1
+  threshold: 1.64
+
+# Sweep of the minimum fill of TR-4 around the reported 15%.
+regular_tr_lvl4_mf5:
+  strategy: regular
+  threshold: 4
+  min_fill: 5
+regular_tr_lvl4_mf10:
+  strategy: regular
+  threshold: 4
+  min_fill: 10
+regular_tr_lvl4_mf20:
+  strategy: regular
+  threshold: 4
+  min_fill: 20
+regular_tr_lvl4_mf25:
+  strategy: regular
+  threshold: 4
+  min_fill: 25

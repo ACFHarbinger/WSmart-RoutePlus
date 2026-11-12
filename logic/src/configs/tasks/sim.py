@@ -71,6 +71,8 @@ class SimConfig:
             bin, the days since its last collection uniformly from {0, ..., W} and opens the bin with
             the deposits of those days (capped at capacity), drawn from a stream separate from the
             horizon deposits, so the horizon deposits are unchanged.
+        search_seed: Offset added to the seed of every routing search (0: the reported runs). The deposits use a
+            separate stream, so a different offset repeats the same scenario with another search trajectory.
         graph: Graph configuration for simulation trials.
         data_dir: Directory containing the simulation data.
         config_path: Policy configuration paths populated by expand_policy_configs.
@@ -111,6 +113,7 @@ class SimConfig:
     gapik_file: Optional[str] = None
     stats_filepath: Optional[str] = None
     initial_fill_days: int = 0
+    search_seed: int = 0
     data_dir: Optional[str] = None
     run_name: Optional[str] = None
     policy_configs: Dict[str, Any] = field(default_factory=dict)

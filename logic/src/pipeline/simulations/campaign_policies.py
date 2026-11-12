@@ -54,6 +54,27 @@ CAMPAIGN_PACKING: List[Dict[str, List[str]]] = [
 ]
 
 # Delayed-start rerun: only the calendar rules depend on the start day, so the fill-level rules are not rerun.
+# Sensitivity variants run alone (--packing / --configs): the packing-threshold sweep and SL1/LA estimating the
+# increments from the capped sensor readings only.
+SENSITIVITY_PACKING: List[Dict[str, List[str]]] = [
+    {"other/packing/pk_last_minute.yaml": ["last_minute_cf70"]},
+    {
+        "other/packing/pk_sensitivity.yaml": [
+            "service_level1_sensor",
+            "lookahead_sensor",
+            "last_minute_cf80",
+            "last_minute_cf95",
+            "service_level1_z0",
+            "service_level1_z050",
+            "service_level1_z128",
+            "service_level1_z164",
+            "regular_tr_lvl4_mf5",
+            "regular_tr_lvl4_mf10",
+            "regular_tr_lvl4_mf20",
+            "regular_tr_lvl4_mf25",
+        ]
+    },
+]
 DELAYED_PACKING: List[Dict[str, List[str]]] = [
     {
         "other/packing/pk_regular.yaml": [
@@ -158,12 +179,13 @@ def campaign_packing_subset(names: List[str]) -> List[Dict[str, List[str]]]:
     Raises:
         ValueError: If a name is not a campaign packing variant.
     """
-    known = {v for entry in CAMPAIGN_PACKING for variants in entry.values() for v in variants}
+    catalogue = CAMPAIGN_PACKING + SENSITIVITY_PACKING
+    known = {v for entry in catalogue for variants in entry.values() for v in variants}
     unknown = sorted(set(names) - known)
     if unknown:
         raise ValueError(f"not campaign packing variants: {unknown}; choose from {sorted(known)}")
     out = []
-    for entry in CAMPAIGN_PACKING:
+    for entry in catalogue:
         for file, variants in entry.items():
             keep = [v for v in variants if v in names]
             if keep:

@@ -47,6 +47,9 @@ class BinsFillingMixin:
     std: np.ndarray
     day_count: int
     square_diff: np.ndarray
+    sensor_means: np.ndarray
+    sensor_std: np.ndarray
+    sensor_square_diff: np.ndarray
     start_with_fill: bool
     lost: np.ndarray
     inoverflow: np.ndarray
@@ -200,6 +203,18 @@ class BinsFillingMixin:
         self.profit += float(profit)
         return total_collected, float(np.sum(collected)), bin_ids.size, float(profit)
 
+    def _update_sensor_estimates(self, observed: np.ndarray) -> None:
+        """Running mean and standard deviation of the observed increments (capped level change, a - lost).
+
+        Args:
+            observed: Today's change of each bin's capped level, in percentage points.
+        """
+        delta = observed - self.sensor_means
+        self.sensor_means = self.sensor_means + delta / self.day_count
+        self.sensor_square_diff = self.sensor_square_diff + delta * (observed - self.sensor_means)
+        if self.day_count > 1:
+            self.sensor_std = np.sqrt(np.maximum(self.sensor_square_diff / (self.day_count - 1), 0.0))
+
     def _process_filling(
         self, todaysfilling: np.ndarray, noisyfilling: Optional[np.ndarray] = None
     ) -> Tuple[int, np.ndarray, np.ndarray, float]:
@@ -230,7 +245,9 @@ class BinsFillingMixin:
         )
         todaysfilling = np.minimum(todaysfilling, MAX_CAPACITY_PERCENT)
         self.lost += todays_lost
+        level_before = self.real_c.copy()
         self.real_c = np.minimum(self.real_c + todaysfilling, MAX_CAPACITY_PERCENT)
+        self._update_sensor_estimates(np.maximum(self.real_c, 0) - np.maximum(level_before, 0))
 
         if noisyfilling is not None:
             # Clip at 0 as well as at capacity: a negative noisy increment must

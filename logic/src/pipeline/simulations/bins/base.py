@@ -129,6 +129,10 @@ class Bins(BinsFillingMixin):
         self.std = np.zeros((n))
         self.day_count = 0
         self.square_diff = np.zeros((n))
+        # The same running estimates from what a fill sensor reveals: the change of the capped level, a - lost.
+        self.sensor_means = np.zeros((n))
+        self.sensor_std = np.zeros((n))
+        self.sensor_square_diff = np.zeros((n))
         self.start_with_fill = False
 
         self.lost = np.zeros((n))
@@ -236,6 +240,8 @@ class Bins(BinsFillingMixin):
         self.std = np.maximum(np.asarray(data["StD"], dtype=np.float64), 0)
         self.day_count = max(int(cast(Any, data.at[0, "Count"])), 0)
         self.square_diff = (self.std**2) * (self.day_count - 1)
+        self.sensor_means, self.sensor_std = self.means.copy(), self.std.copy()
+        self.sensor_square_diff = self.square_diff.copy()
         self.start_with_fill = True
         with contextlib.suppress(Exception):
             run = get_active_run() if get_active_run is not None else None

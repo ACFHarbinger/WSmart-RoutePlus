@@ -259,6 +259,7 @@ class RunningState(SimState):
             engine=sim.policy_configs.get("engine"),
             threshold=sim.policy_configs.get("threshold"),
             seed=sim.seed,
+            search_seed=int(getattr(sim, "search_seed", 0) or 0),
             problem=str(getattr(sim, "problem", "ptp") or "ptp").lower(),
             shift_hours=float(getattr(ctx, "shift_hours", 7.0)),
             time_matrix=getattr(ctx, "time_matrix", None),
