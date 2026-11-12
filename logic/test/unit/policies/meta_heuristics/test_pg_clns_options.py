@@ -59,9 +59,12 @@ def test_nested_yaml_sections_are_read() -> None:
     """The lns and aco sections arrive as Hydra DictConfig; before, coerce_config fell back to the defaults."""
     lns = coerce_config(OmegaConf.create({"time_limit": 600.0, "xi": 0.35, "unknown": 1}), PGCLNSLNSConfig)
     assert (lns.time_limit, lns.xi) == (600.0, 0.35)
-    solver = PGCLNSSolver(_problem(), _paper_config(), seed=1)
+    paper = _paper_config()
+    assert paper.lns.time_limit == 30.0  # the coaching budget of the reported runs
+    raw = OmegaConf.create({"lns": {"time_limit": 45.0}, "aco": {"k_sparse": 10, "max_iterations": 0}})
+    solver = PGCLNSSolver(_problem(), _structured_load(PGCLNSConfig, raw), seed=1)
     assert isinstance(solver.params.aco, KSparseACOConfig) and isinstance(solver.params.lns, PGCLNSLNSConfig)
-    assert solver.coaching_solver.params.time_limit == 600.0  # the yaml value, not the 30 s default
+    assert solver.coaching_solver.params.time_limit == 45.0  # the nested value, not the 30 s default
     assert solver.aco_internal.params.k_sparse == 10 and solver.params.aco.max_iterations == 0
 
 
@@ -113,9 +116,21 @@ def test_colony_rounds_run_n_ants_ants_and_can_improve_the_population(monkeypatc
 
 def test_colony_local_search_and_its_budget_are_used(monkeypatch: pytest.MonkeyPatch) -> None:
     calls: List[int] = []
-    solver = PGCLNSSolver(_problem(), _small(aco=KSparseACOConfig(
-        n_ants=3, max_iterations=1, time_limit=0, local_search=True, local_search_iterations=7, k_sparse=10,
-        tau_min=0.001)), seed=1)
+    solver = PGCLNSSolver(
+        _problem(),
+        _small(
+            aco=KSparseACOConfig(
+                n_ants=3,
+                max_iterations=1,
+                time_limit=0,
+                local_search=True,
+                local_search_iterations=7,
+                k_sparse=10,
+                tau_min=0.001,
+            )
+        ),
+        seed=1,
+    )
     real = solver.aco_internal.ls.optimize
 
     def tracked(routes: List[List[int]]) -> List[List[int]]:
@@ -129,8 +144,16 @@ def test_colony_local_search_and_its_budget_are_used(monkeypatch: pytest.MonkeyP
 
 def test_profit_aware_colony_keeps_the_most_profitable_ant() -> None:
     problem = _problem(revenue=5.0)  # bins pay well: more bins means more profit and more distance
-    aco = ACOSolver(problem.dist_matrix, problem.wastes, problem.capacity, problem.revenue, problem.cost_unit,
-                    {"profit_aware_operators": False}, problem.mandatory_nodes, seed=3)
+    aco = ACOSolver(
+        problem.dist_matrix,
+        problem.wastes,
+        problem.capacity,
+        problem.revenue,
+        problem.cost_unit,
+        {"profit_aware_operators": False},
+        problem.mandatory_nodes,
+        seed=3,
+    )
     ants: List[Tuple[float, float]] = []
     for _ in range(8):
         routes = aco.constructor.construct()
@@ -159,10 +182,12 @@ def test_profit_aware_operators_choose_the_repair_operators() -> None:
 
 def test_colony_seed_overrides_the_solver_seed() -> None:
     problem = _problem()
-    a = ACOSolver(problem.dist_matrix, problem.wastes, problem.capacity, 0.3, 1.0, {"seed": 11}, problem.mandatory_nodes,
-                  seed=1)
-    b = ACOSolver(problem.dist_matrix, problem.wastes, problem.capacity, 0.3, 1.0, {"seed": 11}, problem.mandatory_nodes,
-                  seed=2)
+    a = ACOSolver(
+        problem.dist_matrix, problem.wastes, problem.capacity, 0.3, 1.0, {"seed": 11}, problem.mandatory_nodes, seed=1
+    )
+    b = ACOSolver(
+        problem.dist_matrix, problem.wastes, problem.capacity, 0.3, 1.0, {"seed": 11}, problem.mandatory_nodes, seed=2
+    )
     c = ACOSolver(problem.dist_matrix, problem.wastes, problem.capacity, 0.3, 1.0, {}, problem.mandatory_nodes, seed=11)
     assert a.constructor.random.random() == b.constructor.random.random() == c.constructor.random.random()
 
@@ -187,8 +212,12 @@ def test_every_option_is_read_by_the_policy() -> None:
     import pathlib
     import re
 
-    code = "\n".join(p.read_text() for p in pathlib.Path(
-        "logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search").glob("*.py"))
+    code = "\n".join(
+        p.read_text()
+        for p in pathlib.Path(
+            "logic/src/policies/routing/meta_heuristics/pheromone_guided_cooperative_large_neighborhood_search"
+        ).glob("*.py")
+    )
     pipeline_level = {"packing", "route_improvement"}  # read by the simulator around every policy
     for cls in (PGCLNSConfig, PGCLNSLNSConfig, KSparseACOConfig):
         for f in dataclasses.fields(cls):
@@ -198,9 +227,19 @@ def test_every_option_is_read_by_the_policy() -> None:
 
 
 def test_dict_configs_still_work() -> None:
-    cfg: Dict[str, Any] = {"population_size": 3, "max_iterations": 2, "time_limit": 0,
-                           "aco": {"k_sparse": 8, "tau_min": 0.001, "max_iterations": 1, "n_ants": 2, "local_search": False,
-                                   "time_limit": 0},
-                           "lns": {"max_iterations": 5, "time_limit": 0}}
+    cfg: Dict[str, Any] = {
+        "population_size": 3,
+        "max_iterations": 2,
+        "time_limit": 0,
+        "aco": {
+            "k_sparse": 8,
+            "tau_min": 0.001,
+            "max_iterations": 1,
+            "n_ants": 2,
+            "local_search": False,
+            "time_limit": 0,
+        },
+        "lns": {"max_iterations": 5, "time_limit": 0},
+    }
     routes, profit, _ = PGCLNSSolver(_problem(), cfg, seed=1).solve()
     assert routes and np.isfinite(profit)
