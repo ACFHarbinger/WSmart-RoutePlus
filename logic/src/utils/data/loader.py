@@ -231,11 +231,43 @@ def load_simulation_dataset(filename: str) -> Dict[str, np.ndarray]:
     return dict(data)
 
 
+# Figueira da Foz has readings only at collections, so its rate series are built from the collection records
+# (logic/gen/build_empirical_rates.py): from the drivers' fill readings or from the weighed tour mass.
+FIGDAFOZ_RATE_FILES = {"readings": "out_rate_records[figdafoz].csv", "weights": "out_rate_weights[figdafoz].csv"}
+EMPIRICAL_RATES = "readings"
+
+
+def _rate_files(src_area: str, data_dir: str, rates: Optional[str]) -> Tuple[str, str]:
+    """The rate and bin information files of an area (see ``load_grid_base``)."""
+    # Use the same rate/info pair the simulator repository builds the routed graph from
+    # (repository/filesystem.py): Rio Maior routes from the "old_" files, whose bins the
+    # newer out_rate_crude file only partly covers. Rio Maior's crude series is the day-to-day
+    # change of its fill sensors. Figueira da Foz has readings only at collections, so its crude
+    # series (the slope between two readings across an emptying) does not measure accumulation:
+    # its rates are built from the collection records instead (logic/gen/build_empirical_rates.py).
+    if src_area == "riomaior":
+        waste_csv, info_csv = f"old_out_crude_rate[{src_area}].csv", f"old_out_info[{src_area}].csv"
+    elif src_area == "figdafoz":
+        source = rates or EMPIRICAL_RATES
+        if source not in FIGDAFOZ_RATE_FILES:
+            raise ValueError(f"rates must be one of {sorted(FIGDAFOZ_RATE_FILES)}, got {source!r}")
+        waste_csv, info_csv = FIGDAFOZ_RATE_FILES[source], f"out_info[{src_area}].csv"
+    else:
+        waste_csv, info_csv = f"out_rate_crude[{src_area}].csv", f"out_info[{src_area}].csv"
+    if src_area == "figdafoz" and not os.path.exists(os.path.join(data_dir, "bins_waste", waste_csv)):
+        raise FileNotFoundError(
+            f"missing {os.path.join(data_dir, 'bins_waste', waste_csv)}: build it from the collection records with "
+            "'uv run python logic/gen/build_empirical_rates.py'"
+        )
+    return waste_csv, info_csv
+
+
 def load_grid_base(
     indices: Union[np.ndarray, List[int], None],
     area: Optional[str] = None,
     data_dir: Optional[str] = None,
     ids: Optional[List[Any]] = None,
+    rates: Optional[str] = None,
 ) -> GridBase:
     """
     Loads grid base data from simulation files.
@@ -246,6 +278,9 @@ def load_grid_base(
         data_dir: Directory containing the simulation data.
         ids: Bin IDs to load, in node order. Use this for the routed graph so the
             fill rates line up with the distance-matrix nodes.
+        rates: Figueira da Foz only: ``"readings"`` (the fill read at each collection) or ``"weights"``
+            (the weighed tour mass shared among the tour's bins), the two series written by
+            ``logic/gen/build_empirical_rates.py``. ``None`` uses ``EMPIRICAL_RATES`` (``"readings"``).
 
     Returns:
         GridBase object. Its draws are non-negative and keep each bin's unclipped mean (``mean_preserving``), so
@@ -267,23 +302,7 @@ def load_grid_base(
     src_area = area.translate(str.maketrans("", "", "-_ ")).lower() if area is not None else ""
     src_area = COUNTY_ALIASES.get(src_area, src_area)
 
-    # Use the same rate/info pair the simulator repository builds the routed graph from
-    # (repository/filesystem.py): Rio Maior routes from the "old_" files, whose bins the
-    # newer out_rate_crude file only partly covers. Rio Maior's crude series is the day-to-day
-    # change of its fill sensors. Figueira da Foz has readings only at collections, so its crude
-    # series (the slope between two readings across an emptying) does not measure accumulation:
-    # its rates are built from the collection records instead (logic/gen/build_empirical_rates.py).
-    if src_area == "riomaior":
-        waste_csv, info_csv = f"old_out_crude_rate[{src_area}].csv", f"old_out_info[{src_area}].csv"
-    elif src_area == "figdafoz":
-        waste_csv, info_csv = f"out_rate_records[{src_area}].csv", f"out_info[{src_area}].csv"
-    else:
-        waste_csv, info_csv = f"out_rate_crude[{src_area}].csv", f"out_info[{src_area}].csv"
-    if src_area == "figdafoz" and not os.path.exists(os.path.join(data_dir, "bins_waste", waste_csv)):
-        raise FileNotFoundError(
-            f"missing {os.path.join(data_dir, 'bins_waste', waste_csv)}: build it from the collection records with "
-            "'uv run python logic/gen/build_empirical_rates.py'"
-        )
+    waste_csv, info_csv = _rate_files(src_area, data_dir, rates)
 
     # Handle nested list of indices (list of lists) and the absent-index case.
     if indices is None:

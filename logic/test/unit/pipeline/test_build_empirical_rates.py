@@ -89,3 +89,51 @@ def test_bins_without_a_kept_interval_take_the_daily_median():
     assert list(out[3]) == [3.0, 6.0, 6.0]  # median of bins 1 and 2 each day (bin 2 missing on day 3)
     assert list(out[4]) == list(out[3])
     assert list(out[1]) == [2.0, 4.0, 6.0]
+
+
+def test_weights_share_the_tour_weight_in_proportion_to_the_readings():
+    """Tour 2 weighs 30 kg over two bins read at 50% and 25%: 20 kg and 10 kg, or 40% and 20% of a 50 kg bin."""
+    b = _load_builder()
+    rows = pd.DataFrame(
+        [
+            (1, 1, "2024-01-01 08:00", 50, 30.0),
+            (2, 1, "2024-01-01 08:00", 50, 30.0),
+            (1, 2, "2024-01-05 08:00", 50, 30.0),  # 20 kg in 4 days -> 40% / 4 = 10%/day
+            (2, 2, "2024-01-05 08:00", 25, 30.0),  # 10 kg in 4 days -> 20% / 4 = 5%/day
+            (1, 3, "2024-01-07 08:00", 100, 500.0),  # 500 kg on one bin: capped at 100% -> 50%/day
+        ],
+        columns=["idcontentor", "idrecolha", "Data de ínicio", "Enchimento", "Peso total"],
+    )
+    w = b.collection_rates(rows, source="weights", capacity_kg=50.0)
+    r = b.collection_rates(rows, source="readings")
+    assert (w.loc["2024-01-02":"2024-01-05", 1] == 10.0).all()
+    assert (w.loc["2024-01-02":"2024-01-05", 2] == 5.0).all()
+    assert (w.loc["2024-01-06":"2024-01-07", 1] == 50.0).all()
+    assert (r.loc["2024-01-02":"2024-01-05", 1] == 12.5).all()  # the reading itself: 50% / 4 days
+    with pytest.raises(ValueError):
+        b.collection_rates(rows, source="scale")
+
+
+@pytest.mark.parametrize(
+    "rates, name",
+    [
+        (None, "out_rate_records[figdafoz].csv"),
+        ("readings", "out_rate_records[figdafoz].csv"),
+        ("weights", "out_rate_weights[figdafoz].csv"),
+    ],
+)
+def test_loader_reads_the_chosen_figueira_series(tmp_path, rates, name):
+    from logic.src.utils.data import loader
+
+    (tmp_path / "bins_waste").mkdir()
+    pd.DataFrame({"Date": ["2024-01-01"], "1": [3.0]}).to_csv(tmp_path / "bins_waste" / name, index=False)
+    with mock.patch("logic.submodules.wsmart_bin_analysis.GridBase") as grid:
+        loader.load_grid_base(None, "figueiradafoz", str(tmp_path), ids=[1], rates=rates)
+    assert grid.call_args.kwargs["names"][0] == name
+
+
+def test_loader_rejects_an_unknown_rate_series(tmp_path):
+    from logic.src.utils.data.loader import load_grid_base
+
+    with pytest.raises(ValueError, match="rates must be one of"):
+        load_grid_base(None, "figueiradafoz", str(tmp_path), ids=[1], rates="scale")

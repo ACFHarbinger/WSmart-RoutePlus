@@ -190,6 +190,8 @@ def _cell(args, net_overrides, scenario: CampaignScenario, policy, improver, ove
         overrides.append(f"sim.initial_fill_days={args.initial_fill_days}")
     if getattr(args, "search_seed", 0):
         overrides.append(f"sim.search_seed={args.search_seed}")
+    if getattr(args, "empirical_rates", None):
+        overrides.append(f"sim.empirical_rates={args.empirical_rates}")
     env = {"WSR_POLICY_CONFIG_DIR": str(overlay)} if overlay else {}
     return Cell(
         f"{scenario.depot_mode}_{scenario.seed}_{policy}_{improver}",
@@ -254,6 +256,13 @@ def main() -> int:
         type=int,
         default=0,
         help="offset of the routing search seeds (sim.search_seed); the deposits are unchanged (0: the campaign)",
+    )
+    parser.add_argument(
+        "--empirical-rates",
+        choices=["readings", "weights"],
+        default=None,
+        help="Figueira da Foz Empirical rate series (sim.empirical_rates): drivers' readings or weighed tour mass "
+        "(default: the simulator's, readings)",
     )
     parser.add_argument("--policies", default="", help="comma-separated policy names to run alone (e.g. na)")
     parser.add_argument("--model-path", default=None, help="trained model directory for the na policy")

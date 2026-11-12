@@ -527,7 +527,13 @@ class InitializingState(SimState):
             # of the processed coordinates (node order), not from out_info row positions.
             grid = None
             if data_dist == "emp" and ctx.coords is not None and "ID" in getattr(ctx.coords, "columns", []):
-                grid = load_grid_base(None, graph.area, ctx.data_dir, ids=routed_bin_ids(ctx.coords))
+                grid = load_grid_base(
+                    None,
+                    graph.area,
+                    ctx.data_dir,
+                    ids=routed_bin_ids(ctx.coords),
+                    rates=getattr(sim, "empirical_rates", None),
+                )
             ctx.bins = Bins(
                 graph.num_loc,
                 ctx.data_dir,

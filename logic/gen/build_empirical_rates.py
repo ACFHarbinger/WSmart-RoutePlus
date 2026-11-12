@@ -21,8 +21,16 @@ kept interval (never collected, or only in intervals that were left out) takes t
 that have one, so the simulator never draws an empty deposit for it. The file has the layout of the crude series (a ``Date`` column and one column per
 bin ID), and ``logic/src/utils/data/loader.py`` reads it for Figueira da Foz.
 
-Readings are capped at 100%, so where bins overflow the rate is a lower bound. The readings look like drivers'
-estimates in coarse steps.
+Readings are capped at 100%, so where bins overflow the rate is a lower bound. The readings are drivers' estimates
+in four steps (25, 50, 75 and 100%, nothing lower), and every tour is also weighed. The script therefore writes two
+series, and the simulator chooses one with ``sim.empirical_rates`` (``load_grid_base(..., rates=...)``):
+
+* ``readings`` (``out_rate_records[figdafoz].csv``): the fill read at each collection, as above.
+* ``weights`` (``out_rate_weights[figdafoz].csv``): the fill of each collection taken from the weighed tour mass. The
+  tour weight is shared among the tour's bins in proportion to their readings and converted to percent of the bin
+  capacity of the simulator (2.5 m3 at the packaging density of get_area_params, 50 kg), capped at 100%. The series
+  then carries the weighed mass and keeps each bin's relative fill. At the set density the readings imply about a
+  third more mass than the weights, so this series is about a quarter lower.
 
 Usage (from the repository root; data/simulator is not under version control, so run it once per machine):
     uv run python logic/gen/build_empirical_rates.py
@@ -40,27 +48,44 @@ import pandas as pd
 
 RECORDS = "Enchimentos_com_Recolhas[FigFoz].xlsx"
 INFO = "out_info[figdafoz].csv"
-OUTPUT = "out_rate_records[figdafoz].csv"
+OUTPUTS = {"readings": "out_rate_records[figdafoz].csv", "weights": "out_rate_weights[figdafoz].csv"}
 
 
-def collection_rates(records: pd.DataFrame, min_gap: float = 0.5, max_gap: float = 60.0) -> pd.DataFrame:
+def collection_rates(
+    records: pd.DataFrame,
+    min_gap: float = 0.5,
+    max_gap: float = 60.0,
+    source: str = "readings",
+    capacity_kg: float = 50.0,
+) -> pd.DataFrame:
     """Daily accumulation rate (% of capacity per day) of every bin, one row per calendar day.
 
     Args:
         records: Collection records with the columns ``idcontentor``, ``idrecolha``, ``Data de ínicio`` and
-            ``Enchimento`` (one row per bin emptied on a tour).
+            ``Enchimento`` (one row per bin emptied on a tour), and ``Peso total`` (the tour's weight, kg) for
+            ``source="weights"``.
         min_gap: Shortest interval between two collections that is kept, in days.
         max_gap: Longest interval kept, in days.
+        source: ``"readings"`` (the fill read at the collection) or ``"weights"`` (the tour weight shared among its
+            bins in proportion to their readings, in percent of ``capacity_kg``, capped at 100).
+        capacity_kg: Mass of a full bin, for ``source="weights"``.
 
     Returns:
         A frame indexed by date (daily) with one column per bin ID.
     """
+    if source not in OUTPUTS:
+        raise ValueError(f"source must be one of {sorted(OUTPUTS)}, got {source!r}")
     r = records[records.idrecolha.notna() & records.idcontentor.notna()].copy()
     r["start"] = pd.to_datetime(r["Data de ínicio"], errors="coerce")
     r["fill"] = pd.to_numeric(r["Enchimento"], errors="coerce")
     r = r.dropna(subset=["start", "fill"])
     r["idcontentor"] = r["idcontentor"].astype(int)
     r = r.drop_duplicates(["idcontentor", "idrecolha"]).sort_values(["idcontentor", "start"])
+    if source == "weights":
+        weight = pd.to_numeric(r["Peso total"], errors="coerce")
+        share = r.fill / r.groupby("idrecolha").fill.transform("sum")
+        r["fill"] = (weight * share / capacity_kg * 100.0).clip(upper=100.0)
+        r = r[weight > 0]
     r["prev"] = r.groupby("idcontentor").start.shift()
     r["gap"] = (r.start - r.prev).dt.total_seconds() / 86400
     ok = r[(r.gap >= min_gap) & (r.gap <= max_gap) & r.fill.between(0, 100)]
@@ -95,18 +120,30 @@ def main() -> int:
     if not os.path.exists(src):
         print(f"missing {src}: copy data/simulator from the project data first", file=sys.stderr)
         return 1
-    rates = collection_rates(pd.read_excel(src), args.min_gap, args.max_gap)
+    records = pd.read_excel(src)
     info = pd.read_csv(os.path.join(args.data_dir, "coordinates", INFO))
-    rates, filled = fill_empty_bins(rates, info["ID"].dropna().astype(int))
-    dst = os.path.join(args.data_dir, "bins_waste", OUTPUT)
-    rates.round(2).reset_index().assign(Date=lambda f: f.Date.dt.strftime("%Y-%m-%d")).to_csv(dst, index=False)
-    per_bin = rates.mean()
-    print(
-        f"{dst}: {rates.shape[1]} bins, {rates.shape[0]} days, {int(rates.notna().sum().sum())} bin-days with a rate; "
-        f"per-bin mean {per_bin.mean():.2f} %/day (median {per_bin.median():.2f}); "
-        f"{len(filled)} bins without a kept interval take the daily median rate"
-    )
+    capacity_kg = bin_capacity_kg()
+    for source, name in OUTPUTS.items():
+        rates = collection_rates(records, args.min_gap, args.max_gap, source=source, capacity_kg=capacity_kg)
+        rates, filled = fill_empty_bins(rates, info["ID"].dropna().astype(int))
+        dst = os.path.join(args.data_dir, "bins_waste", name)
+        rates.round(2).reset_index().assign(Date=lambda f: f.Date.dt.strftime("%Y-%m-%d")).to_csv(dst, index=False)
+        per_bin = rates.mean()
+        print(
+            f"{dst} ({source}): {rates.shape[1]} bins, {rates.shape[0]} days, "
+            f"{int(rates.notna().sum().sum())} bin-days with a rate; per-bin mean {per_bin.mean():.2f} %/day "
+            f"(median {per_bin.median():.2f}); {len(filled)} bins without a kept interval take the daily median rate"
+        )
     return 0
+
+
+def bin_capacity_kg() -> float:
+    """Mass of a full Figueira da Foz packaging bin in the simulator (bin volume times density)."""
+    sys.path.insert(0, os.getcwd())
+    from logic.src.pipeline.simulations.repository.base import SimulationRepository
+
+    _, _, density, _, volume = SimulationRepository.get_area_params("figueiradafoz", "plastic")
+    return float(volume * density)
 
 
 if __name__ == "__main__":

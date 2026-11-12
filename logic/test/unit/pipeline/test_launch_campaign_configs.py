@@ -78,3 +78,14 @@ def test_each_triple_runs_its_own_variants_on_every_scenario(tmp_path: Path) -> 
 def test_malformed_triples_are_rejected(tmp_path: Path, configs: str) -> None:
     with pytest.raises(ValueError):
         launch.build_cells(_args(tmp_path, configs), tmp_path / "overlays")
+
+
+def test_empirical_rates_reach_the_simulator(tmp_path: Path) -> None:
+    args = _args(tmp_path, "cvrp/none/regular_lvl4")
+    args.network, args.empirical_rates = "ff350", "weights"
+    cells = launch.build_cells(args, tmp_path / "overlays")
+    assert all("sim.empirical_rates=weights" in c.argv for c in cells)
+    args.empirical_rates = None
+    assert not any(
+        a.startswith("sim.empirical_rates") for c in launch.build_cells(args, tmp_path / "o2") for a in c.argv
+    )
