@@ -86,7 +86,12 @@ def build_cells(args: argparse.Namespace, overlay_root: Path) -> List[Cell]:
         List[Cell]: One cell per scenario, routing algorithm and improver, plus the static baseline.
     """
     network = NETWORKS[args.network]
-    scenarios = [s for s in benchmark_campaign(args.per_depot) if args.depots in ("both", s.depot_mode)]
+    # --swap-depot-seeds runs each depot on the other depot's seeds (central on 42-46, remote on 47-51), so that
+    # together with the campaign every deposit array is run with both depots (paired depot comparison).
+    modes = ("centroid", "remote") if getattr(args, "swap_depot_seeds", False) else ("remote", "centroid")
+    scenarios = [
+        s for s in benchmark_campaign(args.per_depot, depot_modes=modes) if args.depots in ("both", s.depot_mode)
+    ]
     delayed = getattr(args, "delayed_start", False)
     packing = DELAYED_PACKING if delayed else None
     names = [p for p in (getattr(args, "packing", None) or "").split(",") if p]
@@ -256,6 +261,11 @@ def main() -> int:
         type=int,
         default=0,
         help="offset of the routing search seeds (sim.search_seed); the deposits are unchanged (0: the campaign)",
+    )
+    parser.add_argument(
+        "--swap-depot-seeds",
+        action="store_true",
+        help="run the central depot on seeds 42-46 and the remote one on 47-51 (with the campaign: paired depots)",
     )
     parser.add_argument(
         "--empirical-rates",

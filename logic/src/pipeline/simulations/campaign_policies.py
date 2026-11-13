@@ -75,6 +75,10 @@ SENSITIVITY_PACKING: List[Dict[str, List[str]]] = [
         ]
     },
 ]
+# Threshold-regular rules with the longer periods (k = 7 and 10), run on their own with --configs.
+PERIOD_PACKING: List[Dict[str, List[str]]] = [
+    {"other/packing/pk_regular.yaml": ["regular_tr_lvl7", "regular_tr_lvl10"]},
+]
 DELAYED_PACKING: List[Dict[str, List[str]]] = [
     {
         "other/packing/pk_regular.yaml": [
@@ -179,7 +183,7 @@ def campaign_packing_subset(names: List[str]) -> List[Dict[str, List[str]]]:
     Raises:
         ValueError: If a name is not a campaign packing variant.
     """
-    catalogue = CAMPAIGN_PACKING + SENSITIVITY_PACKING
+    catalogue = CAMPAIGN_PACKING + SENSITIVITY_PACKING + PERIOD_PACKING
     known = {v for entry in catalogue for variants in entry.values() for v in variants}
     unknown = sorted(set(names) - known)
     if unknown:
