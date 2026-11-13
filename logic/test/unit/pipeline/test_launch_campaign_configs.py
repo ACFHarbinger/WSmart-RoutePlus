@@ -89,3 +89,13 @@ def test_empirical_rates_reach_the_simulator(tmp_path: Path) -> None:
     assert not any(
         a.startswith("sim.empirical_rates") for c in launch.build_cells(args, tmp_path / "o2") for a in c.argv
     )
+
+
+def test_synthetic_depot_runs_both_seed_groups_with_the_synthetic_depot(tmp_path: Path) -> None:
+    args = _args(tmp_path, "cvrp/none/regular_lvl4")
+    args.synthetic_depot = True
+    cells = launch.build_cells(args, tmp_path / "overlays")
+    seeds = sorted(int(c.name.split("_")[1]) for c in cells)
+    assert seeds == [42, 47]  # the remote and the central seed groups, five samples each
+    assert all(c.name.startswith("synthetic_") for c in cells)
+    assert all(any("synthetic" in a for a in c.argv) for c in cells)

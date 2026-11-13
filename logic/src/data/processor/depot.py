@@ -29,6 +29,8 @@ DEPOT_MODES = ("remote", "centroid", "medoid", "synthetic")
 DepotMode = Literal["remote", "centroid", "medoid", "synthetic"]
 
 _EARTH_RADIUS_KM = 6371.0088
+# Road distance over great-circle distance, for the short access leg of a synthetic depot.
+ROAD_FACTOR = 1.3
 
 
 def _great_circle_km(points: np.ndarray, target: np.ndarray) -> np.ndarray:
@@ -124,9 +126,9 @@ def bins_to_load(num_loc: int, mode: DepotMode) -> int:
         mode: Depot placement mode.
 
     Returns:
-        int: ``num_loc`` for the remote depot, ``num_loc + 1`` when a bin becomes the depot.
+        int: ``num_loc`` for the remote and synthetic depots, ``num_loc + 1`` when a bin becomes the depot.
     """
-    return num_loc if mode == "remote" else num_loc + 1
+    return num_loc if mode in ("remote", "synthetic") else num_loc + 1
 
 
 def extend_subset(indices: Sequence[int], n_available: int) -> List[int]:
@@ -168,8 +170,9 @@ def promote_central_depot(
     Args:
         data: Frame with ``ID``, ``Stock`` and ``Accum_Rate`` columns.
         coords: Frame with ``ID``, ``Lat`` and ``Lng`` columns, in the row order of ``data``.
-        mode: ``remote`` returns the frames unchanged and ``centroid`` promotes the bin nearest
-            to the centroid of the bins.
+        mode: ``remote`` returns the frames unchanged, ``centroid`` promotes the bin nearest to the
+            centroid of the bins, and ``synthetic`` keeps every bin and moves the depot to the centroid
+            of the bins (its distances come from ``synthetic_depot_distances``).
         candidate_ids: Bin IDs that define the centroid and may become the depot (default: every
             bin). A spare bin added by ``extend_subset`` is left out of them.
 
@@ -177,14 +180,18 @@ def promote_central_depot(
         Tuple[pd.DataFrame, pd.DataFrame]: The data and coordinate frames with the new depot.
 
     Raises:
-        NotImplementedError: For ``medoid`` and ``synthetic``, which need distances that are not
-            available before the distance matrix is built.
+        NotImplementedError: For ``medoid``, which needs distances that are not available before the
+            distance matrix is built.
         ValueError: If the mode is unknown or the frames disagree on the node IDs.
     """
     if mode not in DEPOT_MODES:
         raise ValueError(f"depot mode must be one of {DEPOT_MODES}, got {mode!r}")
     if mode == "remote":
         return data, coords
+    if mode == "synthetic":
+        moved = coords.copy()
+        moved.loc[moved.index[0], ["Lat", "Lng"]] = centroid(coords.iloc[1:][["Lat", "Lng"]].to_numpy())
+        return data, moved
     if mode != "centroid":
         raise NotImplementedError(f"depot mode {mode!r} is not available at initialization")
     if not (data["ID"].to_numpy() == coords["ID"].to_numpy()).all():
@@ -207,3 +214,31 @@ def promote_central_depot(
         relocate(data, data.iloc[0][[c for c in ("Stock", "Accum_Rate") if c in data.columns]]),
         relocate(coords, pd.Series(dtype=float)),
     )
+
+
+def synthetic_depot_distances(distance_matrix: np.ndarray, bin_coords: np.ndarray) -> np.ndarray:
+    """Distance matrix with the depot at the centroid of the bins, every bin kept as a customer.
+
+    The road matrices only cover the bins and the original depot, so the synthetic depot reaches the network through
+    the bin ``k`` nearest to the centroid: the access leg is the great-circle distance from the centroid to ``k``
+    times ``ROAD_FACTOR``, and the depot's distances are that leg plus the road distances of ``k``
+    (``d(0, j) = a + d(k, j)``, ``d(j, 0) = d(j, k) + a``, ``d(0, k) = d(k, 0) = a``). Bin-to-bin distances are
+    unchanged, so the customer set and its distances are those of the remote depot.
+
+    Args:
+        distance_matrix: Matrix of shape (n + 1, n + 1) with the depot in row and column 0.
+        bin_coords: ``[lat, lng]`` of the ``n`` bins, in the order of rows 1 to n.
+
+    Returns:
+        np.ndarray: A new matrix with the synthetic depot in row and column 0.
+    """
+    d = np.array(distance_matrix, dtype=np.float64, copy=True)
+    points = np.asarray(bin_coords, dtype=np.float64)
+    c = centroid(points)
+    k = int(np.argmin(_great_circle_km(points, c))) + 1  # matrix index of the nearest bin
+    access = float(_great_circle_km(points[[k - 1]], c)[0]) * ROAD_FACTOR
+    d[0, :] = access + d[k, :]
+    d[:, 0] = d[:, k] + access
+    d[0, k] = d[k, 0] = access
+    d[0, 0] = 0.0
+    return d

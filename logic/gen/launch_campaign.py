@@ -92,6 +92,13 @@ def build_cells(args: argparse.Namespace, overlay_root: Path) -> List[Cell]:
     scenarios = [
         s for s in benchmark_campaign(args.per_depot, depot_modes=modes) if args.depots in ("both", s.depot_mode)
     ]
+    if getattr(args, "synthetic_depot", False):
+        # The depot at the centroid of the bins, every bin kept, on both seed groups: with the remote-depot runs of
+        # the same seeds this pairs the depots on identical bins and deposits.
+        scenarios = [
+            CampaignScenario(depot_mode="synthetic", seed=s.seed, n_samples=s.n_samples)
+            for s in benchmark_campaign(args.per_depot)
+        ]
     delayed = getattr(args, "delayed_start", False)
     packing = DELAYED_PACKING if delayed else None
     names = [p for p in (getattr(args, "packing", None) or "").split(",") if p]
@@ -261,6 +268,11 @@ def main() -> int:
         type=int,
         default=0,
         help="offset of the routing search seeds (sim.search_seed); the deposits are unchanged (0: the campaign)",
+    )
+    parser.add_argument(
+        "--synthetic-depot",
+        action="store_true",
+        help="depot at the centroid of the bins (every bin kept) on seeds 42-46 and 47-51, to pair with the remote depot",
     )
     parser.add_argument(
         "--swap-depot-seeds",

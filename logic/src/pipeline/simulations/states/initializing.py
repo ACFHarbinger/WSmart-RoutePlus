@@ -411,7 +411,7 @@ class InitializingState(SimState):
 
         depot_mode = str(graph.depot_mode).strip().lower()
         candidate_ids = None
-        if depot_mode != "remote" and ctx.indices is not None:
+        if depot_mode == "centroid" and ctx.indices is not None:
             # The depot comes from the subset's bins; a spare bin keeps the customer count.
             candidate_ids = process_data(data, bins_coordinates, depot, ctx.indices)[1]["ID"].iloc[1:].tolist()
             ctx.indices = extend_subset(ctx.indices, len(data))
@@ -437,8 +437,9 @@ class InitializingState(SimState):
             graph.n_days,
             sim.data_distribution,
             # Distances are read by bin ID once a bin is the depot; positions no longer apply.
-            ctx.indices if depot_mode == "remote" else None,
+            ctx.indices if depot_mode in ("remote", "synthetic") else None,
             save_updated_dm=_save_dm,
+            depot_mode=depot_mode,
             tensor_backend=ctx.device is not None,
         )
 

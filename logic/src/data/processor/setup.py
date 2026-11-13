@@ -141,6 +141,7 @@ def setup_dist_path_tup(
     focus_idx=None,
     save_updated_dm=None,
     tensor_backend=True,
+    depot_mode: str = "remote",
 ):
     """Compute distance matrix, edge structure and shortest paths.
 
@@ -157,6 +158,7 @@ def setup_dist_path_tup(
         area: Geographic area name (used to construct the save path).
         n_days: Number of simulation days (used to construct the save path).
         focus_idx: Optional focus indices.
+        depot_mode: ``synthetic`` replaces the depot row and column by the centroid depot's distances.
         save_updated_dm: Optional filename to save the updated distance matrix under
             ``outputs/simulations/{n_days}days/{area}{size}_{area}/{distribution}/{run_name}/``.
 
@@ -172,6 +174,10 @@ def setup_dist_path_tup(
         symkey_name=symkey_name,
         focus_idx=focus_idx,
     )
+    if depot_mode == "synthetic":  # the depot at the centroid of the bins (see depot.synthetic_depot_distances)
+        from logic.src.data.processor.depot import synthetic_depot_distances
+
+        dist_matrix = synthetic_depot_distances(dist_matrix, bins_coordinates[["Lat", "Lng"]].to_numpy()[1:])
     dist_matrix_edges, shortest_paths, adj_matrix = apply_edges(dist_matrix, edge_thresh, edge_method)
     if save_updated_dm is not None and str(save_updated_dm).strip():
         save_path = os.path.join(
